@@ -2,11 +2,13 @@ package goomerang
 
 import (
 	"context"
-	"github.com/gorilla/websocket"
-	"go.eloylp.dev/goomerang/message"
-	"google.golang.org/protobuf/proto"
 	"log"
 	"net/url"
+
+	"github.com/gorilla/websocket"
+	"google.golang.org/protobuf/proto"
+
+	"go.eloylp.dev/goomerang/message"
 )
 
 type Client struct {
@@ -54,7 +56,6 @@ func (c *Client) startReceiver() {
 				if err != nil {
 					log.Println("err on client  receiver:", err)
 				}
-
 				switch frame.Type {
 				case "goomerang.test.PingPong":
 					pingpongMessage := &message.PingPong{}

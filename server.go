@@ -2,12 +2,13 @@ package goomerang
 
 import (
 	"context"
-	"go.eloylp.dev/goomerang/message"
 	"log"
 	"net/http"
 
 	"github.com/gorilla/websocket"
 	"google.golang.org/protobuf/proto"
+
+	"go.eloylp.dev/goomerang/message"
 )
 
 var serverUpgrader = websocket.Upgrader{}
