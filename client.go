@@ -3,7 +3,7 @@ package goomerang
 import (
 	"context"
 	"github.com/gorilla/websocket"
-	messages2 "go.eloylp.dev/goomerang/messages"
+	"go.eloylp.dev/goomerang/message"
 	"google.golang.org/protobuf/proto"
 	"log"
 	"net/url"
@@ -43,22 +43,22 @@ func (c *Client) Connect(ctx context.Context) error {
 func (c *Client) startReceiver() {
 	func() {
 		for {
-			m, message, err := c.c.ReadMessage()
+			m, msg, err := c.c.ReadMessage()
 			if err != nil {
 				log.Println("read:", err)
 				return
 			}
 			if m == websocket.BinaryMessage {
-				envelope := &messages2.Message{}
-				err = proto.Unmarshal(message, envelope)
+				frame := &message.Frame{}
+				err = proto.Unmarshal(msg, frame)
 				if err != nil {
 					log.Println("err on client  receiver:", err)
 				}
 
-				switch envelope.Type {
-				case "goomerang.messages.PingPong":
-					pingpongMessage := &messages2.PingPong{}
-					err := proto.Unmarshal(envelope.Payload, pingpongMessage)
+				switch frame.Type {
+				case "goomerang.test.PingPong":
+					pingpongMessage := &message.PingPong{}
+					err := proto.Unmarshal(frame.Payload, pingpongMessage)
 					if err != nil {
 						log.Println("err on client  receiver:", err)
 					}
@@ -72,16 +72,16 @@ func (c *Client) startReceiver() {
 	}()
 }
 
-func (c *Client) Send(ctx context.Context, msg *messages2.PingPong) error {
+func (c *Client) Send(ctx context.Context, msg *message.PingPong) error {
 	userMessage, err := proto.Marshal(msg)
 	if err != nil {
 		return err
 	}
-	message := &messages2.Message{
+	frame := &message.Frame{
 		Type:    string(msg.ProtoReflect().Descriptor().FullName()),
 		Payload: userMessage,
 	}
-	data, err := proto.Marshal(message)
+	data, err := proto.Marshal(frame)
 	if err != nil {
 		return err
 	}
@@ -92,6 +92,6 @@ func (c *Client) Close() error {
 	return c.c.Close()
 }
 
-func (c *Client) RegisterHandler(msg *messages2.PingPong, handler ClientHandler) {
+func (c *Client) RegisterHandler(msg proto.Message, handler ClientHandler) {
 	c.handler = handler
 }

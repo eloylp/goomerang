@@ -2,7 +2,7 @@ package goomerang
 
 import (
 	"context"
-	messages2 "go.eloylp.dev/goomerang/messages"
+	"go.eloylp.dev/goomerang/message"
 	"log"
 	"net/http"
 
@@ -40,14 +40,14 @@ func (s *Server) ServerMainHandler() http.HandlerFunc {
 				log.Println("read:", err)
 				break
 			}
-			message := &messages2.Message{}
-			if err = proto.Unmarshal(data, message); err != nil {
+			frame := &message.Frame{}
+			if err = proto.Unmarshal(data, frame); err != nil {
 				log.Println("parsing: ", err)
 			}
-			switch message.GetType() {
-			case "goomerang.messages.PingPong":
-				pingpongMessage := &messages2.PingPong{}
-				if err := proto.Unmarshal(message.GetPayload(), pingpongMessage); err != nil {
+			switch frame.GetType() {
+			case "goomerang.test.PingPong":
+				pingpongMessage := &message.PingPong{}
+				if err := proto.Unmarshal(frame.GetPayload(), pingpongMessage); err != nil {
 					log.Println("parsing: ", err)
 				}
 				err := s.handler(s, pingpongMessage)
@@ -76,7 +76,7 @@ func (s *Server) Send(ctx context.Context, msg proto.Message) error {
 	if err != nil {
 		return err
 	}
-	envelope := &messages2.Message{
+	envelope := &message.Frame{
 		Type:    string(msg.ProtoReflect().Descriptor().FullName()),
 		Payload: marshal,
 	}

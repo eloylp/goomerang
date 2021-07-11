@@ -3,7 +3,7 @@ package goomerang_test
 import (
 	"context"
 	"github.com/stretchr/testify/assert"
-	messages2 "go.eloylp.dev/goomerang/messages"
+	messages2 "go.eloylp.dev/goomerang/message"
 	"go.eloylp.dev/kit/test"
 	"sync"
 	"testing"
@@ -21,7 +21,7 @@ const (
 
 func TestPingPongServer(t *testing.T) {
 
-	// Just prepare our assertion messages
+	// Just prepare our assertion message
 	arbiter := NewArbiter()
 
 	wg := &sync.WaitGroup{}

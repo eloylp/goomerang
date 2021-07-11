@@ -1,0 +1,10 @@
+syntax = "proto3";
+
+package goomerang.protocol;
+option go_package = "go.eloylp.dev/goomerang/message";
+
+message Frame {
+  string type = 1;
+  bytes payload = 2;
+}
+

@@ -1,0 +1,8 @@
+syntax = "proto3";
+
+package goomerang.test;
+option go_package = "go.eloylp.dev/goomerang/message";
+
+message PingPong {
+  string message = 1;
+}
