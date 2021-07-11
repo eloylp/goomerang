@@ -1,0 +1,14 @@
+syntax = "proto3";
+
+package goomerang.messages;
+option go_package = "go.eloylp.dev/goomerang";
+
+
+message Message {
+  string type = 1;
+  bytes payload = 2;
+}
+
+message PingPong {
+  string message = 1;
+}
