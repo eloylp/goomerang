@@ -60,7 +60,7 @@ func TestPingPongServer(t *testing.T) {
 }
 
 func clientHandler(arbiter *Arbiter, wg *sync.WaitGroup) goomerang.ClientHandler {
-	return func(c *goomerang.Client, msg proto.Message) error {
+	return func(c goomerang.ClientOps, msg proto.Message) error {
 		_ = msg.(*messages2.PingPong)
 		arbiter.ItsAFactThat(clientReceivedPong)
 		wg.Done()
@@ -69,7 +69,7 @@ func clientHandler(arbiter *Arbiter, wg *sync.WaitGroup) goomerang.ClientHandler
 }
 
 func serverHandler(arbiter *Arbiter, ctx context.Context) goomerang.ServerHandler {
-	return func(s *goomerang.Server, msg proto.Message) error {
+	return func(s goomerang.ServerOpts, msg proto.Message) error {
 		_ = msg.(*messages2.PingPong)
 		if err := s.Send(ctx, &messages2.PingPong{ // As all the processing is async in other goroutines, we will use this sync primitive in order to wait the end of the processing.
 			Message: "pong",

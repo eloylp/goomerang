@@ -22,6 +22,7 @@ func NewServer(opts ...ServerOption) (*Server, error) {
 			Addr: cfg.ListenURL,
 		},
 	}
+	s.serverOpts = &serverOpts{s}
 	return s, nil
 }
 
@@ -50,7 +51,7 @@ func (s *Server) ServerMainHandler() http.HandlerFunc {
 				if err := proto.Unmarshal(frame.GetPayload(), pingpongMessage); err != nil {
 					log.Println("parsing: ", err)
 				}
-				err := s.handler(s, pingpongMessage)
+				err := s.handler(s.serverOpts, pingpongMessage)
 				if err != nil {
 					log.Println("server handler err: ", err)
 				}
@@ -60,13 +61,14 @@ func (s *Server) ServerMainHandler() http.HandlerFunc {
 }
 
 type Server struct {
-	intServer *http.Server
-	c         *websocket.Conn
-	upgrader  *websocket.Upgrader
-	handler   ServerHandler
+	intServer  *http.Server
+	c          *websocket.Conn
+	upgrader   *websocket.Upgrader
+	handler    ServerHandler
+	serverOpts *serverOpts
 }
 
-type ServerHandler func(server *Server, msg proto.Message) error
+type ServerHandler func(serverOpts ServerOpts, msg proto.Message) error
 
 func (s *Server) RegisterHandler(msg proto.Message, handler ServerHandler) {
 	s.handler = handler
@@ -95,4 +97,21 @@ func (s *Server) Run() error {
 
 func (s *Server) Shutdown(ctx context.Context) error {
 	return s.intServer.Shutdown(ctx)
+}
+
+type ServerOpts interface {
+	PeerOps
+	Shutdown(ctx context.Context) error
+}
+
+type serverOpts struct {
+	s *Server
+}
+
+func (so *serverOpts) Send(ctx context.Context, msg proto.Message) error {
+	return so.s.Send(ctx, msg)
+}
+
+func (so *serverOpts) Shutdown(ctx context.Context) error {
+	return so.s.Shutdown(ctx)
 }

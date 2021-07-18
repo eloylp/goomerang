@@ -16,11 +16,24 @@ import (
 type Client struct {
 	ServerURL url.URL
 	handler   ClientHandler
+	clientOps *clientOps
 	c         *websocket.Conn
 	dialer    *websocket.Dialer
 }
 
-type ClientHandler func(client *Client, msg proto.Message) error
+type ClientOps interface {
+	PeerOps
+}
+
+type clientOps struct {
+	c *Client
+}
+
+func (co *clientOps) Send(ctx context.Context, msg proto.Message) error {
+	return co.c.Send(ctx, msg)
+}
+
+type ClientHandler func(clientOps ClientOps, msg proto.Message) error
 
 func NewClient(opts ...ClientOption) (*Client, error) {
 	cfg := &ClientConfig{}
@@ -28,13 +41,15 @@ func NewClient(opts ...ClientOption) (*Client, error) {
 		o(cfg)
 	}
 	serverURL := url.URL{Scheme: "ws", Host: cfg.TargetServer, Path: "/ws"}
-	return &Client{
+	c := &Client{
 		ServerURL: serverURL,
 		dialer: &websocket.Dialer{
 			Proxy:            http.ProxyFromEnvironment,
 			HandshakeTimeout: 45 * time.Second, // TODO parametrize this.
 		},
-	}, nil
+	}
+	c.clientOps = &clientOps{c: c}
+	return c, nil
 }
 
 func (c *Client) Connect(ctx context.Context) error {
@@ -70,7 +85,7 @@ func (c *Client) startReceiver() {
 					if err != nil {
 						log.Println("err on client  receiver:", err)
 					}
-					err = c.handler(c, pingpongMessage)
+					err = c.handler(c.clientOps, pingpongMessage)
 					if err != nil {
 						log.Println("err on client  receiver:", err)
 					}
@@ -80,7 +95,7 @@ func (c *Client) startReceiver() {
 	}()
 }
 
-func (c *Client) Send(ctx context.Context, msg *message.PingPong) error {
+func (c *Client) Send(ctx context.Context, msg proto.Message) error {
 	userMessage, err := proto.Marshal(msg)
 	if err != nil {
 		return err
