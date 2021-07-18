@@ -11,14 +11,13 @@ import (
 	"go.eloylp.dev/goomerang/message"
 )
 
-var serverUpgrader = websocket.Upgrader{}
-
 func NewServer(opts ...ServerOption) (*Server, error) {
 	cfg := &ServerConfig{}
 	for _, o := range opts {
 		o(cfg)
 	}
 	s := &Server{
+		upgrader: &websocket.Upgrader{},
 		intServer: &http.Server{
 			Addr: cfg.ListenURL,
 		},
@@ -28,7 +27,7 @@ func NewServer(opts ...ServerOption) (*Server, error) {
 
 func (s *Server) ServerMainHandler() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		c, err := serverUpgrader.Upgrade(w, r, nil)
+		c, err := s.upgrader.Upgrade(w, r, nil)
 		if err != nil {
 			log.Print("upgrade:", err)
 			return
@@ -63,6 +62,7 @@ func (s *Server) ServerMainHandler() http.HandlerFunc {
 type Server struct {
 	intServer *http.Server
 	c         *websocket.Conn
+	upgrader  *websocket.Upgrader
 	handler   ServerHandler
 }
 
