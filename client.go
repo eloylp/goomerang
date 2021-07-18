@@ -3,7 +3,9 @@ package goomerang
 import (
 	"context"
 	"log"
+	"net/http"
 	"net/url"
+	"time"
 
 	"github.com/gorilla/websocket"
 	"google.golang.org/protobuf/proto"
@@ -13,8 +15,9 @@ import (
 
 type Client struct {
 	ServerURL url.URL
-	c         *websocket.Conn
 	handler   ClientHandler
+	c         *websocket.Conn
+	dialer    *websocket.Dialer
 }
 
 type ClientHandler func(client *Client, msg proto.Message) error
@@ -27,11 +30,15 @@ func NewClient(opts ...ClientOption) (*Client, error) {
 	serverURL := url.URL{Scheme: "ws", Host: cfg.TargetServer, Path: "/ws"}
 	return &Client{
 		ServerURL: serverURL,
+		dialer: &websocket.Dialer{
+			Proxy:            http.ProxyFromEnvironment,
+			HandshakeTimeout: 45 * time.Second, // TODO parametrize this.
+		},
 	}, nil
 }
 
 func (c *Client) Connect(ctx context.Context) error {
-	conn, _, err := websocket.DefaultDialer.Dial(c.ServerURL.String(), nil)
+	conn, _, err := c.dialer.DialContext(ctx, c.ServerURL.String(), nil)
 	if err != nil {
 		return err
 	}
