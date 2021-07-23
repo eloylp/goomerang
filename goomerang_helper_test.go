@@ -1,7 +1,10 @@
 package goomerang_test
 
 import (
+	"context"
 	"sync"
+
+	"google.golang.org/protobuf/proto"
 )
 
 const (
@@ -31,4 +34,15 @@ func (a *Arbiter) AssertHappened(event string) bool {
 	defer a.L.RUnlock()
 	_, ok := a.successes[event]
 	return ok
+}
+
+type FakeServerOpts struct {
+}
+
+func (f *FakeServerOpts) Send(ctx context.Context, msg proto.Message) error {
+	panic("implement me")
+}
+
+func (f *FakeServerOpts) Shutdown(ctx context.Context) error {
+	panic("implement me")
 }

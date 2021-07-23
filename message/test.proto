@@ -6,3 +6,7 @@ option go_package = "go.eloylp.dev/goomerang/message";
 message PingPong {
   string message = 1;
 }
+
+message GreetV1 {
+  string message = 1;
+}

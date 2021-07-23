@@ -21,6 +21,7 @@ func NewServer(opts ...ServerOption) (*Server, error) {
 		intServer: &http.Server{
 			Addr: cfg.ListenURL,
 		},
+		registry: Registry{},
 	}
 	s.serverOpts = &serverOpts{s}
 	return s, nil
@@ -45,6 +46,12 @@ func (s *Server) ServerMainHandler() http.HandlerFunc {
 			if err = proto.Unmarshal(data, frame); err != nil {
 				log.Println("parsing: ", err)
 			}
+
+			handler, err := s.registry.Handler(frame.GetType())
+			if err != nil {
+				log.Println("server handler err: ", err)
+			}
+
 			switch frame.GetType() {
 			case "goomerang.test.PingPong":
 				pingpongMessage := &message.PingPong{}
@@ -66,12 +73,14 @@ type Server struct {
 	upgrader   *websocket.Upgrader
 	handler    ServerHandler
 	serverOpts *serverOpts
+	registry   Registry
 }
 
 type ServerHandler func(serverOpts ServerOpts, msg proto.Message) error
 
 func (s *Server) RegisterHandler(msg proto.Message, handler ServerHandler) {
-	s.handler = handler
+	name := string(msg.ProtoReflect().Descriptor().FullName())
+	s.registry.Register(name, handler)
 }
 
 func (s *Server) Send(ctx context.Context, msg proto.Message) error {
