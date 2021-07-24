@@ -4,13 +4,15 @@ import (
 	"fmt"
 
 	"google.golang.org/protobuf/proto"
+
+	"go.eloylp.dev/goomerang/message"
 )
 
 type Registry map[string][2]interface{}
 
 func (r Registry) Register(msg proto.Message, h ServerHandler) {
-	key := msg.ProtoReflect().Descriptor().FullName()
-	r[string(key)] = [2]interface{}{msg, h}
+	key := message.FQDN(msg)
+	r[key] = [2]interface{}{msg, h}
 }
 
 func (r Registry) Handler(key string) (proto.Message, ServerHandler, error) {

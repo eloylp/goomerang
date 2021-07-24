@@ -10,6 +10,7 @@ import (
 	"github.com/gorilla/websocket"
 	"google.golang.org/protobuf/proto"
 
+	"go.eloylp.dev/goomerang/message"
 	"go.eloylp.dev/goomerang/message/protocol"
 	"go.eloylp.dev/goomerang/message/test"
 )
@@ -102,7 +103,7 @@ func (c *Client) Send(ctx context.Context, msg proto.Message) error {
 		return err
 	}
 	frame := &protocol.Frame{
-		Type:    string(msg.ProtoReflect().Descriptor().FullName()),
+		Type:    message.FQDN(msg),
 		Payload: userMessage,
 	}
 	data, err := proto.Marshal(frame)
