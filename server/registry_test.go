@@ -1,28 +1,28 @@
-package goomerang_test
+package server_test
 
 import (
+	"context"
 	"errors"
 	message "go.eloylp.dev/goomerang/message/test"
+	"go.eloylp.dev/goomerang/server"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/proto"
-
-	"go.eloylp.dev/goomerang"
 )
 
 func TestHandlerRegistry(t *testing.T) {
-	r := goomerang.Registry{}
+	r := server.Registry{}
 
 	m1 := &message.GreetV1{Message: "hi!"}
 	m1Name := m1.ProtoReflect().Descriptor().FullName()
-	r.Register(m1, func(serverOpts goomerang.ServerOpts, msg proto.Message) error {
+	r.Register(m1, func(serverOpts server.ServerOpts, msg proto.Message) error {
 		return errors.New("this causes errors")
 	})
 	m2 := &message.PingPong{Message: "ping"}
 	m2Name := m2.ProtoReflect().Descriptor().FullName()
-	r.Register(m2, func(serverOpts goomerang.ServerOpts, msg proto.Message) error {
+	r.Register(m2, func(serverOpts server.ServerOpts, msg proto.Message) error {
 		return nil
 	})
 
@@ -38,4 +38,15 @@ func TestHandlerRegistry(t *testing.T) {
 	require.NoError(t, err)
 	assert.NoError(t, h2(fakeServerOpts, stubMsg))
 	assert.Equal(t, m2Name, msg.ProtoReflect().Descriptor().FullName())
+}
+
+type FakeServerOpts struct {
+}
+
+func (f *FakeServerOpts) Send(ctx context.Context, msg proto.Message) error {
+	panic("implement me")
+}
+
+func (f *FakeServerOpts) Shutdown(ctx context.Context) error {
+	panic("implement me")
 }

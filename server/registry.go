@@ -1,4 +1,4 @@
-package goomerang
+package server
 
 import (
 	"fmt"

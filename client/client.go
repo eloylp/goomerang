@@ -1,4 +1,4 @@
-package goomerang
+package client
 
 import (
 	"context"
@@ -16,14 +16,14 @@ import (
 
 type Client struct {
 	ServerURL url.URL
-	handler   ClientHandler
+	handler   Handler
 	clientOps *clientOps
 	c         *websocket.Conn
 	dialer    *websocket.Dialer
 }
 
-type ClientOps interface {
-	PeerOps
+type Ops interface {
+	Send(ctx context.Context, msg proto.Message) error
 }
 
 type clientOps struct {
@@ -34,10 +34,10 @@ func (co *clientOps) Send(ctx context.Context, msg proto.Message) error {
 	return co.c.Send(ctx, msg)
 }
 
-type ClientHandler func(clientOps ClientOps, msg proto.Message) error
+type Handler func(clientOps Ops, msg proto.Message) error
 
-func NewClient(opts ...ClientOption) (*Client, error) {
-	cfg := &ClientConfig{}
+func NewClient(opts ...Option) (*Client, error) {
+	cfg := &Config{}
 	for _, o := range opts {
 		o(cfg)
 	}
@@ -116,6 +116,6 @@ func (c *Client) Close() error {
 	return c.c.Close()
 }
 
-func (c *Client) RegisterHandler(msg proto.Message, handler ClientHandler) {
+func (c *Client) RegisterHandler(msg proto.Message, handler Handler) {
 	c.handler = handler
 }

@@ -1,4 +1,4 @@
-package goomerang
+package server
 
 import (
 	"context"
@@ -11,8 +11,8 @@ import (
 	"go.eloylp.dev/goomerang/message/protocol"
 )
 
-func NewServer(opts ...ServerOption) (*Server, error) {
-	cfg := &ServerConfig{}
+func NewServer(opts ...Option) (*Server, error) {
+	cfg := &Config{}
 	for _, o := range opts {
 		o(cfg)
 	}
@@ -99,7 +99,7 @@ func (s *Server) Shutdown(ctx context.Context) error {
 }
 
 type ServerOpts interface {
-	PeerOps
+	Send(ctx context.Context, msg proto.Message) error
 	Shutdown(ctx context.Context) error
 }
 
