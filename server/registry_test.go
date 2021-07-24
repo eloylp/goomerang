@@ -19,14 +19,10 @@ func TestHandlerRegistry(t *testing.T) {
 
 	m1 := &testMessages.GreetV1{Message: "hi!"}
 	m1Name := message.FQDN(m1)
-	r.Register(m1, func(serverOpts server.ServerOpts, msg proto.Message) error {
-		return errors.New("this causes errors")
-	})
+	r.Register(m1, problematicHandler())
 	m2 := &testMessages.PingPong{Message: "ping"}
 	m2Name := message.FQDN(m2)
-	r.Register(m2, func(serverOpts server.ServerOpts, msg proto.Message) error {
-		return nil
-	})
+	r.Register(m2, successfulHandler())
 
 	fakeServerOpts := &FakeServerOpts{}
 	stubMsg := &testMessages.GreetV1{}
@@ -40,6 +36,18 @@ func TestHandlerRegistry(t *testing.T) {
 	require.NoError(t, err)
 	assert.NoError(t, h2(fakeServerOpts, stubMsg))
 	assert.Equal(t, m2Name, message.FQDN(msg))
+}
+
+func successfulHandler() server.ServerHandler {
+	return func(serverOpts server.ServerOpts, msg proto.Message) error {
+		return nil
+	}
+}
+
+func problematicHandler() server.ServerHandler {
+	return func(serverOpts server.ServerOpts, msg proto.Message) error {
+		return errors.New("this causes errors")
+	}
 }
 
 type FakeServerOpts struct {
