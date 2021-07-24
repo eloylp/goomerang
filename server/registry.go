@@ -8,11 +8,11 @@ import (
 	"go.eloylp.dev/goomerang/message"
 )
 
-type Registry map[string][2]interface{}
+type Registry map[string][]interface{}
 
 func (r Registry) Register(msg proto.Message, h ServerHandler) {
 	key := message.FQDN(msg)
-	r[key] = [2]interface{}{msg, h}
+	r[key] = []interface{}{msg, h}
 }
 
 func (r Registry) Handler(key string) (proto.Message, ServerHandler, error) {
