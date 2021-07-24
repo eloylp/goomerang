@@ -9,26 +9,26 @@ import (
 	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/proto"
 
-	message "go.eloylp.dev/goomerang/message/test"
+	testMessages "go.eloylp.dev/goomerang/message/test"
 	"go.eloylp.dev/goomerang/server"
 )
 
 func TestHandlerRegistry(t *testing.T) {
 	r := server.Registry{}
 
-	m1 := &message.GreetV1{Message: "hi!"}
+	m1 := &testMessages.GreetV1{Message: "hi!"}
 	m1Name := m1.ProtoReflect().Descriptor().FullName()
 	r.Register(m1, func(serverOpts server.ServerOpts, msg proto.Message) error {
 		return errors.New("this causes errors")
 	})
-	m2 := &message.PingPong{Message: "ping"}
+	m2 := &testMessages.PingPong{Message: "ping"}
 	m2Name := m2.ProtoReflect().Descriptor().FullName()
 	r.Register(m2, func(serverOpts server.ServerOpts, msg proto.Message) error {
 		return nil
 	})
 
 	fakeServerOpts := &FakeServerOpts{}
-	stubMsg := &message.GreetV1{}
+	stubMsg := &testMessages.GreetV1{}
 
 	msg, h1, err := r.Handler(string(m1Name))
 	require.NoError(t, err)
