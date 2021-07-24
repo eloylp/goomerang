@@ -68,8 +68,8 @@ func clientHandler(arbiter *Arbiter, wg *sync.WaitGroup) client.Handler {
 	}
 }
 
-func serverHandler(arbiter *Arbiter, ctx context.Context) server.ServerHandler {
-	return func(s server.ServerOpts, msg proto.Message) error {
+func serverHandler(arbiter *Arbiter, ctx context.Context) server.Handler {
+	return func(s server.Opts, msg proto.Message) error {
 		_ = msg.(*testMessages.PingPong)
 		if err := s.Send(ctx, &testMessages.PingPong{ // As all the processing is async in other goroutines, we will use this sync primitive in order to wait the end of the processing.
 			Message: "pong",
@@ -87,15 +87,15 @@ func TestMultipleHandlersArePossible(t *testing.T) {
 	require.NoError(t, err)
 	arbiter := NewArbiter(t)
 	m := &testMessages.GreetV1{Message: "Hi !"}
-	h := func(serverOpts server.ServerOpts, msg proto.Message) error {
+	h := func(serverOpts server.Opts, msg proto.Message) error {
 		arbiter.ItsAFactThat("HANDLER1_CALLED")
 		return nil
 	}
-	h2 := func(serverOpts server.ServerOpts, msg proto.Message) error {
+	h2 := func(serverOpts server.Opts, msg proto.Message) error {
 		arbiter.ItsAFactThat("HANDLER2_CALLED")
 		return nil
 	}
-	h3 := func(serverOpts server.ServerOpts, msg proto.Message) error {
+	h3 := func(serverOpts server.Opts, msg proto.Message) error {
 		arbiter.ItsAFactThat("HANDLER3_CALLED")
 		return nil
 	}

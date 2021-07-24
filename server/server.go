@@ -64,14 +64,14 @@ type Server struct {
 	intServer  *http.Server
 	c          *websocket.Conn
 	upgrader   *websocket.Upgrader
-	handler    ServerHandler
+	handler    Handler
 	serverOpts *serverOpts
 	registry   Registry
 }
 
-type ServerHandler func(serverOpts ServerOpts, msg proto.Message) error
+type Handler func(serverOpts Opts, msg proto.Message) error
 
-func (s *Server) RegisterHandler(msg proto.Message, handlers ...ServerHandler) {
+func (s *Server) RegisterHandler(msg proto.Message, handlers ...Handler) {
 	s.registry.Register(msg, handlers...)
 }
 
@@ -100,7 +100,7 @@ func (s *Server) Shutdown(ctx context.Context) error {
 	return s.intServer.Shutdown(ctx)
 }
 
-type ServerOpts interface {
+type Opts interface {
 	Send(ctx context.Context, msg proto.Message) error
 	Shutdown(ctx context.Context) error
 }

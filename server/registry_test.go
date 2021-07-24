@@ -37,14 +37,14 @@ func TestHandlerRegistry(t *testing.T) {
 	assert.Equal(t, m2Name, message.FQDN(msg))
 }
 
-func successfulHandler() server.ServerHandler {
-	return func(serverOpts server.ServerOpts, msg proto.Message) error {
+func successfulHandler() server.Handler {
+	return func(serverOpts server.Opts, msg proto.Message) error {
 		return nil
 	}
 }
 
-func problematicHandler() server.ServerHandler {
-	return func(serverOpts server.ServerOpts, msg proto.Message) error {
+func problematicHandler() server.Handler {
+	return func(serverOpts server.Opts, msg proto.Message) error {
 		return errors.New("this causes errors")
 	}
 }
