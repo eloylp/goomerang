@@ -2,18 +2,20 @@ package goomerang
 
 import (
 	"fmt"
+	"google.golang.org/protobuf/proto"
 )
 
-type Registry map[string]ServerHandler
+type Registry map[string][2]interface{}
 
-func (r Registry) Register(key string, h ServerHandler) {
-	r[key] = h
+func (r Registry) Register(msg proto.Message, h ServerHandler) {
+	key := msg.ProtoReflect().Descriptor().FullName()
+	r[string(key)] = [2]interface{}{msg, h}
 }
 
-func (r Registry) Handler(key string) (ServerHandler, error) {
-	h, ok := r[key]
+func (r Registry) Handler(key string) (proto.Message, ServerHandler, error) {
+	slot, ok := r[key]
 	if !ok {
-		return nil, fmt.Errorf("cannot found handler with key: %s", key)
+		return nil, nil, fmt.Errorf("cannot found handler with key: %s", key)
 	}
-	return h, nil
+	return slot[0].(proto.Message), slot[1].(ServerHandler), nil
 }

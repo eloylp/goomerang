@@ -46,22 +46,13 @@ func (s *Server) ServerMainHandler() http.HandlerFunc {
 			if err = proto.Unmarshal(data, frame); err != nil {
 				log.Println("parsing: ", err)
 			}
-
-			handler, err := s.registry.Handler(frame.GetType())
+			msg, handler, err := s.registry.Handler(frame.GetType())
 			if err != nil {
 				log.Println("server handler err: ", err)
 			}
-
-			switch frame.GetType() {
-			case "goomerang.test.PingPong":
-				pingpongMessage := &message.PingPong{}
-				if err := proto.Unmarshal(frame.GetPayload(), pingpongMessage); err != nil {
-					log.Println("parsing: ", err)
-				}
-				err := s.handler(s.serverOpts, pingpongMessage)
-				if err != nil {
-					log.Println("server handler err: ", err)
-				}
+			err = handler(s.serverOpts, msg)
+			if err != nil {
+				log.Println("server handler err: ", err)
 			}
 		}
 	}
@@ -79,8 +70,7 @@ type Server struct {
 type ServerHandler func(serverOpts ServerOpts, msg proto.Message) error
 
 func (s *Server) RegisterHandler(msg proto.Message, handler ServerHandler) {
-	name := string(msg.ProtoReflect().Descriptor().FullName())
-	s.registry.Register(name, handler)
+	s.registry.Register(msg, handler)
 }
 
 func (s *Server) Send(ctx context.Context, msg proto.Message) error {
