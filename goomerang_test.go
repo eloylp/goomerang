@@ -2,17 +2,18 @@ package goomerang_test
 
 import (
 	"context"
-	"github.com/stretchr/testify/assert"
-	"go.eloylp.dev/goomerang/client"
-	"go.eloylp.dev/goomerang/server"
-	"go.eloylp.dev/kit/test"
 	"sync"
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	message "go.eloylp.dev/goomerang/message/test"
+	"go.eloylp.dev/kit/test"
 	"google.golang.org/protobuf/proto"
+
+	"go.eloylp.dev/goomerang/client"
+	message "go.eloylp.dev/goomerang/message/test"
+	"go.eloylp.dev/goomerang/server"
 )
 
 const (

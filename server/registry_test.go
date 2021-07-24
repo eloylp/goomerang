@@ -3,13 +3,14 @@ package server_test
 import (
 	"context"
 	"errors"
-	message "go.eloylp.dev/goomerang/message/test"
-	"go.eloylp.dev/goomerang/server"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/proto"
+
+	message "go.eloylp.dev/goomerang/message/test"
+	"go.eloylp.dev/goomerang/server"
 )
 
 func TestHandlerRegistry(t *testing.T) {
