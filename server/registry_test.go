@@ -29,12 +29,12 @@ func TestHandlerRegistry(t *testing.T) {
 
 	msg, h1, err := r.Handler(m1Name)
 	require.NoError(t, err)
-	assert.Error(t, h1(fakeServerOpts, stubMsg))
+	assert.Error(t, h1[0](fakeServerOpts, stubMsg))
 	assert.Equal(t, m1Name, message.FQDN(msg))
 
 	msg, h2, err := r.Handler(m2Name)
 	require.NoError(t, err)
-	assert.NoError(t, h2(fakeServerOpts, stubMsg))
+	assert.NoError(t, h2[0](fakeServerOpts, stubMsg))
 	assert.Equal(t, m2Name, message.FQDN(msg))
 }
 

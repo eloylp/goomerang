@@ -47,13 +47,14 @@ func (s *Server) ServerMainHandler() http.HandlerFunc {
 			if err = proto.Unmarshal(data, frame); err != nil {
 				log.Println("parsing: ", err)
 			}
-			msg, handler, err := s.registry.Handler(frame.GetType())
+			msg, handlers, err := s.registry.Handler(frame.GetType())
 			if err != nil {
 				log.Println("server handler err: ", err)
 			}
-			err = handler(s.serverOpts, msg)
-			if err != nil {
-				log.Println("server handler err: ", err)
+			for _, h := range handlers {
+				if err = h(s.serverOpts, msg); err != nil {
+					log.Println("server handler err: ", err)
+				}
 			}
 		}
 	}
