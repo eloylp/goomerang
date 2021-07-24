@@ -71,8 +71,8 @@ type Server struct {
 
 type ServerHandler func(serverOpts ServerOpts, msg proto.Message) error
 
-func (s *Server) RegisterHandler(msg proto.Message, handler ServerHandler) {
-	s.registry.Register(msg, handler)
+func (s *Server) RegisterHandler(msg proto.Message, handlers ...ServerHandler) {
+	s.registry.Register(msg, handlers...)
 }
 
 func (s *Server) Send(ctx context.Context, msg proto.Message) error {

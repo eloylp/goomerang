@@ -6,7 +6,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.eloylp.dev/kit/test"
 	"google.golang.org/protobuf/proto"
@@ -23,7 +22,7 @@ const (
 func TestPingPongServer(t *testing.T) {
 
 	// Just prepare our assertion testMessages
-	arbiter := NewArbiter()
+	arbiter := NewArbiter(t)
 
 	wg := &sync.WaitGroup{}
 	// As all the processing is async in other goroutines,
@@ -56,8 +55,8 @@ func TestPingPongServer(t *testing.T) {
 
 	wg.Wait()
 
-	assert.True(t, arbiter.AssertHappened(serverReceivedPing))
-	assert.True(t, arbiter.AssertHappened(clientReceivedPong))
+	arbiter.AssertHappened(serverReceivedPing)
+	arbiter.AssertHappened(clientReceivedPong)
 }
 
 func clientHandler(arbiter *Arbiter, wg *sync.WaitGroup) client.Handler {
@@ -80,4 +79,44 @@ func serverHandler(arbiter *Arbiter, ctx context.Context) server.ServerHandler {
 		arbiter.ItsAFactThat(serverReceivedPing)
 		return nil
 	}
+}
+
+func TestMultipleHandlersArePossible(t *testing.T) {
+	// Create the test server
+	s, err := server.NewServer(server.WithListenAddr(serverAddr))
+	require.NoError(t, err)
+	arbiter := NewArbiter(t)
+	m := &testMessages.GreetV1{Message: "Hi !"}
+	h := func(serverOpts server.ServerOpts, msg proto.Message) error {
+		arbiter.ItsAFactThat("HANDLER1_CALLED")
+		return nil
+	}
+	h2 := func(serverOpts server.ServerOpts, msg proto.Message) error {
+		arbiter.ItsAFactThat("HANDLER2_CALLED")
+		return nil
+	}
+	h3 := func(serverOpts server.ServerOpts, msg proto.Message) error {
+		arbiter.ItsAFactThat("HANDLER3_CALLED")
+		return nil
+	}
+	s.RegisterHandler(m, h, h2)
+	s.RegisterHandler(m, h3)
+
+	go s.Run()
+	test.WaitTCPService(t, serverAddr, 50*time.Millisecond, 2*time.Second)
+
+	// Create client
+	ctx := context.Background()
+	c, err := client.NewClient(client.WithTargetServer(serverAddr))
+	require.NoError(t, err)
+	err = c.Connect(ctx)
+	require.NoError(t, err)
+	defer c.Close()
+
+	err = c.Send(ctx, m)
+	require.NoError(t, err)
+	time.Sleep(50 * time.Millisecond)
+
+	arbiter.AssertHappenedInOrder("HANDLER1_CALLED", "HANDLER2_CALLED")
+	arbiter.AssertHappenedInOrder("HANDLER2_CALLED", "HANDLER3_CALLED")
 }
