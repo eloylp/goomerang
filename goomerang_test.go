@@ -3,13 +3,13 @@ package goomerang_test
 import (
 	"context"
 	"github.com/stretchr/testify/assert"
-	messages2 "go.eloylp.dev/goomerang/message"
 	"go.eloylp.dev/kit/test"
 	"sync"
 	"testing"
 	"time"
 
 	"github.com/stretchr/testify/require"
+	message "go.eloylp.dev/goomerang/message/test"
 	"google.golang.org/protobuf/proto"
 
 	"go.eloylp.dev/goomerang"
@@ -40,7 +40,7 @@ func TestPingPongServer(t *testing.T) {
 	defer s.Shutdown(ctx)
 
 	// Register handler at server
-	s.RegisterHandler(&messages2.PingPong{}, serverHandler(arbiter, ctx))
+	s.RegisterHandler(&message.PingPong{}, serverHandler(arbiter, ctx))
 	// Create client
 	c, err := goomerang.NewClient(goomerang.WithTargetServer(serverAddr))
 	require.NoError(t, err)
@@ -49,8 +49,8 @@ func TestPingPongServer(t *testing.T) {
 	defer c.Close()
 
 	// Register handler at client (as this is a bidirectional communication)
-	c.RegisterHandler(&messages2.PingPong{}, clientHandler(arbiter, wg))
-	err = c.Send(ctx, &messages2.PingPong{Message: "ping"})
+	c.RegisterHandler(&message.PingPong{}, clientHandler(arbiter, wg))
+	err = c.Send(ctx, &message.PingPong{Message: "ping"})
 	require.NoError(t, err)
 
 	wg.Wait()
@@ -61,7 +61,7 @@ func TestPingPongServer(t *testing.T) {
 
 func clientHandler(arbiter *Arbiter, wg *sync.WaitGroup) goomerang.ClientHandler {
 	return func(c goomerang.ClientOps, msg proto.Message) error {
-		_ = msg.(*messages2.PingPong)
+		_ = msg.(*message.PingPong)
 		arbiter.ItsAFactThat(clientReceivedPong)
 		wg.Done()
 		return nil
@@ -70,8 +70,8 @@ func clientHandler(arbiter *Arbiter, wg *sync.WaitGroup) goomerang.ClientHandler
 
 func serverHandler(arbiter *Arbiter, ctx context.Context) goomerang.ServerHandler {
 	return func(s goomerang.ServerOpts, msg proto.Message) error {
-		_ = msg.(*messages2.PingPong)
-		if err := s.Send(ctx, &messages2.PingPong{ // As all the processing is async in other goroutines, we will use this sync primitive in order to wait the end of the processing.
+		_ = msg.(*message.PingPong)
+		if err := s.Send(ctx, &message.PingPong{ // As all the processing is async in other goroutines, we will use this sync primitive in order to wait the end of the processing.
 			Message: "pong",
 		}); err != nil {
 			return err

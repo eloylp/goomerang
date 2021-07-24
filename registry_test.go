@@ -2,7 +2,7 @@ package goomerang_test
 
 import (
 	"errors"
-	"go.eloylp.dev/goomerang/message"
+	message "go.eloylp.dev/goomerang/message/test"
 	"testing"
 
 	"github.com/stretchr/testify/assert"

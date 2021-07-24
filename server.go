@@ -8,7 +8,7 @@ import (
 	"github.com/gorilla/websocket"
 	"google.golang.org/protobuf/proto"
 
-	"go.eloylp.dev/goomerang/message"
+	"go.eloylp.dev/goomerang/message/protocol"
 )
 
 func NewServer(opts ...ServerOption) (*Server, error) {
@@ -42,7 +42,7 @@ func (s *Server) ServerMainHandler() http.HandlerFunc {
 				log.Println("read:", err)
 				break
 			}
-			frame := &message.Frame{}
+			frame := &protocol.Frame{}
 			if err = proto.Unmarshal(data, frame); err != nil {
 				log.Println("parsing: ", err)
 			}
@@ -78,7 +78,7 @@ func (s *Server) Send(ctx context.Context, msg proto.Message) error {
 	if err != nil {
 		return err
 	}
-	envelope := &message.Frame{
+	envelope := &protocol.Frame{
 		Type:    string(msg.ProtoReflect().Descriptor().FullName()),
 		Payload: marshal,
 	}

@@ -10,7 +10,8 @@ import (
 	"github.com/gorilla/websocket"
 	"google.golang.org/protobuf/proto"
 
-	"go.eloylp.dev/goomerang/message"
+	"go.eloylp.dev/goomerang/message/protocol"
+	"go.eloylp.dev/goomerang/message/test"
 )
 
 type Client struct {
@@ -73,14 +74,14 @@ func (c *Client) startReceiver() {
 				return
 			}
 			if m == websocket.BinaryMessage {
-				frame := &message.Frame{}
+				frame := &protocol.Frame{}
 				err = proto.Unmarshal(msg, frame)
 				if err != nil {
 					log.Println("err on client  receiver:", err)
 				}
 				switch frame.Type {
 				case "goomerang.test.PingPong":
-					pingpongMessage := &message.PingPong{}
+					pingpongMessage := &test.PingPong{}
 					err := proto.Unmarshal(frame.Payload, pingpongMessage)
 					if err != nil {
 						log.Println("err on client  receiver:", err)
@@ -100,7 +101,7 @@ func (c *Client) Send(ctx context.Context, msg proto.Message) error {
 	if err != nil {
 		return err
 	}
-	frame := &message.Frame{
+	frame := &protocol.Frame{
 		Type:    string(msg.ProtoReflect().Descriptor().FullName()),
 		Payload: userMessage,
 	}
