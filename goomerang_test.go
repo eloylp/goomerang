@@ -14,10 +14,6 @@ import (
 )
 
 func TestPingPongServer(t *testing.T) {
-	const (
-		serverReceivedPing = "SERVER_RECEIVED_PING"
-		clientReceivedPong = "CLIENT_RECEIVED_PONG"
-	)
 	arbiter := NewArbiter(t)
 	s := PrepareServer(t)
 	ctx := context.Background()
@@ -29,7 +25,7 @@ func TestPingPongServer(t *testing.T) {
 		}); err != nil {
 			return err
 		}
-		arbiter.ItsAFactThat(serverReceivedPing)
+		arbiter.ItsAFactThat("SERVER_RECEIVED_PING")
 		return nil
 	})
 
@@ -39,7 +35,7 @@ func TestPingPongServer(t *testing.T) {
 	wg.Add(1)
 	c.RegisterHandler(&testMessages.PingPong{}, func(c client.Ops, msg proto.Message) error {
 		_ = msg.(*testMessages.PingPong)
-		arbiter.ItsAFactThat(clientReceivedPong)
+		arbiter.ItsAFactThat("CLIENT_RECEIVED_PONG")
 		wg.Done()
 		return nil
 	})
@@ -49,8 +45,8 @@ func TestPingPongServer(t *testing.T) {
 
 	wg.Wait()
 
-	arbiter.AssertHappened(serverReceivedPing)
-	arbiter.AssertHappened(clientReceivedPong)
+	arbiter.AssertHappened("SERVER_RECEIVED_PING")
+	arbiter.AssertHappened("CLIENT_RECEIVED_PONG")
 }
 
 func TestMultipleHandlersArePossible(t *testing.T) {
