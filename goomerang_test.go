@@ -84,3 +84,38 @@ func TestMultipleHandlersArePossibleInServer(t *testing.T) {
 	arbiter.AssertHappenedInOrder("HANDLER1_CALLED", "HANDLER2_CALLED")
 	arbiter.AssertHappenedInOrder("HANDLER2_CALLED", "HANDLER3_CALLED")
 }
+
+func TestMultipleHandlersArePossibleInClient(t *testing.T) {
+	arbiter := NewArbiter(t)
+	c := PrepareClient(t)
+	defer c.Close()
+	m := &testMessages.GreetV1{Message: "Hi !"}
+	h := func(opts client.Ops, msg proto.Message) error {
+		arbiter.ItsAFactThat("HANDLER1_CALLED")
+		return nil
+	}
+	h2 := func(ops client.Ops, msg proto.Message) error {
+		arbiter.ItsAFactThat("HANDLER2_CALLED")
+		return nil
+	}
+	wg := sync.WaitGroup{}
+	wg.Add(1)
+	h3 := func(ops client.Ops, msg proto.Message) error {
+		arbiter.ItsAFactThat("HANDLER3_CALLED")
+		wg.Done()
+		return nil
+	}
+	c.RegisterHandler(m, h, h2)
+	c.RegisterHandler(m, h3)
+
+	ctx := context.Background()
+	s := PrepareServer(t)
+	defer s.Shutdown(ctx)
+	err := s.Send(ctx, m)
+	require.NoError(t, err)
+
+	wg.Wait()
+
+	arbiter.AssertHappenedInOrder("HANDLER1_CALLED", "HANDLER2_CALLED")
+	arbiter.AssertHappenedInOrder("HANDLER2_CALLED", "HANDLER3_CALLED")
+}
