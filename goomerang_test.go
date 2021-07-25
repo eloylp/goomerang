@@ -14,6 +14,11 @@ import (
 )
 
 func TestPingPongServer(t *testing.T) {
+	const (
+		serverReceivedPing = "SERVER_RECEIVED_PING"
+		clientReceivedPong = "CLIENT_RECEIVED_PONG"
+	)
+
 	arbiter := NewArbiter(t)
 	wg := &sync.WaitGroup{}
 	wg.Add(1)
@@ -21,11 +26,27 @@ func TestPingPongServer(t *testing.T) {
 	s := PrepareServer(t)
 	ctx := context.Background()
 	defer s.Shutdown(ctx)
-	s.RegisterHandler(&testMessages.PingPong{}, serverHandler(arbiter, ctx))
+	s.RegisterHandler(&testMessages.PingPong{}, func(s server.Opts, msg proto.Message) error {
+		_ = msg.(*testMessages.PingPong)
+		if err := s.Send(ctx, &testMessages.PingPong{
+			Message: "pong",
+		}); err != nil {
+			return err
+		}
+		arbiter.ItsAFactThat(serverReceivedPing)
+		return nil
+	})
 
 	c := PrepareClient(t)
 	defer c.Close()
-	c.RegisterHandler(&testMessages.PingPong{}, clientHandler(arbiter, wg))
+
+	c.RegisterHandler(&testMessages.PingPong{}, func(c client.Ops, msg proto.Message) error {
+		_ = msg.(*testMessages.PingPong)
+		arbiter.ItsAFactThat(clientReceivedPong)
+		wg.Done()
+		return nil
+	})
+
 	err := c.Send(ctx, &testMessages.PingPong{Message: "ping"})
 	require.NoError(t, err)
 
@@ -33,28 +54,6 @@ func TestPingPongServer(t *testing.T) {
 
 	arbiter.AssertHappened(serverReceivedPing)
 	arbiter.AssertHappened(clientReceivedPong)
-}
-
-func clientHandler(arbiter *Arbiter, wg *sync.WaitGroup) client.Handler {
-	return func(c client.Ops, msg proto.Message) error {
-		_ = msg.(*testMessages.PingPong)
-		arbiter.ItsAFactThat(clientReceivedPong)
-		wg.Done()
-		return nil
-	}
-}
-
-func serverHandler(arbiter *Arbiter, ctx context.Context) server.Handler {
-	return func(s server.Opts, msg proto.Message) error {
-		_ = msg.(*testMessages.PingPong)
-		if err := s.Send(ctx, &testMessages.PingPong{ // As all the processing is async in other goroutines, we will use this sync primitive in order to wait the end of the processing.
-			Message: "pong",
-		}); err != nil {
-			return err
-		}
-		arbiter.ItsAFactThat(serverReceivedPing)
-		return nil
-	}
 }
 
 func TestMultipleHandlersArePossible(t *testing.T) {

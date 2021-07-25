@@ -13,11 +13,6 @@ import (
 )
 
 const (
-	serverReceivedPing = "SERVER_RECEIVED_PING"
-	clientReceivedPong = "CLIENT_RECEIVED_PONG"
-)
-
-const (
 	serverAddr = "0.0.0.0:3000"
 )
 
