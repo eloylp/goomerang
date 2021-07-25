@@ -2,10 +2,11 @@ package goomerang_test
 
 import (
 	"context"
-	"github.com/stretchr/testify/require"
-	"google.golang.org/protobuf/proto"
 	"sync"
 	"testing"
+
+	"github.com/stretchr/testify/require"
+	"google.golang.org/protobuf/proto"
 
 	"go.eloylp.dev/goomerang/client"
 	testMessages "go.eloylp.dev/goomerang/message/test"
