@@ -65,7 +65,6 @@ type Server struct {
 	intServer  *http.Server
 	c          *websocket.Conn
 	upgrader   *websocket.Upgrader
-	handler    Handler
 	serverOpts *serverOpts
 	registry   engine.Registry
 }
