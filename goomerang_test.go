@@ -51,6 +51,7 @@ func TestPingPongServer(t *testing.T) {
 
 func TestMultipleHandlersArePossibleInServer(t *testing.T) {
 	s := PrepareServer(t)
+	defer s.Shutdown(context.Background())
 	arbiter := NewArbiter(t)
 	m := &testMessages.GreetV1{Message: "Hi !"}
 	h := func(serverOpts server.Opts, msg proto.Message) error {
