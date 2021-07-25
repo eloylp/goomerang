@@ -14,27 +14,17 @@ import (
 )
 
 func TestPingPongServer(t *testing.T) {
-	// Just prepare our assertion testMessages
 	arbiter := NewArbiter(t)
-
 	wg := &sync.WaitGroup{}
-	// As all the processing is async in other goroutines,
-	// we will use this sync primitive in order to wait the
-	// end of the processing.
 	wg.Add(1)
 
 	s := PrepareServer(t)
 	ctx := context.Background()
 	defer s.Shutdown(ctx)
-
-	// Register handler at server
 	s.RegisterHandler(&testMessages.PingPong{}, serverHandler(arbiter, ctx))
 
-	// Client side
 	c := PrepareClient(t)
 	defer c.Close()
-
-	// Register handler at client (as this is a bidirectional communication)
 	c.RegisterHandler(&testMessages.PingPong{}, clientHandler(arbiter, wg))
 	err := c.Send(ctx, &testMessages.PingPong{Message: "ping"})
 	require.NoError(t, err)
