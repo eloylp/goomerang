@@ -18,11 +18,7 @@ func TestPingPongServer(t *testing.T) {
 		serverReceivedPing = "SERVER_RECEIVED_PING"
 		clientReceivedPong = "CLIENT_RECEIVED_PONG"
 	)
-
 	arbiter := NewArbiter(t)
-	wg := &sync.WaitGroup{}
-	wg.Add(1)
-
 	s := PrepareServer(t)
 	ctx := context.Background()
 	defer s.Shutdown(ctx)
@@ -39,7 +35,8 @@ func TestPingPongServer(t *testing.T) {
 
 	c := PrepareClient(t)
 	defer c.Close()
-
+	wg := &sync.WaitGroup{}
+	wg.Add(1)
 	c.RegisterHandler(&testMessages.PingPong{}, func(c client.Ops, msg proto.Message) error {
 		_ = msg.(*testMessages.PingPong)
 		arbiter.ItsAFactThat(clientReceivedPong)
@@ -59,10 +56,6 @@ func TestPingPongServer(t *testing.T) {
 func TestMultipleHandlersArePossible(t *testing.T) {
 	s := PrepareServer(t)
 	arbiter := NewArbiter(t)
-
-	wg := sync.WaitGroup{}
-	wg.Add(1)
-
 	m := &testMessages.GreetV1{Message: "Hi !"}
 	h := func(serverOpts server.Opts, msg proto.Message) error {
 		arbiter.ItsAFactThat("HANDLER1_CALLED")
@@ -72,6 +65,8 @@ func TestMultipleHandlersArePossible(t *testing.T) {
 		arbiter.ItsAFactThat("HANDLER2_CALLED")
 		return nil
 	}
+	wg := sync.WaitGroup{}
+	wg.Add(1)
 	h3 := func(serverOpts server.Opts, msg proto.Message) error {
 		arbiter.ItsAFactThat("HANDLER3_CALLED")
 		wg.Done()
