@@ -23,18 +23,6 @@ type Client struct {
 	dialer    *websocket.Dialer
 }
 
-type Ops interface {
-	Send(ctx context.Context, msg proto.Message) error
-}
-
-type clientOps struct {
-	c *Client
-}
-
-func (co *clientOps) Send(ctx context.Context, msg proto.Message) error {
-	return co.c.Send(ctx, msg)
-}
-
 type Handler func(clientOps Ops, msg proto.Message) error
 
 func NewClient(opts ...Option) (*Client, error) {
