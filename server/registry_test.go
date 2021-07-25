@@ -38,13 +38,13 @@ func TestHandlerRegistry(t *testing.T) {
 }
 
 func successfulHandler() server.Handler {
-	return func(serverOpts server.Opts, msg proto.Message) error {
+	return func(serverOpts server.Ops, msg proto.Message) error {
 		return nil
 	}
 }
 
 func problematicHandler() server.Handler {
-	return func(serverOpts server.Opts, msg proto.Message) error {
+	return func(serverOpts server.Ops, msg proto.Message) error {
 		return errors.New("this causes errors")
 	}
 }

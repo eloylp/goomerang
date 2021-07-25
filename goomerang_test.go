@@ -18,7 +18,7 @@ func TestPingPongServer(t *testing.T) {
 	s := PrepareServer(t)
 	ctx := context.Background()
 	defer s.Shutdown(ctx)
-	s.RegisterHandler(&testMessages.PingPong{}, func(s server.Opts, msg proto.Message) error {
+	s.RegisterHandler(&testMessages.PingPong{}, func(s server.Ops, msg proto.Message) error {
 		_ = msg.(*testMessages.PingPong)
 		if err := s.Send(ctx, &testMessages.PingPong{
 			Message: "pong",

@@ -69,7 +69,7 @@ type Server struct {
 	registry   Registry
 }
 
-type Handler func(serverOpts Opts, msg proto.Message) error
+type Handler func(serverOpts Ops, msg proto.Message) error
 
 func (s *Server) RegisterHandler(msg proto.Message, handlers ...Handler) {
 	s.registry.Register(msg, handlers...)
@@ -100,7 +100,7 @@ func (s *Server) Shutdown(ctx context.Context) error {
 	return s.intServer.Shutdown(ctx)
 }
 
-type Opts interface {
+type Ops interface {
 	Send(ctx context.Context, msg proto.Message) error
 	Shutdown(ctx context.Context) error
 }
