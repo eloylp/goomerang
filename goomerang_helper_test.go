@@ -1,6 +1,10 @@
 package goomerang_test
 
 import (
+	"context"
+	"go.eloylp.dev/goomerang/client"
+	"go.eloylp.dev/goomerang/server"
+	"go.eloylp.dev/kit/test"
 	"sync"
 	"testing"
 	"time"
@@ -11,6 +15,10 @@ import (
 const (
 	serverReceivedPing = "SERVER_RECEIVED_PING"
 	clientReceivedPong = "CLIENT_RECEIVED_PONG"
+)
+
+const (
+	serverAddr = "0.0.0.0:3000"
 )
 
 type Arbiter struct {
@@ -67,4 +75,28 @@ func (a *Arbiter) AssertHappenedTimes(event string, expectedCount int) *Arbiter 
 	require.Truef(a.t, ok, "event %s not happened", event)
 	require.Equalf(a.t, expectedCount, times, "event %s expected to happen %v times. Got %v", event, expectedCount, times)
 	return a
+}
+
+func PrepareServer(t *testing.T) *server.Server {
+	t.Helper()
+	s, err := server.NewServer(server.WithListenAddr(serverAddr))
+	if err != nil {
+		t.Fatal(err)
+	}
+	go s.Run()
+	test.WaitTCPService(t, serverAddr, 50*time.Millisecond, 2*time.Second)
+	return s
+}
+
+func PrepareClient(t *testing.T) *client.Client {
+	c, err := client.NewClient(client.WithTargetServer(serverAddr))
+	if err != nil {
+		t.Fatal(err)
+	}
+	ctx := context.Background()
+	err = c.Connect(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return c
 }

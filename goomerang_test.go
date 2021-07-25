@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/require"
-	"go.eloylp.dev/kit/test"
 	"google.golang.org/protobuf/proto"
 
 	"go.eloylp.dev/goomerang/client"
@@ -15,12 +14,7 @@ import (
 	"go.eloylp.dev/goomerang/server"
 )
 
-const (
-	serverAddr = "0.0.0.0:3000"
-)
-
 func TestPingPongServer(t *testing.T) {
-
 	// Just prepare our assertion testMessages
 	arbiter := NewArbiter(t)
 
@@ -30,27 +24,20 @@ func TestPingPongServer(t *testing.T) {
 	// end of the processing.
 	wg.Add(1)
 
-	// Create the test server
-	s, err := server.NewServer(server.WithListenAddr(serverAddr))
-	require.NoError(t, err)
+	s := PrepareServer(t)
 	ctx := context.Background()
-
-	go s.Run()
-	test.WaitTCPService(t, serverAddr, 50*time.Millisecond, 2*time.Second)
 	defer s.Shutdown(ctx)
 
 	// Register handler at server
 	s.RegisterHandler(&testMessages.PingPong{}, serverHandler(arbiter, ctx))
-	// Create client
-	c, err := client.NewClient(client.WithTargetServer(serverAddr))
-	require.NoError(t, err)
-	err = c.Connect(ctx)
-	require.NoError(t, err)
+
+	// Client side
+	c := PrepareClient(t)
 	defer c.Close()
 
 	// Register handler at client (as this is a bidirectional communication)
 	c.RegisterHandler(&testMessages.PingPong{}, clientHandler(arbiter, wg))
-	err = c.Send(ctx, &testMessages.PingPong{Message: "ping"})
+	err := c.Send(ctx, &testMessages.PingPong{Message: "ping"})
 	require.NoError(t, err)
 
 	wg.Wait()
@@ -82,10 +69,9 @@ func serverHandler(arbiter *Arbiter, ctx context.Context) server.Handler {
 }
 
 func TestMultipleHandlersArePossible(t *testing.T) {
-	// Create the test server
-	s, err := server.NewServer(server.WithListenAddr(serverAddr))
-	require.NoError(t, err)
+	s := PrepareServer(t)
 	arbiter := NewArbiter(t)
+
 	m := &testMessages.GreetV1{Message: "Hi !"}
 	h := func(serverOpts server.Opts, msg proto.Message) error {
 		arbiter.ItsAFactThat("HANDLER1_CALLED")
@@ -102,18 +88,11 @@ func TestMultipleHandlersArePossible(t *testing.T) {
 	s.RegisterHandler(m, h, h2)
 	s.RegisterHandler(m, h3)
 
-	go s.Run()
-	test.WaitTCPService(t, serverAddr, 50*time.Millisecond, 2*time.Second)
-
-	// Create client
-	ctx := context.Background()
-	c, err := client.NewClient(client.WithTargetServer(serverAddr))
-	require.NoError(t, err)
-	err = c.Connect(ctx)
-	require.NoError(t, err)
+	c := PrepareClient(t)
 	defer c.Close()
 
-	err = c.Send(ctx, m)
+	ctx := context.Background()
+	err := c.Send(ctx, m)
 	require.NoError(t, err)
 	time.Sleep(50 * time.Millisecond)
 
