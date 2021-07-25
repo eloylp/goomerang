@@ -49,7 +49,7 @@ func TestPingPongServer(t *testing.T) {
 	arbiter.AssertHappened("CLIENT_RECEIVED_PONG")
 }
 
-func TestMultipleHandlersArePossible(t *testing.T) {
+func TestMultipleHandlersArePossibleInServer(t *testing.T) {
 	s := PrepareServer(t)
 	arbiter := NewArbiter(t)
 	m := &testMessages.GreetV1{Message: "Hi !"}
