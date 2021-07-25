@@ -2,12 +2,10 @@ package goomerang_test
 
 import (
 	"context"
-	"sync"
-	"testing"
-	"time"
-
 	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/proto"
+	"sync"
+	"testing"
 
 	"go.eloylp.dev/goomerang/client"
 	testMessages "go.eloylp.dev/goomerang/message/test"
@@ -72,6 +70,9 @@ func TestMultipleHandlersArePossible(t *testing.T) {
 	s := PrepareServer(t)
 	arbiter := NewArbiter(t)
 
+	wg := sync.WaitGroup{}
+	wg.Add(1)
+
 	m := &testMessages.GreetV1{Message: "Hi !"}
 	h := func(serverOpts server.Opts, msg proto.Message) error {
 		arbiter.ItsAFactThat("HANDLER1_CALLED")
@@ -83,6 +84,7 @@ func TestMultipleHandlersArePossible(t *testing.T) {
 	}
 	h3 := func(serverOpts server.Opts, msg proto.Message) error {
 		arbiter.ItsAFactThat("HANDLER3_CALLED")
+		wg.Done()
 		return nil
 	}
 	s.RegisterHandler(m, h, h2)
@@ -94,7 +96,8 @@ func TestMultipleHandlersArePossible(t *testing.T) {
 	ctx := context.Background()
 	err := c.Send(ctx, m)
 	require.NoError(t, err)
-	time.Sleep(50 * time.Millisecond)
+
+	wg.Wait()
 
 	arbiter.AssertHappenedInOrder("HANDLER1_CALLED", "HANDLER2_CALLED")
 	arbiter.AssertHappenedInOrder("HANDLER2_CALLED", "HANDLER3_CALLED")
