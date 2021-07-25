@@ -15,6 +15,8 @@ import (
 	"go.eloylp.dev/goomerang/message/test"
 )
 
+type Handler func(clientOps Ops, msg proto.Message) error
+
 type Client struct {
 	ServerURL url.URL
 	handler   Handler
@@ -22,8 +24,6 @@ type Client struct {
 	c         *websocket.Conn
 	dialer    *websocket.Dialer
 }
-
-type Handler func(clientOps Ops, msg proto.Message) error
 
 func NewClient(opts ...Option) (*Client, error) {
 	cfg := &Config{}
