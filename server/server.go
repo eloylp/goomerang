@@ -13,6 +13,16 @@ import (
 	"go.eloylp.dev/goomerang/message/protocol"
 )
 
+type Handler func(serverOpts Ops, msg proto.Message) error
+
+type Server struct {
+	intServer  *http.Server
+	c          *websocket.Conn
+	upgrader   *websocket.Upgrader
+	serverOpts *serverOpts
+	registry   engine.Registry
+}
+
 func NewServer(opts ...Option) (*Server, error) {
 	cfg := &Config{}
 	for _, o := range opts {
@@ -60,16 +70,6 @@ func (s *Server) ServerMainHandler() http.HandlerFunc {
 		}
 	}
 }
-
-type Server struct {
-	intServer  *http.Server
-	c          *websocket.Conn
-	upgrader   *websocket.Upgrader
-	serverOpts *serverOpts
-	registry   engine.Registry
-}
-
-type Handler func(serverOpts Ops, msg proto.Message) error
 
 func (s *Server) RegisterHandler(msg proto.Message, handlers ...Handler) {
 	his := make([]interface{}, len(handlers))
