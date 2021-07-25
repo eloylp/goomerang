@@ -54,17 +54,17 @@ func TestMultipleHandlersArePossibleInServer(t *testing.T) {
 	defer s.Shutdown(context.Background())
 	arbiter := NewArbiter(t)
 	m := &testMessages.GreetV1{Message: "Hi !"}
-	h := func(serverOpts server.Opts, msg proto.Message) error {
+	h := func(ops server.Ops, msg proto.Message) error {
 		arbiter.ItsAFactThat("HANDLER1_CALLED")
 		return nil
 	}
-	h2 := func(serverOpts server.Opts, msg proto.Message) error {
+	h2 := func(ops server.Ops, msg proto.Message) error {
 		arbiter.ItsAFactThat("HANDLER2_CALLED")
 		return nil
 	}
 	wg := sync.WaitGroup{}
 	wg.Add(1)
-	h3 := func(serverOpts server.Opts, msg proto.Message) error {
+	h3 := func(ops server.Ops, msg proto.Message) error {
 		arbiter.ItsAFactThat("HANDLER3_CALLED")
 		wg.Done()
 		return nil
