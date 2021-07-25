@@ -8,6 +8,7 @@ import (
 	"github.com/gorilla/websocket"
 	"google.golang.org/protobuf/proto"
 
+	"go.eloylp.dev/goomerang/internal/engine"
 	"go.eloylp.dev/goomerang/message"
 	"go.eloylp.dev/goomerang/message/protocol"
 )
@@ -22,7 +23,7 @@ func NewServer(opts ...Option) (*Server, error) {
 		intServer: &http.Server{
 			Addr: cfg.ListenURL,
 		},
-		registry: Registry{},
+		registry: engine.Registry{},
 	}
 	s.serverOpts = &serverOpts{s}
 	return s, nil
@@ -52,7 +53,7 @@ func (s *Server) ServerMainHandler() http.HandlerFunc {
 				log.Println("server handler err: ", err)
 			}
 			for _, h := range handlers {
-				if err = h(s.serverOpts, msg); err != nil {
+				if err = h.(Handler)(s.serverOpts, msg); err != nil {
 					log.Println("server handler err: ", err)
 				}
 			}
@@ -66,13 +67,17 @@ type Server struct {
 	upgrader   *websocket.Upgrader
 	handler    Handler
 	serverOpts *serverOpts
-	registry   Registry
+	registry   engine.Registry
 }
 
 type Handler func(serverOpts Ops, msg proto.Message) error
 
 func (s *Server) RegisterHandler(msg proto.Message, handlers ...Handler) {
-	s.registry.Register(msg, handlers...)
+	his := make([]interface{}, len(handlers))
+	for i, h := range handlers {
+		his[i] = h
+	}
+	s.registry.Register(msg, his...)
 }
 
 func (s *Server) Send(ctx context.Context, msg proto.Message) error {
