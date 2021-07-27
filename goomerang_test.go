@@ -86,6 +86,9 @@ func TestMultipleHandlersArePossibleInServer(t *testing.T) {
 }
 
 func TestMultipleHandlersArePossibleInClient(t *testing.T) {
+	ctx := context.Background()
+	s := PrepareServer(t)
+	defer s.Shutdown(ctx)
 	arbiter := NewArbiter(t)
 	c := PrepareClient(t)
 	defer c.Close()
@@ -108,9 +111,6 @@ func TestMultipleHandlersArePossibleInClient(t *testing.T) {
 	c.RegisterHandler(m, h, h2)
 	c.RegisterHandler(m, h3)
 
-	ctx := context.Background()
-	s := PrepareServer(t)
-	defer s.Shutdown(ctx)
 	err := s.Send(ctx, m)
 	require.NoError(t, err)
 

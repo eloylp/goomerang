@@ -10,16 +10,16 @@ import (
 	"github.com/gorilla/websocket"
 	"google.golang.org/protobuf/proto"
 
+	"go.eloylp.dev/goomerang/internal/engine"
 	"go.eloylp.dev/goomerang/message"
 	"go.eloylp.dev/goomerang/message/protocol"
-	"go.eloylp.dev/goomerang/message/test"
 )
 
 type Handler func(clientOps Ops, msg proto.Message) error
 
 type Client struct {
 	ServerURL url.URL
-	handler   Handler
+	registry  engine.Registry
 	clientOps *clientOps
 	c         *websocket.Conn
 	dialer    *websocket.Dialer
@@ -37,6 +37,7 @@ func NewClient(opts ...Option) (*Client, error) {
 			Proxy:            http.ProxyFromEnvironment,
 			HandshakeTimeout: 45 * time.Second, // TODO parametrize this.
 		},
+		registry: engine.Registry{},
 	}
 	c.clientOps = &clientOps{c: c}
 	return c, nil
@@ -68,16 +69,13 @@ func (c *Client) startReceiver() {
 				if err != nil {
 					log.Println("err on client  receiver:", err)
 				}
-				switch frame.Type {
-				case "goomerang.test.PingPong":
-					pingpongMessage := &test.PingPong{}
-					err := proto.Unmarshal(frame.Payload, pingpongMessage)
-					if err != nil {
-						log.Println("err on client  receiver:", err)
-					}
-					err = c.handler(c.clientOps, pingpongMessage)
-					if err != nil {
-						log.Println("err on client  receiver:", err)
+				msg, handlers, err := c.registry.Handler(frame.Type)
+				if err != nil {
+					log.Println("client handler err: ", err)
+				}
+				for _, h := range handlers {
+					if err = h.(Handler)(c.clientOps, msg); err != nil {
+						log.Println("client handler err: ", err)
 					}
 				}
 			}
@@ -105,6 +103,10 @@ func (c *Client) Close() error {
 	return c.c.Close()
 }
 
-func (c *Client) RegisterHandler(msg proto.Message, handler Handler) {
-	c.handler = handler
+func (c *Client) RegisterHandler(msg proto.Message, handlers ...Handler) {
+	his := make([]interface{}, len(handlers))
+	for i, h := range handlers {
+		his[i] = h
+	}
+	c.registry.Register(msg, his...)
 }
