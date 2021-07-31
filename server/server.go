@@ -13,7 +13,7 @@ import (
 	"go.eloylp.dev/goomerang/message/protocol"
 )
 
-type Handler func(serverOpts Ops, msg proto.Message) error
+type Handler func(ops Ops, msg proto.Message) error
 
 type Server struct {
 	intServer  *http.Server

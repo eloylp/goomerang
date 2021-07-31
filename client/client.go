@@ -15,7 +15,7 @@ import (
 	"go.eloylp.dev/goomerang/message/protocol"
 )
 
-type Handler func(clientOps Ops, msg proto.Message) error
+type Handler func(ops Ops, msg proto.Message) error
 
 type Client struct {
 	ServerURL url.URL
