@@ -145,3 +145,17 @@ func TestServerErrorHandler(t *testing.T) {
 	wg.Wait()
 	arbiter.AssertHappened("ERROR_HANDLER_WORKS")
 }
+
+func TestShutdownProcedure(t *testing.T) {
+	s := PrepareServer(t)
+	c := PrepareClient(t)
+
+	require.NotPanics(t, func() {
+		err := c.Close()
+		require.NoError(t, err)
+	})
+	require.NotPanics(t, func() {
+		err := s.Shutdown(context.Background())
+		require.NoError(t, err)
+	})
+}

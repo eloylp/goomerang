@@ -54,23 +54,29 @@ func (s *Server) ServerMainHandler() http.HandlerFunc {
 		s.c = c
 		defer c.Close()
 		for {
-			_, data, err := c.ReadMessage()
+			m, data, err := c.ReadMessage()
 			if err != nil {
 				log.Println("read:", err)
 				break
 			}
-			frame := &protocol.Frame{}
-			if err = proto.Unmarshal(data, frame); err != nil {
-				log.Println("parsing: ", err)
-			}
-			msg, handlers, err := s.registry.Handler(frame.GetType())
-			if err != nil {
-				log.Println("server handler err: ", err)
-			}
-			for _, h := range handlers {
-				if err = h.(Handler)(s.serverOpts, msg); err != nil {
-					s.errorHandler(fmt.Errorf("server handler err: %w", err))
+			if m == websocket.BinaryMessage {
+				frame := &protocol.Frame{}
+				if err = proto.Unmarshal(data, frame); err != nil {
+					log.Println("parsing: ", err)
 				}
+				msg, handlers, err := s.registry.Handler(frame.GetType())
+				if err != nil {
+					log.Println("server handler err: ", err)
+				}
+				for _, h := range handlers {
+					if err = h.(Handler)(s.serverOpts, msg); err != nil {
+						s.errorHandler(fmt.Errorf("server handler err: %w", err))
+					}
+				}
+			}
+			if m == websocket.CloseMessage {
+				s.c.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, ""))
+				break
 			}
 		}
 	}

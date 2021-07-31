@@ -79,6 +79,10 @@ func (c *Client) startReceiver() {
 					}
 				}
 			}
+			if m == websocket.CloseMessage {
+				c.c.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, ""))
+				break
+			}
 		}
 	}()
 }
@@ -100,7 +104,7 @@ func (c *Client) Send(ctx context.Context, msg proto.Message) error {
 }
 
 func (c *Client) Close() error {
-	return c.c.Close()
+	return c.c.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, ""))
 }
 
 func (c *Client) RegisterHandler(msg proto.Message, handlers ...Handler) {
