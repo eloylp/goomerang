@@ -2,6 +2,7 @@ package server
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"net/http"
 
@@ -16,15 +17,18 @@ import (
 type Handler func(ops Ops, msg proto.Message) error
 
 type Server struct {
-	intServer  *http.Server
-	c          *websocket.Conn
-	upgrader   *websocket.Upgrader
-	serverOpts *serverOpts
-	registry   engine.Registry
+	intServer    *http.Server
+	c            *websocket.Conn
+	upgrader     *websocket.Upgrader
+	serverOpts   *serverOpts
+	registry     engine.Registry
+	errorHandler func(err error)
 }
 
 func NewServer(opts ...Option) (*Server, error) {
-	cfg := &Config{}
+	cfg := &Config{
+		ErrorHandler: func(err error) {},
+	}
 	for _, o := range opts {
 		o(cfg)
 	}
@@ -33,7 +37,8 @@ func NewServer(opts ...Option) (*Server, error) {
 		intServer: &http.Server{
 			Addr: cfg.ListenURL,
 		},
-		registry: engine.Registry{},
+		errorHandler: cfg.ErrorHandler,
+		registry:     engine.Registry{},
 	}
 	s.serverOpts = &serverOpts{s}
 	return s, nil
@@ -64,7 +69,7 @@ func (s *Server) ServerMainHandler() http.HandlerFunc {
 			}
 			for _, h := range handlers {
 				if err = h.(Handler)(s.serverOpts, msg); err != nil {
-					log.Println("server handler err: ", err)
+					s.errorHandler(fmt.Errorf("server handler err: %w", err))
 				}
 			}
 		}

@@ -2,6 +2,7 @@ package goomerang_test
 
 import (
 	"context"
+	"errors"
 	"sync"
 	"testing"
 
@@ -118,4 +119,29 @@ func TestMultipleHandlersArePossibleInClient(t *testing.T) {
 
 	arbiter.AssertHappenedInOrder("HANDLER1_CALLED", "HANDLER2_CALLED")
 	arbiter.AssertHappenedInOrder("HANDLER2_CALLED", "HANDLER3_CALLED")
+}
+
+func TestServerErrorHandler(t *testing.T) {
+	arbiter := NewArbiter(t)
+	wg := &sync.WaitGroup{}
+	ctx := context.Background()
+	wg.Add(1)
+	s := PrepareServer(t, server.WithErrorHandler(func(err error) {
+		if err != nil && err.Error() == "server handler err: a handler error" {
+			arbiter.ItsAFactThat("ERROR_HANDLER_WORKS")
+		}
+		wg.Done()
+	}))
+	defer s.Shutdown(ctx)
+	s.RegisterHandler(&testMessages.PingPong{}, func(ops server.Ops, msg proto.Message) error {
+		return errors.New("a handler error")
+	})
+
+	c1 := PrepareClient(t)
+	defer c1.Close()
+
+	err := c1.Send(ctx, &testMessages.PingPong{Message: "ping"})
+	require.NoError(t, err)
+	wg.Wait()
+	arbiter.AssertHappened("ERROR_HANDLER_WORKS")
 }

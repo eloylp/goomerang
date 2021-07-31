@@ -8,6 +8,13 @@ func WithListenAddr(addr string) Option {
 	}
 }
 
+func WithErrorHandler(h func(err error)) Option {
+	return func(cfg *Config) {
+		cfg.ErrorHandler = h
+	}
+}
+
 type Config struct {
-	ListenURL string
+	ListenURL    string
+	ErrorHandler func(err error)
 }
