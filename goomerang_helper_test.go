@@ -72,10 +72,10 @@ func (a *Arbiter) AssertHappenedTimes(event string, expectedCount int) *Arbiter 
 	return a
 }
 
-func PrepareServer(t *testing.T, ops ...server.Option) *server.Server {
+func PrepareServer(t *testing.T, opts ...server.Option) *server.Server {
 	t.Helper()
-	ops = append(ops, server.WithListenAddr(serverAddr))
-	s, err := server.NewServer(ops...)
+	opts = append(opts, server.WithListenAddr(serverAddr))
+	s, err := server.NewServer(opts...)
 	if err != nil {
 		t.Fatal(err)
 	}
