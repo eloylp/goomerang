@@ -14,7 +14,14 @@ func WithErrorHandler(h func(err error)) Option {
 	}
 }
 
+func WithOnCloseHandler(h func()) Option {
+	return func(cfg *Config) {
+		cfg.OnCloseHandler = h
+	}
+}
+
 type Config struct {
-	ListenURL    string
-	ErrorHandler func(err error)
+	ListenURL      string
+	ErrorHandler   func(err error)
+	OnCloseHandler func()
 }

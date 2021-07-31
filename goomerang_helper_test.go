@@ -39,6 +39,7 @@ func (a *Arbiter) ItsAFactThat(event string) {
 	a.successes[event] = append(a.successes[event], success{time: time.Now()})
 }
 
+// todo make assertions eventually
 func (a *Arbiter) AssertHappened(event string) *Arbiter {
 	a.L.RLock()
 	defer a.L.RUnlock()
@@ -84,8 +85,9 @@ func PrepareServer(t *testing.T, opts ...server.Option) *server.Server {
 	return s
 }
 
-func PrepareClient(t *testing.T) *client.Client {
-	c, err := client.NewClient(client.WithTargetServer(serverAddr))
+func PrepareClient(t *testing.T, opts ...client.Option) *client.Client {
+	opts = append(opts, client.WithTargetServer(serverAddr))
+	c, err := client.NewClient(opts...)
 	if err != nil {
 		t.Fatal(err)
 	}
