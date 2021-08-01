@@ -126,31 +126,24 @@ func TestServerErrorHandler(t *testing.T) {
 
 func TestShutdownProcedureClientSideInit(t *testing.T) {
 	arbiter := NewArbiter(t)
-	wg := &sync.WaitGroup{}
-	wg.Add(1)
 	s := PrepareServer(t, server.WithOnCloseHandler(func() {
 		arbiter.ItsAFactThat("SERVER_PROPERLY_CLOSED")
 	}))
 	c := PrepareClient(t, client.WithOnCloseHandler(func() {
 		arbiter.ItsAFactThat("CLIENT_PROPERLY_CLOSED")
-		wg.Done()
 	}))
 	err := c.Close()
 	require.NoError(t, err)
 	err = s.Shutdown(context.Background())
 	require.NoError(t, err)
-	wg.Wait()
 	arbiter.AssertHappened("SERVER_PROPERLY_CLOSED")
 	arbiter.AssertHappened("CLIENT_PROPERLY_CLOSED")
 }
 
 func TestShutdownProcedureServerSideInit(t *testing.T) {
 	arbiter := NewArbiter(t)
-	wg := &sync.WaitGroup{}
-	wg.Add(1)
 	s := PrepareServer(t, server.WithOnCloseHandler(func() {
 		arbiter.ItsAFactThat("SERVER_PROPERLY_CLOSED")
-		wg.Done()
 	}))
 	c := PrepareClient(t, client.WithOnCloseHandler(func() {
 		arbiter.ItsAFactThat("CLIENT_PROPERLY_CLOSED")
@@ -158,7 +151,6 @@ func TestShutdownProcedureServerSideInit(t *testing.T) {
 	defer c.Close()
 	err := s.Shutdown(context.Background())
 	require.NoError(t, err)
-	wg.Wait()
 	arbiter.AssertHappened("SERVER_PROPERLY_CLOSED")
 	arbiter.AssertHappened("CLIENT_PROPERLY_CLOSED")
 }
