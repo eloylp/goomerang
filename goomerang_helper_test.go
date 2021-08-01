@@ -39,6 +39,7 @@ func (a *Arbiter) ItsAFactThat(event string) {
 	a.successes[event] = append(a.successes[event], success{time: time.Now()})
 }
 
+// todo make assertions eventually
 func (a *Arbiter) AssertHappened(event string) *Arbiter {
 	require.Eventuallyf(a.t, func() bool {
 		a.L.RLock()
@@ -83,10 +84,10 @@ func (a *Arbiter) AssertHappenedTimes(event string, expectedCount int) *Arbiter 
 	return a
 }
 
-func PrepareServer(t *testing.T, ops ...server.Option) *server.Server {
+func PrepareServer(t *testing.T, opts ...server.Option) *server.Server {
 	t.Helper()
-	ops = append(ops, server.WithListenAddr(serverAddr))
-	s, err := server.NewServer(ops...)
+	opts = append(opts, server.WithListenAddr(serverAddr))
+	s, err := server.NewServer(opts...)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -95,8 +96,9 @@ func PrepareServer(t *testing.T, ops ...server.Option) *server.Server {
 	return s
 }
 
-func PrepareClient(t *testing.T) *client.Client {
-	c, err := client.NewClient(client.WithTargetServer(serverAddr))
+func PrepareClient(t *testing.T, opts ...client.Option) *client.Client {
+	opts = append(opts, client.WithTargetServer(serverAddr))
+	c, err := client.NewClient(opts...)
 	if err != nil {
 		t.Fatal(err)
 	}

@@ -18,21 +18,24 @@ import (
 type Handler func(ops Ops, msg proto.Message) error
 
 type Client struct {
-	ServerURL url.URL
-	registry  engine.Registry
-	clientOps *clientOps
-	c         *websocket.Conn
-	dialer    *websocket.Dialer
+	ServerURL      url.URL
+	registry       engine.Registry
+	clientOps      *clientOps
+	c              *websocket.Conn
+	dialer         *websocket.Dialer
+	onCloseHandler func()
 }
 
 func NewClient(opts ...Option) (*Client, error) {
 	cfg := &Config{}
+	cfg.OnCloseHandler = func() {}
 	for _, o := range opts {
 		o(cfg)
 	}
 	serverURL := url.URL{Scheme: "ws", Host: cfg.TargetServer, Path: "/ws"}
 	c := &Client{
-		ServerURL: serverURL,
+		ServerURL:      serverURL,
+		onCloseHandler: cfg.OnCloseHandler,
 		dialer: &websocket.Dialer{
 			Proxy:            http.ProxyFromEnvironment,
 			HandshakeTimeout: 45 * time.Second, // TODO parametrize this.
@@ -60,6 +63,12 @@ func (c *Client) startReceiver() {
 		for {
 			m, msg, err := c.c.ReadMessage()
 			if err != nil {
+				// todo, maybe the error is not assertable. Precheck.
+				if err.(*websocket.CloseError).Code == websocket.CloseNormalClosure {
+					_ = c.c.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, ""))
+					c.onCloseHandler()
+					return
+				}
 				log.Println("read:", err)
 				return
 			}
@@ -78,10 +87,6 @@ func (c *Client) startReceiver() {
 						log.Println("client handler err: ", err)
 					}
 				}
-			}
-			if m == websocket.CloseMessage {
-				c.c.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, ""))
-				break
 			}
 		}
 	}()

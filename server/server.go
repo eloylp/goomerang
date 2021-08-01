@@ -17,17 +17,19 @@ import (
 type Handler func(ops Ops, msg proto.Message) error
 
 type Server struct {
-	intServer    *http.Server
-	c            *websocket.Conn
-	upgrader     *websocket.Upgrader
-	serverOpts   *serverOpts
-	registry     engine.Registry
-	errorHandler func(err error)
+	intServer      *http.Server
+	c              *websocket.Conn
+	upgrader       *websocket.Upgrader
+	serverOpts     *serverOpts
+	registry       engine.Registry
+	errorHandler   func(err error)
+	onCloseHandler func()
 }
 
 func NewServer(opts ...Option) (*Server, error) {
 	cfg := &Config{
-		ErrorHandler: func(err error) {},
+		ErrorHandler:   func(err error) {},
+		OnCloseHandler: func() {},
 	}
 	for _, o := range opts {
 		o(cfg)
@@ -37,8 +39,9 @@ func NewServer(opts ...Option) (*Server, error) {
 		intServer: &http.Server{
 			Addr: cfg.ListenURL,
 		},
-		errorHandler: cfg.ErrorHandler,
-		registry:     engine.Registry{},
+		errorHandler:   cfg.ErrorHandler,
+		onCloseHandler: cfg.OnCloseHandler,
+		registry:       engine.Registry{},
 	}
 	s.serverOpts = &serverOpts{s}
 	return s, nil
@@ -56,6 +59,12 @@ func (s *Server) ServerMainHandler() http.HandlerFunc {
 		for {
 			m, data, err := c.ReadMessage()
 			if err != nil {
+				// todo, maybe the error is not assertable. Precheck.
+				if err.(*websocket.CloseError).Code == websocket.CloseNormalClosure {
+					_ = s.c.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, ""))
+					s.onCloseHandler()
+					return
+				}
 				log.Println("read:", err)
 				break
 			}
@@ -73,10 +82,6 @@ func (s *Server) ServerMainHandler() http.HandlerFunc {
 						s.errorHandler(fmt.Errorf("server handler err: %w", err))
 					}
 				}
-			}
-			if m == websocket.CloseMessage {
-				s.c.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, ""))
-				break
 			}
 		}
 	}
@@ -112,5 +117,8 @@ func (s *Server) Run() error {
 }
 
 func (s *Server) Shutdown(ctx context.Context) error {
+	// todo this must be done for ALL connections.
+	s.c.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, ""))
+	// TODO. This must be done gracefully.
 	return s.intServer.Shutdown(ctx)
 }
