@@ -40,35 +40,46 @@ func (a *Arbiter) ItsAFactThat(event string) {
 }
 
 func (a *Arbiter) AssertHappened(event string) *Arbiter {
-	a.L.RLock()
-	defer a.L.RUnlock()
-	_, ok := a.successes[event]
-	require.Truef(a.t, ok, "event %s not happened", event)
+	require.Eventuallyf(a.t, func() bool {
+		a.L.RLock()
+		defer a.L.RUnlock()
+		_, ok := a.successes[event]
+		return ok
+	}, time.Second, time.Millisecond, "event %s not happened", event)
 	return a
 }
 
 func (a *Arbiter) AssertHappenedInOrder(event1, event2 string) *Arbiter {
-	a.L.RLock()
-	defer a.L.RUnlock()
-	e1, ok := a.successes[event1]
-	require.Truef(a.t, ok, "event %s not happened", event1)
-	e2, ok := a.successes[event2]
-	require.Truef(a.t, ok, "event %s not happened", event1)
-
+	var e1, e2 []success
+	var ok bool
+	require.Eventuallyf(a.t, func() bool {
+		a.L.RLock()
+		defer a.L.RUnlock()
+		e1, ok = a.successes[event1]
+		return ok
+	}, time.Second, time.Millisecond, "event %s not happened", event1)
+	require.Eventuallyf(a.t, func() bool {
+		a.L.RLock()
+		defer a.L.RUnlock()
+		e2, ok = a.successes[event2]
+		return ok
+	}, time.Second, time.Millisecond, "event %s not happened", event2)
 	firstE1 := e1[0]
 	firstE2 := e2[0]
-
 	require.True(a.t, firstE1.time.UnixNano() < firstE2.time.UnixNano(), "event %s happened at %v, but event %s happened at %v", event1, firstE1, event2, firstE2)
-
 	return a
 }
 
 func (a *Arbiter) AssertHappenedTimes(event string, expectedCount int) *Arbiter {
-	a.L.RLock()
-	defer a.L.RUnlock()
-	times, ok := a.successes[event]
-	require.Truef(a.t, ok, "event %s not happened", event)
-	require.Equalf(a.t, expectedCount, times, "event %s expected to happen %v times. Got %v", event, expectedCount, times)
+	var times []success
+	var ok bool
+	require.Eventuallyf(a.t, func() bool {
+		a.L.RLock()
+		defer a.L.RUnlock()
+		times, ok = a.successes[event]
+		return ok
+	}, time.Second, time.Millisecond, "event %s not happened", event)
+	require.Lenf(a.t, times, expectedCount, "event %s expected to happen %v times. Got %v", event, expectedCount, times)
 	return a
 }
 

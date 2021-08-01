@@ -3,7 +3,6 @@ package goomerang_test
 import (
 	"context"
 	"errors"
-	"sync"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -32,20 +31,14 @@ func TestPingPongServer(t *testing.T) {
 
 	c := PrepareClient(t)
 	defer c.Close()
-	wg := &sync.WaitGroup{}
-	wg.Add(1)
+
 	c.RegisterHandler(&testMessages.PingPong{}, func(c client.Ops, msg proto.Message) error {
 		_ = msg.(*testMessages.PingPong)
 		arbiter.ItsAFactThat("CLIENT_RECEIVED_PONG")
-		wg.Done()
 		return nil
 	})
-
 	err := c.Send(ctx, &testMessages.PingPong{Message: "ping"})
 	require.NoError(t, err)
-
-	wg.Wait()
-
 	arbiter.AssertHappened("SERVER_RECEIVED_PING")
 	arbiter.AssertHappened("CLIENT_RECEIVED_PONG")
 }
@@ -63,11 +56,8 @@ func TestMultipleHandlersArePossibleInServer(t *testing.T) {
 		arbiter.ItsAFactThat("HANDLER2_CALLED")
 		return nil
 	}
-	wg := sync.WaitGroup{}
-	wg.Add(1)
 	h3 := func(ops server.Ops, msg proto.Message) error {
 		arbiter.ItsAFactThat("HANDLER3_CALLED")
-		wg.Done()
 		return nil
 	}
 	s.RegisterHandler(m, h, h2)
@@ -79,9 +69,6 @@ func TestMultipleHandlersArePossibleInServer(t *testing.T) {
 	ctx := context.Background()
 	err := c.Send(ctx, m)
 	require.NoError(t, err)
-
-	wg.Wait()
-
 	arbiter.AssertHappenedInOrder("HANDLER1_CALLED", "HANDLER2_CALLED")
 	arbiter.AssertHappenedInOrder("HANDLER2_CALLED", "HANDLER3_CALLED")
 }
@@ -102,11 +89,8 @@ func TestMultipleHandlersArePossibleInClient(t *testing.T) {
 		arbiter.ItsAFactThat("HANDLER2_CALLED")
 		return nil
 	}
-	wg := sync.WaitGroup{}
-	wg.Add(1)
 	h3 := func(ops client.Ops, msg proto.Message) error {
 		arbiter.ItsAFactThat("HANDLER3_CALLED")
-		wg.Done()
 		return nil
 	}
 	c.RegisterHandler(m, h, h2)
@@ -115,22 +99,17 @@ func TestMultipleHandlersArePossibleInClient(t *testing.T) {
 	err := s.Send(ctx, m)
 	require.NoError(t, err)
 
-	wg.Wait()
-
 	arbiter.AssertHappenedInOrder("HANDLER1_CALLED", "HANDLER2_CALLED")
 	arbiter.AssertHappenedInOrder("HANDLER2_CALLED", "HANDLER3_CALLED")
 }
 
 func TestServerErrorHandler(t *testing.T) {
 	arbiter := NewArbiter(t)
-	wg := &sync.WaitGroup{}
 	ctx := context.Background()
-	wg.Add(1)
 	s := PrepareServer(t, server.WithErrorHandler(func(err error) {
 		if err != nil && err.Error() == "server handler err: a handler error" {
 			arbiter.ItsAFactThat("ERROR_HANDLER_WORKS")
 		}
-		wg.Done()
 	}))
 	defer s.Shutdown(ctx)
 	s.RegisterHandler(&testMessages.PingPong{}, func(ops server.Ops, msg proto.Message) error {
@@ -142,7 +121,6 @@ func TestServerErrorHandler(t *testing.T) {
 
 	err := c1.Send(ctx, &testMessages.PingPong{Message: "ping"})
 	require.NoError(t, err)
-	wg.Wait()
 	arbiter.AssertHappened("ERROR_HANDLER_WORKS")
 }
 
