@@ -2,9 +2,11 @@ package server
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log"
 	"net/http"
+	"strings"
 	"sync"
 
 	"github.com/gorilla/websocket"
@@ -108,7 +110,18 @@ func (s *Server) Send(ctx context.Context, msg proto.Message) error {
 	if err != nil {
 		return err
 	}
-	return s.c[0].WriteMessage(websocket.BinaryMessage, bytes)
+	s.L.Lock()
+	defer s.L.Unlock()
+	var errs strings.Builder
+	for _, conn := range s.c {
+		if err := conn.WriteMessage(websocket.BinaryMessage, bytes); err != nil {
+			errs.WriteString(err.Error() + " \n")
+		}
+	}
+	if errs.Len() != 0 {
+		return errors.New("send: \n" + errs.String())
+	}
+	return nil
 }
 
 func prepareMessage(msg proto.Message) ([]byte, error) {

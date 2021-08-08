@@ -204,3 +204,30 @@ func TestServerSupportMultipleClients(t *testing.T) {
 	arbiter.AssertHappened("CLIENT2_RECEIVED_FROM_SERVER_2")
 
 }
+
+func TestServerCanBroadCastMessages(t *testing.T) {
+	ctx := context.Background()
+	arbiter := NewArbiter(t)
+	s := PrepareServer(t)
+	defer s.Shutdown(ctx)
+
+	c1 := PrepareClient(t)
+	defer c1.Close()
+	c1.RegisterHandler(&testMessages.GreetV1{}, func(ops client.Ops, msg proto.Message) error {
+		arbiter.ItsAFactThat("CLIENT1_RECEIVED_SERVER_GREET")
+		return nil
+	})
+
+	c2 := PrepareClient(t)
+	defer c2.Close()
+	c2.RegisterHandler(&testMessages.GreetV1{}, func(ops client.Ops, msg proto.Message) error {
+		arbiter.ItsAFactThat("CLIENT2_RECEIVED_SERVER_GREET")
+		return nil
+	})
+
+	err := s.Send(ctx, &testMessages.GreetV1{Message: "Hi!"})
+	require.NoError(t, err)
+
+	arbiter.AssertHappened("CLIENT1_RECEIVED_SERVER_GREET")
+	arbiter.AssertHappened("CLIENT2_RECEIVED_SERVER_GREET")
+}
