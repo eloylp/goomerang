@@ -10,7 +10,6 @@ import (
 	"github.com/gorilla/websocket"
 	"google.golang.org/protobuf/proto"
 
-	"go.eloylp.dev/goomerang/internal/engine"
 	"go.eloylp.dev/goomerang/internal/message"
 	"go.eloylp.dev/goomerang/internal/message/protocol"
 )
@@ -19,7 +18,7 @@ type Handler func(ops Ops, msg proto.Message) error
 
 type Client struct {
 	ServerURL      url.URL
-	registry       engine.Registry
+	registry       message.Registry
 	clientOps      *clientOps
 	c              *websocket.Conn
 	dialer         *websocket.Dialer
@@ -40,7 +39,7 @@ func NewClient(opts ...Option) (*Client, error) {
 			Proxy:            http.ProxyFromEnvironment,
 			HandshakeTimeout: 45 * time.Second, // TODO parametrize this.
 		},
-		registry: engine.Registry{},
+		registry: message.Registry{},
 	}
 	c.clientOps = &clientOps{c: c}
 	return c, nil

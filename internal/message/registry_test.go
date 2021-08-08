@@ -1,4 +1,4 @@
-package engine_test
+package message_test
 
 import (
 	"errors"
@@ -8,14 +8,12 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-
-	"go.eloylp.dev/goomerang/internal/engine"
 )
 
 type fakeHandler func() error
 
 func TestHandlerRegistry(t *testing.T) {
-	r := engine.Registry{}
+	r := message.Registry{}
 
 	m1 := &testMessages.GreetV1{Message: "hi!"}
 	r.Register(m1, problematicHandler())
@@ -48,7 +46,7 @@ func problematicHandler() fakeHandler {
 }
 
 func TestMultipleCumulativeHandlersCanBeRegistered(t *testing.T) {
-	r := engine.Registry{}
+	r := message.Registry{}
 	m := &testMessages.GreetV1{Message: "hi!"}
 	r.Register(m, successfulHandler(), successfulHandler())
 	r.Register(m, successfulHandler(), successfulHandler())

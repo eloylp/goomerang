@@ -13,8 +13,6 @@ import (
 
 	"github.com/gorilla/websocket"
 	"google.golang.org/protobuf/proto"
-
-	"go.eloylp.dev/goomerang/internal/engine"
 )
 
 type Handler func(ops Ops, msg proto.Message) error
@@ -24,7 +22,7 @@ type Server struct {
 	c              []*websocket.Conn
 	L              *sync.Mutex
 	upgrader       *websocket.Upgrader
-	registry       engine.Registry
+	registry       message.Registry
 	errorHandler   func(err error)
 	onCloseHandler func()
 }
@@ -44,7 +42,7 @@ func NewServer(opts ...Option) (*Server, error) {
 		},
 		errorHandler:   cfg.ErrorHandler,
 		onCloseHandler: cfg.OnCloseHandler,
-		registry:       engine.Registry{},
+		registry:       message.Registry{},
 		L:              &sync.Mutex{},
 	}
 	return s, nil

@@ -1,9 +1,7 @@
-package engine
+package message
 
 import (
 	"fmt"
-	"go.eloylp.dev/goomerang/internal/message"
-
 	"google.golang.org/protobuf/proto"
 )
 
@@ -15,7 +13,7 @@ type slot struct {
 }
 
 func (r Registry) Register(msg proto.Message, handlers ...interface{}) {
-	key := message.FQDN(msg)
+	key := FQDN(msg)
 	s, ok := r[key]
 	if !ok {
 		r[key] = slot{
