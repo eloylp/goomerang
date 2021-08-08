@@ -39,8 +39,8 @@ func TestPingPongServer(t *testing.T) {
 	})
 	err := c.Send(ctx, &testMessages.PingPong{Message: "ping"})
 	require.NoError(t, err)
-	arbiter.AssertHappened("SERVER_RECEIVED_PING")
-	arbiter.AssertHappened("CLIENT_RECEIVED_PONG")
+	arbiter.RequireHappened("SERVER_RECEIVED_PING")
+	arbiter.RequireHappened("CLIENT_RECEIVED_PONG")
 }
 
 func TestMultipleHandlersArePossibleInServer(t *testing.T) {
@@ -69,8 +69,8 @@ func TestMultipleHandlersArePossibleInServer(t *testing.T) {
 	ctx := context.Background()
 	err := c.Send(ctx, m)
 	require.NoError(t, err)
-	arbiter.AssertHappenedInOrder("HANDLER1_CALLED", "HANDLER2_CALLED")
-	arbiter.AssertHappenedInOrder("HANDLER2_CALLED", "HANDLER3_CALLED")
+	arbiter.RequireHappenedInOrder("HANDLER1_CALLED", "HANDLER2_CALLED")
+	arbiter.RequireHappenedInOrder("HANDLER2_CALLED", "HANDLER3_CALLED")
 }
 
 func TestMultipleHandlersArePossibleInClient(t *testing.T) {
@@ -99,8 +99,8 @@ func TestMultipleHandlersArePossibleInClient(t *testing.T) {
 	err := s.Send(ctx, m)
 	require.NoError(t, err)
 
-	arbiter.AssertHappenedInOrder("HANDLER1_CALLED", "HANDLER2_CALLED")
-	arbiter.AssertHappenedInOrder("HANDLER2_CALLED", "HANDLER3_CALLED")
+	arbiter.RequireHappenedInOrder("HANDLER1_CALLED", "HANDLER2_CALLED")
+	arbiter.RequireHappenedInOrder("HANDLER2_CALLED", "HANDLER3_CALLED")
 }
 
 func TestServerErrorHandler(t *testing.T) {
@@ -121,7 +121,7 @@ func TestServerErrorHandler(t *testing.T) {
 
 	err := c1.Send(ctx, &testMessages.PingPong{Message: "ping"})
 	require.NoError(t, err)
-	arbiter.AssertHappened("ERROR_HANDLER_WORKS")
+	arbiter.RequireHappened("ERROR_HANDLER_WORKS")
 }
 
 func TestShutdownProcedureClientSideInit(t *testing.T) {
@@ -136,8 +136,8 @@ func TestShutdownProcedureClientSideInit(t *testing.T) {
 	require.NoError(t, err)
 	err = s.Shutdown(context.Background())
 	require.NoError(t, err)
-	arbiter.AssertHappened("SERVER_PROPERLY_CLOSED")
-	arbiter.AssertHappened("CLIENT_PROPERLY_CLOSED")
+	arbiter.RequireHappened("SERVER_PROPERLY_CLOSED")
+	arbiter.RequireHappened("CLIENT_PROPERLY_CLOSED")
 }
 
 func TestShutdownProcedureServerSideInit(t *testing.T) {
@@ -151,8 +151,8 @@ func TestShutdownProcedureServerSideInit(t *testing.T) {
 	defer c.Close()
 	err := s.Shutdown(context.Background())
 	require.NoError(t, err)
-	arbiter.AssertHappened("SERVER_PROPERLY_CLOSED")
-	arbiter.AssertHappened("CLIENT_PROPERLY_CLOSED")
+	arbiter.RequireHappened("SERVER_PROPERLY_CLOSED")
+	arbiter.RequireHappened("CLIENT_PROPERLY_CLOSED")
 }
 
 func TestServerSupportMultipleClients(t *testing.T) {
@@ -197,11 +197,11 @@ func TestServerSupportMultipleClients(t *testing.T) {
 	err = c2.Send(ctx, &testMessages.PingPong{Message: "2"})
 	require.NoError(t, err)
 
-	arbiter.AssertNoErrors()
-	arbiter.AssertHappened("SERVER_RECEIVED_FROM_CLIENT_1")
-	arbiter.AssertHappened("SERVER_RECEIVED_FROM_CLIENT_2")
-	arbiter.AssertHappened("CLIENT1_RECEIVED_FROM_SERVER_1")
-	arbiter.AssertHappened("CLIENT2_RECEIVED_FROM_SERVER_2")
+	arbiter.RequireNoErrors()
+	arbiter.RequireHappened("SERVER_RECEIVED_FROM_CLIENT_1")
+	arbiter.RequireHappened("SERVER_RECEIVED_FROM_CLIENT_2")
+	arbiter.RequireHappened("CLIENT1_RECEIVED_FROM_SERVER_1")
+	arbiter.RequireHappened("CLIENT2_RECEIVED_FROM_SERVER_2")
 
 }
 
@@ -228,6 +228,6 @@ func TestServerCanBroadCastMessages(t *testing.T) {
 	err := s.Send(ctx, &testMessages.GreetV1{Message: "Hi!"})
 	require.NoError(t, err)
 
-	arbiter.AssertHappened("CLIENT1_RECEIVED_SERVER_GREET")
-	arbiter.AssertHappened("CLIENT2_RECEIVED_SERVER_GREET")
+	arbiter.RequireHappened("CLIENT1_RECEIVED_SERVER_GREET")
+	arbiter.RequireHappened("CLIENT2_RECEIVED_SERVER_GREET")
 }

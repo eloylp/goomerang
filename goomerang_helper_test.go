@@ -43,7 +43,7 @@ func (a *Arbiter) ItsAFactThat(event string) {
 	a.successes[event] = append(a.successes[event], success{time: time.Now()})
 }
 
-func (a *Arbiter) AssertHappened(event string) *Arbiter {
+func (a *Arbiter) RequireHappened(event string) *Arbiter {
 	require.Eventuallyf(a.t, func() bool {
 		a.L.RLock()
 		defer a.L.RUnlock()
@@ -53,7 +53,7 @@ func (a *Arbiter) AssertHappened(event string) *Arbiter {
 	return a
 }
 
-func (a *Arbiter) AssertHappenedInOrder(event1, event2 string) *Arbiter {
+func (a *Arbiter) RequireHappenedInOrder(event1, event2 string) *Arbiter {
 	var e1, e2 []success
 	var ok bool
 	require.Eventuallyf(a.t, func() bool {
@@ -74,7 +74,7 @@ func (a *Arbiter) AssertHappenedInOrder(event1, event2 string) *Arbiter {
 	return a
 }
 
-func (a *Arbiter) AssertHappenedTimes(event string, expectedCount int) *Arbiter {
+func (a *Arbiter) RequireHappenedTimes(event string, expectedCount int) *Arbiter {
 	var times []success
 	var ok bool
 	require.Eventuallyf(a.t, func() bool {
@@ -93,7 +93,7 @@ func (a *Arbiter) ErrorHappened(err error) {
 	a.errors = append(a.errors, err)
 }
 
-func (a *Arbiter) AssertNoErrors() {
+func (a *Arbiter) RequireNoErrors() {
 	a.L.RLock()
 	defer a.L.RUnlock()
 	var msg strings.Builder
