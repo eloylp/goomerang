@@ -2,6 +2,7 @@ package server
 
 import (
 	"context"
+	"go.eloylp.dev/goomerang/internal/message"
 
 	"github.com/gorilla/websocket"
 	"google.golang.org/protobuf/proto"
@@ -18,7 +19,7 @@ type serverOpts struct {
 }
 
 func (so *serverOpts) Send(ctx context.Context, msg proto.Message) error {
-	m, err := prepareMessage(msg)
+	m, err := message.PrepareMessage(msg)
 	if err != nil {
 		return err
 	}

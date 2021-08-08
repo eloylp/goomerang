@@ -106,7 +106,7 @@ func (s *Server) RegisterHandler(msg proto.Message, handlers ...Handler) {
 }
 
 func (s *Server) Send(ctx context.Context, msg proto.Message) error {
-	bytes, err := prepareMessage(msg)
+	bytes, err := message.PrepareMessage(msg)
 	if err != nil {
 		return err
 	}
@@ -122,22 +122,6 @@ func (s *Server) Send(ctx context.Context, msg proto.Message) error {
 		return errors.New("send: \n" + errs.String())
 	}
 	return nil
-}
-
-func prepareMessage(msg proto.Message) ([]byte, error) {
-	payload, err := proto.Marshal(msg)
-	if err != nil {
-		return nil, err
-	}
-	envelope := &protocol.Frame{
-		Type:    message.FQDN(msg),
-		Payload: payload,
-	}
-	bytes, err := proto.Marshal(envelope)
-	if err != nil {
-		return nil, err
-	}
-	return bytes, nil
 }
 
 func (s *Server) Run() error {
