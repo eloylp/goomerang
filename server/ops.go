@@ -2,10 +2,11 @@ package server
 
 import (
 	"context"
-	"go.eloylp.dev/goomerang/internal/message"
 
 	"github.com/gorilla/websocket"
 	"google.golang.org/protobuf/proto"
+
+	"go.eloylp.dev/goomerang/internal/message"
 )
 
 type Ops interface {

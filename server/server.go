@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"go.eloylp.dev/goomerang/internal/message"
 	"log"
 	"net/http"
 	"strings"
@@ -12,6 +11,8 @@ import (
 
 	"github.com/gorilla/websocket"
 	"google.golang.org/protobuf/proto"
+
+	"go.eloylp.dev/goomerang/internal/message"
 )
 
 type Handler func(ops Ops, msg proto.Message) error

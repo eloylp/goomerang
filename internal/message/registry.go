@@ -2,6 +2,7 @@ package message
 
 import (
 	"fmt"
+
 	"google.golang.org/protobuf/proto"
 )
 
