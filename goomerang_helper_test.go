@@ -43,7 +43,6 @@ func (a *Arbiter) ItsAFactThat(event string) {
 	a.successes[event] = append(a.successes[event], success{time: time.Now()})
 }
 
-// todo make assertions eventually
 func (a *Arbiter) AssertHappened(event string) *Arbiter {
 	require.Eventuallyf(a.t, func() bool {
 		a.L.RLock()
