@@ -71,7 +71,7 @@ func (c *Client) startReceiver() {
 				return
 			}
 			if m == websocket.BinaryMessage {
-				msg, handlers, err := message.UnPackMessage(c.registry, msg)
+				msg, handlers, err := message.UnPack(c.registry, msg)
 				if err != nil {
 					log.Println("unpack:", err) // todo error handler.
 					continue
@@ -87,7 +87,7 @@ func (c *Client) startReceiver() {
 }
 
 func (c *Client) Send(ctx context.Context, msg proto.Message) error {
-	data, err := message.PackMessage(msg)
+	data, err := message.Pack(msg)
 	if err != nil {
 		return err
 	}

@@ -73,7 +73,7 @@ func (s *Server) ServerMainHandler() http.HandlerFunc {
 				break
 			}
 			if m == websocket.BinaryMessage {
-				msg, handlers, err := message.UnPackMessage(s.registry, data)
+				msg, handlers, err := message.UnPack(s.registry, data)
 				if err != nil {
 					s.errorHandler(err)
 					continue
@@ -97,7 +97,7 @@ func (s *Server) RegisterHandler(msg proto.Message, handlers ...Handler) {
 }
 
 func (s *Server) Send(ctx context.Context, msg proto.Message) error {
-	bytes, err := message.PackMessage(msg)
+	bytes, err := message.Pack(msg)
 	if err != nil {
 		return err
 	}

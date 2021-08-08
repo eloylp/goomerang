@@ -12,7 +12,7 @@ func FQDN(msg proto.Message) string {
 	return string(msg.ProtoReflect().Descriptor().FullName())
 }
 
-func PackMessage(msg proto.Message) ([]byte, error) {
+func Pack(msg proto.Message) ([]byte, error) {
 	payload, err := proto.Marshal(msg)
 	if err != nil {
 		return nil, err
@@ -28,7 +28,7 @@ func PackMessage(msg proto.Message) ([]byte, error) {
 	return bytes, nil
 }
 
-func UnPackMessage(registry Registry, data []byte) (proto.Message, []interface{}, error) {
+func UnPack(registry Registry, data []byte) (proto.Message, []interface{}, error) {
 	frame := &protocol.Frame{}
 	if err := proto.Unmarshal(data, frame); err != nil {
 		return nil, nil, fmt.Errorf("protocol decoding err: %w", err)
