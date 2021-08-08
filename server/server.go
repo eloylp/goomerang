@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"go.eloylp.dev/goomerang/internal/message"
-	"go.eloylp.dev/goomerang/internal/message/protocol"
 	"log"
 	"net/http"
 	"strings"
@@ -74,16 +73,10 @@ func (s *Server) ServerMainHandler() http.HandlerFunc {
 				break
 			}
 			if m == websocket.BinaryMessage {
-				frame := &protocol.Frame{}
-				if err = proto.Unmarshal(data, frame); err != nil {
-					log.Println("parsing: ", err)
-				}
-				msg, handlers, err := s.registry.Handler(frame.GetType())
+				msg, handlers, err := message.UnPackMessage(s.registry, data)
 				if err != nil {
-					log.Println("server handler err: ", err)
-				}
-				if err = proto.Unmarshal(frame.Payload, msg); err != nil {
-					log.Println("decoding err: ", err)
+					s.errorHandler(err)
+					continue
 				}
 				for _, h := range handlers {
 					if err = h.(Handler)(sOpts, msg); err != nil {

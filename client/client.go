@@ -11,7 +11,6 @@ import (
 	"google.golang.org/protobuf/proto"
 
 	"go.eloylp.dev/goomerang/internal/message"
-	"go.eloylp.dev/goomerang/internal/message/protocol"
 )
 
 type Handler func(ops Ops, msg proto.Message) error
@@ -72,17 +71,10 @@ func (c *Client) startReceiver() {
 				return
 			}
 			if m == websocket.BinaryMessage {
-				frame := &protocol.Frame{}
-				err = proto.Unmarshal(msg, frame)
+				msg, handlers, err := message.UnPackMessage(c.registry, msg)
 				if err != nil {
-					log.Println("err on client  receiver:", err)
-				}
-				msg, handlers, err := c.registry.Handler(frame.Type)
-				if err != nil {
-					log.Println("client handler err: ", err)
-				}
-				if err := proto.Unmarshal(frame.Payload, msg); err != nil {
-					log.Println("decode: ", err)
+					log.Println("unpack:", err) // todo error handler.
+					continue
 				}
 				for _, h := range handlers {
 					if err = h.(Handler)(c.clientOps, msg); err != nil {
