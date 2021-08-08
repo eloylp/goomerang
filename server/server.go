@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"sync"
 
 	"github.com/gorilla/websocket"
 	"google.golang.org/protobuf/proto"
@@ -18,9 +19,9 @@ type Handler func(ops Ops, msg proto.Message) error
 
 type Server struct {
 	intServer      *http.Server
-	c              *websocket.Conn
+	c              []*websocket.Conn
+	L              *sync.Mutex
 	upgrader       *websocket.Upgrader
-	serverOpts     *serverOpts
 	registry       engine.Registry
 	errorHandler   func(err error)
 	onCloseHandler func()
@@ -42,8 +43,8 @@ func NewServer(opts ...Option) (*Server, error) {
 		errorHandler:   cfg.ErrorHandler,
 		onCloseHandler: cfg.OnCloseHandler,
 		registry:       engine.Registry{},
+		L:              &sync.Mutex{},
 	}
-	s.serverOpts = &serverOpts{s}
 	return s, nil
 }
 
@@ -54,14 +55,18 @@ func (s *Server) ServerMainHandler() http.HandlerFunc {
 			log.Print("upgrade:", err)
 			return
 		}
-		s.c = c
+		s.L.Lock()
+		s.c = append(s.c, c)
+		s.L.Unlock()
+		sOpts := &serverOpts{s, c}
 		defer c.Close()
+
 		for {
 			m, data, err := c.ReadMessage()
 			if err != nil {
 				// todo, maybe the error is not assertable. Precheck.
 				if err.(*websocket.CloseError).Code == websocket.CloseNormalClosure {
-					_ = s.c.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, ""))
+					_ = c.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, ""))
 					s.onCloseHandler()
 					return
 				}
@@ -77,8 +82,11 @@ func (s *Server) ServerMainHandler() http.HandlerFunc {
 				if err != nil {
 					log.Println("server handler err: ", err)
 				}
+				if err = proto.Unmarshal(frame.Payload, msg); err != nil {
+					log.Println("decoding err: ", err)
+				}
 				for _, h := range handlers {
-					if err = h.(Handler)(s.serverOpts, msg); err != nil {
+					if err = h.(Handler)(sOpts, msg); err != nil {
 						s.errorHandler(fmt.Errorf("server handler err: %w", err))
 					}
 				}
@@ -96,19 +104,27 @@ func (s *Server) RegisterHandler(msg proto.Message, handlers ...Handler) {
 }
 
 func (s *Server) Send(ctx context.Context, msg proto.Message) error {
-	marshal, err := proto.Marshal(msg)
+	bytes, err := prepareMessage(msg)
 	if err != nil {
 		return err
+	}
+	return s.c[0].WriteMessage(websocket.BinaryMessage, bytes)
+}
+
+func prepareMessage(msg proto.Message) ([]byte, error) {
+	payload, err := proto.Marshal(msg)
+	if err != nil {
+		return nil, err
 	}
 	envelope := &protocol.Frame{
 		Type:    message.FQDN(msg),
-		Payload: marshal,
+		Payload: payload,
 	}
 	bytes, err := proto.Marshal(envelope)
 	if err != nil {
-		return err
+		return nil, err
 	}
-	return s.c.WriteMessage(websocket.BinaryMessage, bytes)
+	return bytes, nil
 }
 
 func (s *Server) Run() error {
@@ -118,7 +134,7 @@ func (s *Server) Run() error {
 
 func (s *Server) Shutdown(ctx context.Context) error {
 	// todo this must be done for ALL connections.
-	s.c.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, ""))
+	s.c[0].WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, ""))
 	// TODO. This must be done gracefully.
 	return s.intServer.Shutdown(ctx)
 }

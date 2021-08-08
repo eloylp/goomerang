@@ -2,14 +2,17 @@ package goomerang_test
 
 import (
 	"context"
-	"go.eloylp.dev/goomerang/client"
-	"go.eloylp.dev/goomerang/server"
-	"go.eloylp.dev/kit/test"
+	"fmt"
+	"strings"
 	"sync"
 	"testing"
 	"time"
 
 	"github.com/stretchr/testify/require"
+	"go.eloylp.dev/kit/test"
+
+	"go.eloylp.dev/goomerang/client"
+	"go.eloylp.dev/goomerang/server"
 )
 
 const (
@@ -20,6 +23,7 @@ type Arbiter struct {
 	t         *testing.T
 	successes map[string][]success
 	L         sync.RWMutex
+	errors    []error
 }
 
 type success struct {
@@ -82,6 +86,22 @@ func (a *Arbiter) AssertHappenedTimes(event string, expectedCount int) *Arbiter 
 	}, time.Second, time.Millisecond, "event %s not happened", event)
 	require.Lenf(a.t, times, expectedCount, "event %s expected to happen %v times. Got %v", event, expectedCount, times)
 	return a
+}
+
+func (a *Arbiter) ErrorHappened(err error) {
+	a.L.Lock()
+	defer a.L.Unlock()
+	a.errors = append(a.errors, err)
+}
+
+func (a *Arbiter) AssertNoErrors() {
+	a.L.RLock()
+	defer a.L.RUnlock()
+	var msg strings.Builder
+	for i, err := range a.errors {
+		msg.WriteString(fmt.Sprintf("error %v: type %T: %v \n", i, err, err))
+	}
+	require.Len(a.t, a.errors, 0, msg)
 }
 
 func PrepareServer(t *testing.T, opts ...server.Option) *server.Server {

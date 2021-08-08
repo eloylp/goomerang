@@ -3,6 +3,7 @@ package server
 import (
 	"context"
 
+	"github.com/gorilla/websocket"
 	"google.golang.org/protobuf/proto"
 )
 
@@ -13,10 +14,15 @@ type Ops interface {
 
 type serverOpts struct {
 	s *Server
+	c *websocket.Conn
 }
 
 func (so *serverOpts) Send(ctx context.Context, msg proto.Message) error {
-	return so.s.Send(ctx, msg)
+	m, err := prepareMessage(msg)
+	if err != nil {
+		return err
+	}
+	return so.c.WriteMessage(websocket.BinaryMessage, m)
 }
 
 func (so *serverOpts) Shutdown(ctx context.Context) error {

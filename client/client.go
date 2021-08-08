@@ -82,6 +82,9 @@ func (c *Client) startReceiver() {
 				if err != nil {
 					log.Println("client handler err: ", err)
 				}
+				if err := proto.Unmarshal(frame.Payload, msg); err != nil {
+					log.Println("decode: ", err)
+				}
 				for _, h := range handlers {
 					if err = h.(Handler)(c.clientOps, msg); err != nil {
 						log.Println("client handler err: ", err)
