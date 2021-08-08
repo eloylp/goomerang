@@ -106,7 +106,7 @@ func (s *Server) RegisterHandler(msg proto.Message, handlers ...Handler) {
 }
 
 func (s *Server) Send(ctx context.Context, msg proto.Message) error {
-	bytes, err := message.PrepareMessage(msg)
+	bytes, err := message.PackMessage(msg)
 	if err != nil {
 		return err
 	}

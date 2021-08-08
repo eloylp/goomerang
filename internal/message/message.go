@@ -9,7 +9,7 @@ func FQDN(msg proto.Message) string {
 	return string(msg.ProtoReflect().Descriptor().FullName())
 }
 
-func PrepareMessage(msg proto.Message) ([]byte, error) {
+func PackMessage(msg proto.Message) ([]byte, error) {
 	payload, err := proto.Marshal(msg)
 	if err != nil {
 		return nil, err

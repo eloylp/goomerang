@@ -19,7 +19,7 @@ type serverOpts struct {
 }
 
 func (so *serverOpts) Send(ctx context.Context, msg proto.Message) error {
-	m, err := message.PrepareMessage(msg)
+	m, err := message.PackMessage(msg)
 	if err != nil {
 		return err
 	}
