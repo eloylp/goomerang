@@ -1,8 +1,11 @@
 package message
 
 import (
-	"go.eloylp.dev/goomerang/internal/message/protocol"
+	"fmt"
+
 	"google.golang.org/protobuf/proto"
+
+	"go.eloylp.dev/goomerang/internal/message/protocol"
 )
 
 func FQDN(msg proto.Message) string {
@@ -23,4 +26,19 @@ func PackMessage(msg proto.Message) ([]byte, error) {
 		return nil, err
 	}
 	return bytes, nil
+}
+
+func UnPackMessage(registry Registry, data []byte) (proto.Message, []interface{}, error) {
+	frame := &protocol.Frame{}
+	if err := proto.Unmarshal(data, frame); err != nil {
+		return nil, nil, fmt.Errorf("protocol decoding err: %w", err)
+	}
+	msg, handlers, err := registry.Handler(frame.GetType())
+	if err != nil {
+		return nil, nil, fmt.Errorf("handler registry: %w", err)
+	}
+	if err = proto.Unmarshal(frame.Payload, msg); err != nil {
+		return nil, nil, fmt.Errorf("payload decoding err: %w", err)
+	}
+	return msg, handlers, nil
 }
