@@ -2,14 +2,14 @@ package engine_test
 
 import (
 	"errors"
+	"go.eloylp.dev/goomerang/internal/message"
+	testMessages "go.eloylp.dev/goomerang/internal/message/test"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"go.eloylp.dev/goomerang/internal/engine"
-	"go.eloylp.dev/goomerang/message"
-	testMessages "go.eloylp.dev/goomerang/message/test"
 )
 
 type fakeHandler func() error

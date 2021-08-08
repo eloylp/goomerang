@@ -6,4 +6,4 @@ test:
 	go test -v ./...
 
 messages:
-	protoc --go_out=message ./message/protocol.proto ./message/test.proto
+	protoc --go_out=internal/message ./internal/message/protocol.proto ./internal/message/test.proto

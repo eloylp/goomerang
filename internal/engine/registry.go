@@ -2,10 +2,9 @@ package engine
 
 import (
 	"fmt"
+	"go.eloylp.dev/goomerang/internal/message"
 
 	"google.golang.org/protobuf/proto"
-
-	"go.eloylp.dev/goomerang/message"
 )
 
 type Registry map[string]slot

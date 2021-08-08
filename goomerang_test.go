@@ -3,13 +3,13 @@ package goomerang_test
 import (
 	"context"
 	"errors"
+	testMessages "go.eloylp.dev/goomerang/internal/message/test"
 	"testing"
 
 	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/proto"
 
 	"go.eloylp.dev/goomerang/client"
-	testMessages "go.eloylp.dev/goomerang/message/test"
 	"go.eloylp.dev/goomerang/server"
 )
 
