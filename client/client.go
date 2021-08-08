@@ -96,15 +96,7 @@ func (c *Client) startReceiver() {
 }
 
 func (c *Client) Send(ctx context.Context, msg proto.Message) error {
-	userMessage, err := proto.Marshal(msg)
-	if err != nil {
-		return err
-	}
-	frame := &protocol.Frame{
-		Type:    message.FQDN(msg),
-		Payload: userMessage,
-	}
-	data, err := proto.Marshal(frame)
+	data, err := message.PackMessage(msg)
 	if err != nil {
 		return err
 	}
