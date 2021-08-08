@@ -59,7 +59,7 @@ func (c *Client) Connect(ctx context.Context) error {
 func (c *Client) startReceiver() {
 	func() {
 		for {
-			m, msg, err := c.c.ReadMessage()
+			m, data, err := c.c.ReadMessage()
 			if err != nil {
 				// todo, maybe the error is not assertable. Precheck.
 				if err.(*websocket.CloseError).Code == websocket.CloseNormalClosure {
@@ -71,7 +71,7 @@ func (c *Client) startReceiver() {
 				return
 			}
 			if m == websocket.BinaryMessage {
-				msg, handlers, err := message.UnPack(c.registry, msg)
+				msg, handlers, err := message.UnPack(c.registry, data)
 				if err != nil {
 					log.Println("unpack:", err) // todo error handler.
 					continue
