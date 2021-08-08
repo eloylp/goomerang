@@ -2,8 +2,6 @@ package client
 
 import (
 	"context"
-	"go.eloylp.dev/goomerang/internal/message"
-	"go.eloylp.dev/goomerang/internal/message/protocol"
 	"log"
 	"net/http"
 	"net/url"
@@ -13,6 +11,8 @@ import (
 	"google.golang.org/protobuf/proto"
 
 	"go.eloylp.dev/goomerang/internal/engine"
+	"go.eloylp.dev/goomerang/internal/message"
+	"go.eloylp.dev/goomerang/internal/message/protocol"
 )
 
 type Handler func(ops Ops, msg proto.Message) error
