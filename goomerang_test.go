@@ -202,7 +202,6 @@ func TestServerSupportMultipleClients(t *testing.T) {
 	arbiter.RequireHappened("SERVER_RECEIVED_FROM_CLIENT_2")
 	arbiter.RequireHappened("CLIENT1_RECEIVED_FROM_SERVER_1")
 	arbiter.RequireHappened("CLIENT2_RECEIVED_FROM_SERVER_2")
-
 }
 
 func TestServerCanBroadCastMessages(t *testing.T) {
