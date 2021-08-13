@@ -1,11 +1,12 @@
 package message_test
 
 import (
-	"go.eloylp.dev/goomerang/internal/message"
-	"go.eloylp.dev/goomerang/internal/message/test"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+
+	"go.eloylp.dev/goomerang/internal/message"
+	"go.eloylp.dev/goomerang/internal/message/test"
 )
 
 func TestFQDN(t *testing.T) {
