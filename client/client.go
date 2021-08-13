@@ -45,10 +45,11 @@ func NewClient(opts ...Option) (*Client, error) {
 }
 
 func (c *Client) Connect(ctx context.Context) error {
-	conn, _, err := c.dialer.DialContext(ctx, c.ServerURL.String(), nil)
+	conn, resp, err := c.dialer.DialContext(ctx, c.ServerURL.String(), nil)
 	if err != nil {
 		return err
 	}
+	defer resp.Body.Close()
 	c.c = conn
 
 	go c.startReceiver()
