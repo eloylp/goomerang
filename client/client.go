@@ -2,7 +2,6 @@ package client
 
 import (
 	"context"
-	"log"
 	"net/http"
 	"net/url"
 	"time"
@@ -22,11 +21,14 @@ type Client struct {
 	c              *websocket.Conn
 	dialer         *websocket.Dialer
 	onCloseHandler func()
+	onErrorHandler func(err error)
 }
 
 func NewClient(opts ...Option) (*Client, error) {
-	cfg := &Config{}
-	cfg.OnCloseHandler = func() {}
+	cfg := &Config{
+		OnErrorHandler: func(err error) {},
+		OnCloseHandler: func() {},
+	}
 	for _, o := range opts {
 		o(cfg)
 	}
@@ -68,18 +70,18 @@ func (c *Client) startReceiver() {
 					c.onCloseHandler()
 					return
 				}
-				log.Println("read:", err)
+				c.onErrorHandler(err)
 				return
 			}
 			if m == websocket.BinaryMessage {
 				msg, handlers, err := message.UnPack(c.registry, data)
 				if err != nil {
-					log.Println("unpack:", err) // todo error handler.
+					c.onErrorHandler(err)
 					continue
 				}
 				for _, h := range handlers {
 					if err = h.(Handler)(c.clientOps, msg); err != nil {
-						log.Println("client handler err: ", err)
+						c.onErrorHandler(err)
 					}
 				}
 			}
