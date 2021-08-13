@@ -22,7 +22,7 @@ type Server struct {
 	L              *sync.Mutex
 	upgrader       *websocket.Upgrader
 	registry       message.Registry
-	errorHandler   func(err error)
+	onErrorHandler func(err error)
 	onCloseHandler func()
 }
 
@@ -39,7 +39,7 @@ func NewServer(opts ...Option) (*Server, error) {
 		intServer: &http.Server{
 			Addr: cfg.ListenURL,
 		},
-		errorHandler:   cfg.ErrorHandler,
+		onErrorHandler: cfg.ErrorHandler,
 		onCloseHandler: cfg.OnCloseHandler,
 		registry:       message.Registry{},
 		L:              &sync.Mutex{},
@@ -51,7 +51,7 @@ func (s *Server) ServerMainHandler() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		c, err := s.upgrader.Upgrade(w, r, nil)
 		if err != nil {
-			s.errorHandler(err)
+			s.onErrorHandler(err)
 			return
 		}
 		s.L.Lock()
@@ -71,18 +71,18 @@ func (s *Server) ServerMainHandler() http.HandlerFunc {
 						return
 					}
 				}
-				s.errorHandler(err)
+				s.onErrorHandler(err)
 				break
 			}
 			if m == websocket.BinaryMessage {
 				msg, handlers, err := message.UnPack(s.registry, data)
 				if err != nil {
-					s.errorHandler(err)
+					s.onErrorHandler(err)
 					continue
 				}
 				for _, h := range handlers {
 					if err = h.(Handler)(sOpts, msg); err != nil {
-						s.errorHandler(fmt.Errorf("server handler err: %w", err))
+						s.onErrorHandler(fmt.Errorf("server handler err: %w", err))
 					}
 				}
 			}
