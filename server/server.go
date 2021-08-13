@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"log"
 	"net/http"
 	"strings"
 	"sync"
@@ -52,7 +51,7 @@ func (s *Server) ServerMainHandler() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		c, err := s.upgrader.Upgrade(w, r, nil)
 		if err != nil {
-			log.Print("upgrade:", err)
+			s.errorHandler(err)
 			return
 		}
 		s.L.Lock()
@@ -70,7 +69,7 @@ func (s *Server) ServerMainHandler() http.HandlerFunc {
 					s.onCloseHandler()
 					return
 				}
-				log.Println("read:", err)
+				s.errorHandler(err)
 				break
 			}
 			if m == websocket.BinaryMessage {
