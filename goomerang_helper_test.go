@@ -70,7 +70,8 @@ func (a *Arbiter) RequireHappenedInOrder(event1, event2 string) *Arbiter {
 	}, time.Second, time.Millisecond, "event %s not happened", event2)
 	firstE1 := e1[0]
 	firstE2 := e2[0]
-	require.True(a.t, firstE1.time.UnixNano() < firstE2.time.UnixNano(), "event %s happened at %v, but event %s happened at %v", event1, firstE1, event2, firstE2)
+	msg := "event %s happened at %v, but event %s happened at %v"
+	require.True(a.t, firstE1.time.UnixNano() < firstE2.time.UnixNano(), msg, event1, firstE1, event2, firstE2)
 	return a
 }
 
