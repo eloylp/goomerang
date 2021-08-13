@@ -63,11 +63,13 @@ func (s *Server) ServerMainHandler() http.HandlerFunc {
 		for {
 			m, data, err := c.ReadMessage()
 			if err != nil {
-				// todo, maybe the error is not assertable. Precheck.
-				if err.(*websocket.CloseError).Code == websocket.CloseNormalClosure {
-					_ = c.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, ""))
-					s.onCloseHandler()
-					return
+				var closeErr *websocket.CloseError
+				if errors.As(err, &closeErr) {
+					if closeErr.Code == websocket.CloseNormalClosure {
+						_ = c.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, ""))
+						s.onCloseHandler()
+						return
+					}
 				}
 				s.errorHandler(err)
 				break
