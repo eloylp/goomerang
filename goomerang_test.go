@@ -230,3 +230,20 @@ func TestServerCanBroadCastMessages(t *testing.T) {
 	arbiter.RequireHappened("CLIENT1_RECEIVED_SERVER_GREET")
 	arbiter.RequireHappened("CLIENT2_RECEIVED_SERVER_GREET")
 }
+
+func TestErrorWhenClientSendsOnClosedConn(t *testing.T) {
+	ctx := context.Background()
+	s := PrepareServer(t)
+
+	c1 := PrepareClient(t)
+	defer c1.Close()
+	c2 := PrepareClient(t)
+	defer c2.Close()
+
+	s.Shutdown(ctx)
+
+	msg := &testMessages.GreetV1{Message: "Hi!"}
+
+	require.ErrorIs(t, c1.Send(ctx, msg), client.ErrServerDisconnected)
+	require.ErrorIs(t, c1.Send(ctx, msg), client.ErrServerDisconnected)
+}

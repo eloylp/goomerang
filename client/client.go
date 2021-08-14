@@ -2,6 +2,7 @@ package client
 
 import (
 	"context"
+	"errors"
 	"net/http"
 	"net/url"
 	"time"
@@ -94,7 +95,13 @@ func (c *Client) Send(ctx context.Context, msg proto.Message) error {
 	if err != nil {
 		return err
 	}
-	return c.c.WriteMessage(websocket.BinaryMessage, data)
+	if err := c.c.WriteMessage(websocket.BinaryMessage, data); err != nil {
+		if errors.Is(err, websocket.ErrCloseSent) {
+			return ErrServerDisconnected
+		}
+		return err
+	}
+	return nil
 }
 
 func (c *Client) Close() error {
