@@ -107,8 +107,8 @@ func (s *Server) Send(ctx context.Context, msg proto.Message) error {
 	defer s.L.Unlock()
 	var errList error
 	var count int
-	for _, conn := range s.c {
-		if err := conn.WriteMessage(websocket.BinaryMessage, bytes); err != nil && count < 100 {
+	for i := 0; i < len(s.c); i++ {
+		if err := s.c[i].WriteMessage(websocket.BinaryMessage, bytes); err != nil && count < 100 {
 			errList = multierror.Append(err, errList)
 			count++
 		}
