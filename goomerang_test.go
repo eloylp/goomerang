@@ -261,3 +261,14 @@ func TestClientCloseWhenServerClosed(t *testing.T) {
 
 	require.ErrorIs(t, c.Close(), client.ErrServerDisconnected)
 }
+
+func TestServerSendWhenClientClosed(t *testing.T) {
+	s := PrepareServer(t)
+	defer s.Shutdown(defaultCtx)
+	c := PrepareClient(t)
+
+	require.NoError(t, c.Close())
+
+	msg := &testMessages.GreetV1{Message: "Hi!"}
+	require.ErrorIs(t, s.Send(defaultCtx, msg), server.ErrClientDisconnected)
+}

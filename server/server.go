@@ -106,6 +106,9 @@ func (s *Server) Send(ctx context.Context, msg proto.Message) error {
 	var count int
 	for i := 0; i < len(s.c); i++ {
 		if err := s.c[i].WriteMessage(websocket.BinaryMessage, bytes); err != nil && count < 100 {
+			if errors.Is(err, websocket.ErrCloseSent) {
+				err = ErrClientDisconnected
+			}
 			errList = multierror.Append(err, errList)
 			count++
 		}
