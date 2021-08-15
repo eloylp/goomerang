@@ -27,10 +27,7 @@ type Server struct {
 }
 
 func NewServer(opts ...Option) (*Server, error) {
-	cfg := &Config{
-		ErrorHandler:   func(err error) {},
-		OnCloseHandler: func() {},
-	}
+	cfg := defaultConfig()
 	for _, o := range opts {
 		o(cfg)
 	}

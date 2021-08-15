@@ -25,3 +25,11 @@ func WithOnErrorHandler(h func(err error)) Option {
 		cfg.OnErrorHandler = h
 	}
 }
+
+func defaultConfig() *Config {
+	cfg := &Config{
+		OnErrorHandler: func(err error) {},
+		OnCloseHandler: func() {},
+	}
+	return cfg
+}
