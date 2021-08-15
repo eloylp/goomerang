@@ -123,8 +123,11 @@ func (s *Server) Run() error {
 }
 
 func (s *Server) Shutdown(ctx context.Context) error {
-	// todo this must be done for ALL connections.
-	s.c[0].WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, ""))
+	s.L.Lock()
+	defer s.L.Unlock()
+	for i := 0; i < len(s.c); i++ {
+		s.c[i].WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, ""))
+	}
 	// TODO. This must be done gracefully.
 	return s.intServer.Shutdown(ctx)
 }
