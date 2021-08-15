@@ -248,7 +248,6 @@ func TestClientNormalClose(t *testing.T) {
 	defer s.Shutdown(defaultCtx)
 
 	c := PrepareClient(t)
-	defer c.Close()
 
 	require.NoError(t, c.Close())
 }
