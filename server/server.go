@@ -5,10 +5,10 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
-	"strings"
 	"sync"
 
 	"github.com/gorilla/websocket"
+	"github.com/hashicorp/go-multierror"
 	"google.golang.org/protobuf/proto"
 
 	"go.eloylp.dev/goomerang/internal/message"
@@ -105,14 +105,16 @@ func (s *Server) Send(ctx context.Context, msg proto.Message) error {
 	}
 	s.L.Lock()
 	defer s.L.Unlock()
-	var errs strings.Builder
+	var errList error
+	var count int
 	for _, conn := range s.c {
-		if err := conn.WriteMessage(websocket.BinaryMessage, bytes); err != nil {
-			errs.WriteString(err.Error() + " \n")
+		if err := conn.WriteMessage(websocket.BinaryMessage, bytes); err != nil && count < 100 {
+			errList = multierror.Append(err, errList)
+			count++
 		}
 	}
-	if errs.Len() != 0 {
-		return errors.New("send: \n" + errs.String())
+	if errList != nil {
+		return errList
 	}
 	return nil
 }
@@ -125,8 +127,17 @@ func (s *Server) Run() error {
 func (s *Server) Shutdown(ctx context.Context) error {
 	s.L.Lock()
 	defer s.L.Unlock()
+	var errList error
+	var count int
 	for i := 0; i < len(s.c); i++ {
-		s.c[i].WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, ""))
+		err := s.c[i].WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, ""))
+		if err != nil && err != websocket.ErrCloseSent && count < 100 {
+			errList = multierror.Append(errList, err)
+			count++
+		}
+	}
+	if errList != nil {
+		return errList
 	}
 	// TODO. This must be done gracefully.
 	return s.intServer.Shutdown(ctx)

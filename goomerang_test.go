@@ -247,3 +247,14 @@ func TestServerShutdownIsPropagatedToAllClients(t *testing.T) {
 	require.ErrorIs(t, c1.Send(ctx, msg), client.ErrServerDisconnected)
 	require.ErrorIs(t, c2.Send(ctx, msg), client.ErrServerDisconnected)
 }
+
+func TestClientNormalClose(t *testing.T) {
+	ctx := context.Background()
+	s := PrepareServer(t)
+	defer s.Shutdown(ctx)
+
+	c := PrepareClient(t)
+	defer c.Close()
+
+	require.NoError(t, c.Close())
+}
