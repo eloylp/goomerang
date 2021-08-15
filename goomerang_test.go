@@ -13,14 +13,15 @@ import (
 	"go.eloylp.dev/goomerang/server"
 )
 
+var defaultCtx = context.Background()
+
 func TestPingPongServer(t *testing.T) {
 	arbiter := NewArbiter(t)
 	s := PrepareServer(t)
-	ctx := context.Background()
-	defer s.Shutdown(ctx)
+	defer s.Shutdown(defaultCtx)
 	s.RegisterHandler(&testMessages.PingPong{}, func(s server.Ops, msg proto.Message) error {
 		_ = msg.(*testMessages.PingPong)
-		if err := s.Send(ctx, &testMessages.PingPong{
+		if err := s.Send(defaultCtx, &testMessages.PingPong{
 			Message: "pong",
 		}); err != nil {
 			return err
@@ -37,7 +38,7 @@ func TestPingPongServer(t *testing.T) {
 		arbiter.ItsAFactThat("CLIENT_RECEIVED_PONG")
 		return nil
 	})
-	err := c.Send(ctx, &testMessages.PingPong{Message: "ping"})
+	err := c.Send(defaultCtx, &testMessages.PingPong{Message: "ping"})
 	require.NoError(t, err)
 	arbiter.RequireHappened("SERVER_RECEIVED_PING")
 	arbiter.RequireHappened("CLIENT_RECEIVED_PONG")
@@ -66,17 +67,15 @@ func TestMultipleHandlersArePossibleInServer(t *testing.T) {
 	c := PrepareClient(t)
 	defer c.Close()
 
-	ctx := context.Background()
-	err := c.Send(ctx, m)
+	err := c.Send(defaultCtx, m)
 	require.NoError(t, err)
 	arbiter.RequireHappenedInOrder("HANDLER1_CALLED", "HANDLER2_CALLED")
 	arbiter.RequireHappenedInOrder("HANDLER2_CALLED", "HANDLER3_CALLED")
 }
 
 func TestMultipleHandlersArePossibleInClient(t *testing.T) {
-	ctx := context.Background()
 	s := PrepareServer(t)
-	defer s.Shutdown(ctx)
+	defer s.Shutdown(defaultCtx)
 	arbiter := NewArbiter(t)
 	c := PrepareClient(t)
 	defer c.Close()
@@ -96,7 +95,7 @@ func TestMultipleHandlersArePossibleInClient(t *testing.T) {
 	c.RegisterHandler(m, h, h2)
 	c.RegisterHandler(m, h3)
 
-	err := s.Send(ctx, m)
+	err := s.Send(defaultCtx, m)
 	require.NoError(t, err)
 
 	arbiter.RequireHappenedInOrder("HANDLER1_CALLED", "HANDLER2_CALLED")
@@ -105,13 +104,12 @@ func TestMultipleHandlersArePossibleInClient(t *testing.T) {
 
 func TestServerErrorHandler(t *testing.T) {
 	arbiter := NewArbiter(t)
-	ctx := context.Background()
 	s := PrepareServer(t, server.WithErrorHandler(func(err error) {
 		if err != nil && err.Error() == "server handler err: a handler error" {
 			arbiter.ItsAFactThat("ERROR_HANDLER_WORKS")
 		}
 	}))
-	defer s.Shutdown(ctx)
+	defer s.Shutdown(defaultCtx)
 	s.RegisterHandler(&testMessages.PingPong{}, func(ops server.Ops, msg proto.Message) error {
 		return errors.New("a handler error")
 	})
@@ -119,7 +117,7 @@ func TestServerErrorHandler(t *testing.T) {
 	c1 := PrepareClient(t)
 	defer c1.Close()
 
-	err := c1.Send(ctx, &testMessages.PingPong{Message: "ping"})
+	err := c1.Send(defaultCtx, &testMessages.PingPong{Message: "ping"})
 	require.NoError(t, err)
 	arbiter.RequireHappened("ERROR_HANDLER_WORKS")
 }
@@ -156,7 +154,6 @@ func TestShutdownProcedureServerSideInit(t *testing.T) {
 }
 
 func TestServerSupportMultipleClients(t *testing.T) {
-	ctx := context.Background()
 	arbiter := NewArbiter(t)
 	s := PrepareServer(t, server.WithErrorHandler(func(err error) {
 		arbiter.ErrorHappened(err)
@@ -167,9 +164,9 @@ func TestServerSupportMultipleClients(t *testing.T) {
 			return errors.New("cannot type assert message")
 		}
 		arbiter.ItsAFactThat("SERVER_RECEIVED_FROM_CLIENT_" + pingMsg.Message)
-		return ops.Send(ctx, &testMessages.PingPong{Message: pingMsg.Message})
+		return ops.Send(defaultCtx, &testMessages.PingPong{Message: pingMsg.Message})
 	})
-	defer s.Shutdown(ctx)
+	defer s.Shutdown(defaultCtx)
 
 	c1 := PrepareClient(t)
 	c1.RegisterHandler(&testMessages.PingPong{}, func(ops client.Ops, msg proto.Message) error {
@@ -192,9 +189,9 @@ func TestServerSupportMultipleClients(t *testing.T) {
 	})
 	defer c2.Close()
 
-	err := c1.Send(ctx, &testMessages.PingPong{Message: "1"})
+	err := c1.Send(defaultCtx, &testMessages.PingPong{Message: "1"})
 	require.NoError(t, err)
-	err = c2.Send(ctx, &testMessages.PingPong{Message: "2"})
+	err = c2.Send(defaultCtx, &testMessages.PingPong{Message: "2"})
 	require.NoError(t, err)
 
 	arbiter.RequireNoErrors()
@@ -205,10 +202,9 @@ func TestServerSupportMultipleClients(t *testing.T) {
 }
 
 func TestServerCanBroadCastMessages(t *testing.T) {
-	ctx := context.Background()
 	arbiter := NewArbiter(t)
 	s := PrepareServer(t)
-	defer s.Shutdown(ctx)
+	defer s.Shutdown(defaultCtx)
 
 	c1 := PrepareClient(t)
 	defer c1.Close()
@@ -224,7 +220,7 @@ func TestServerCanBroadCastMessages(t *testing.T) {
 		return nil
 	})
 
-	err := s.Send(ctx, &testMessages.GreetV1{Message: "Hi!"})
+	err := s.Send(defaultCtx, &testMessages.GreetV1{Message: "Hi!"})
 	require.NoError(t, err)
 
 	arbiter.RequireHappened("CLIENT1_RECEIVED_SERVER_GREET")
@@ -232,7 +228,6 @@ func TestServerCanBroadCastMessages(t *testing.T) {
 }
 
 func TestServerShutdownIsPropagatedToAllClients(t *testing.T) {
-	ctx := context.Background()
 	s := PrepareServer(t)
 
 	c1 := PrepareClient(t)
@@ -240,18 +235,17 @@ func TestServerShutdownIsPropagatedToAllClients(t *testing.T) {
 	c2 := PrepareClient(t)
 	defer c2.Close()
 
-	s.Shutdown(ctx)
+	s.Shutdown(defaultCtx)
 
 	msg := &testMessages.GreetV1{Message: "Hi!"}
 
-	require.ErrorIs(t, c1.Send(ctx, msg), client.ErrServerDisconnected)
-	require.ErrorIs(t, c2.Send(ctx, msg), client.ErrServerDisconnected)
+	require.ErrorIs(t, c1.Send(defaultCtx, msg), client.ErrServerDisconnected)
+	require.ErrorIs(t, c2.Send(defaultCtx, msg), client.ErrServerDisconnected)
 }
 
 func TestClientNormalClose(t *testing.T) {
-	ctx := context.Background()
 	s := PrepareServer(t)
-	defer s.Shutdown(ctx)
+	defer s.Shutdown(defaultCtx)
 
 	c := PrepareClient(t)
 	defer c.Close()
