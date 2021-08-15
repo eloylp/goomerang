@@ -25,3 +25,11 @@ type Config struct {
 	ErrorHandler   func(err error)
 	OnCloseHandler func()
 }
+
+func defaultConfig() *Config {
+	cfg := &Config{
+		ErrorHandler:   func(err error) {},
+		OnCloseHandler: func() {},
+	}
+	return cfg
+}

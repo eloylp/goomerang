@@ -26,10 +26,7 @@ type Client struct {
 }
 
 func NewClient(opts ...Option) (*Client, error) {
-	cfg := &Config{
-		OnErrorHandler: func(err error) {},
-		OnCloseHandler: func() {},
-	}
+	cfg := defaultConfig()
 	for _, o := range opts {
 		o(cfg)
 	}
