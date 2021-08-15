@@ -104,7 +104,14 @@ func (c *Client) Send(ctx context.Context, msg proto.Message) error {
 }
 
 func (c *Client) Close() error {
-	return c.c.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, ""))
+	err := c.c.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, ""))
+	if err != nil {
+		if errors.Is(err, websocket.ErrCloseSent) {
+			return ErrServerDisconnected
+		}
+		return err
+	}
+	return nil
 }
 
 func (c *Client) RegisterHandler(msg proto.Message, handlers ...Handler) {

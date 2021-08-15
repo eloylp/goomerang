@@ -251,3 +251,13 @@ func TestClientNormalClose(t *testing.T) {
 
 	require.NoError(t, c.Close())
 }
+
+func TestClientCloseWhenServerClosed(t *testing.T) {
+	s := PrepareServer(t)
+	c := PrepareClient(t)
+
+	err := s.Shutdown(defaultCtx)
+	require.NoError(t, err)
+
+	require.ErrorIs(t, c.Close(), client.ErrServerDisconnected)
+}
