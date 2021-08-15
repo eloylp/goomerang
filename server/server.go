@@ -89,8 +89,8 @@ func (s *Server) ServerMainHandler() http.HandlerFunc {
 
 func (s *Server) RegisterHandler(msg proto.Message, handlers ...Handler) {
 	his := make([]interface{}, len(handlers))
-	for i, h := range handlers {
-		his[i] = h
+	for i := 0; i < len(handlers); i++ {
+		his[i] = handlers[i]
 	}
 	s.registry.Register(msg, his...)
 }

@@ -109,8 +109,8 @@ func (c *Client) Close() error {
 
 func (c *Client) RegisterHandler(msg proto.Message, handlers ...Handler) {
 	his := make([]interface{}, len(handlers))
-	for i, h := range handlers {
-		his[i] = h
+	for i := 0; i < len(handlers); i++ {
+		his[i] = handlers[i]
 	}
 	c.registry.Register(msg, his...)
 }
