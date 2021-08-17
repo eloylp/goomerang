@@ -8,7 +8,6 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"go.eloylp.dev/goomerang/internal/message"
-	testMessages "go.eloylp.dev/goomerang/internal/message/test"
 )
 
 type fakeHandler func() error
@@ -16,22 +15,16 @@ type fakeHandler func() error
 func TestHandlerRegistry(t *testing.T) {
 	r := message.Registry{}
 
-	m1 := &testMessages.GreetV1{Message: "hi!"}
-	r.Register(m1, problematicHandler())
-	m2 := &testMessages.PingPong{Message: "ping"}
-	r.Register(m2, successfulHandler())
+	r.Register("m1", problematicHandler())
+	r.Register("m2", successfulHandler())
 
-	m1Name := message.FQDN(m1)
-	msg, h1, err := r.Handler(m1Name)
+	h1, err := r.Handler("m1")
 	require.NoError(t, err)
 	assert.Error(t, h1[0].(fakeHandler)())
-	assert.Equal(t, m1Name, message.FQDN(msg))
 
-	m2Name := message.FQDN(m2)
-	msg, h2, err := r.Handler(m2Name)
+	h2, err := r.Handler("m2")
 	require.NoError(t, err)
 	assert.NoError(t, h2[0].(fakeHandler)())
-	assert.Equal(t, m2Name, message.FQDN(msg))
 }
 
 func successfulHandler() fakeHandler {
@@ -48,10 +41,9 @@ func problematicHandler() fakeHandler {
 
 func TestMultipleCumulativeHandlersCanBeRegistered(t *testing.T) {
 	r := message.Registry{}
-	m := &testMessages.GreetV1{Message: "hi!"}
-	r.Register(m, successfulHandler(), successfulHandler())
-	r.Register(m, successfulHandler(), successfulHandler())
-	_, handlers, err := r.Handler(message.FQDN(m))
+	r.Register("m", successfulHandler(), successfulHandler())
+	r.Register("m", successfulHandler(), successfulHandler())
+	handlers, err := r.Handler("m")
 	require.NoError(t, err)
 	assert.Len(t, handlers, 4)
 }
