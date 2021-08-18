@@ -21,7 +21,7 @@ type Handler func(ops Ops, msg proto.Message) error
 type Client struct {
 	ServerURL       url.URL
 	registry        handler.Registry
-	messageRegistry message.MessageRegistry
+	messageRegistry message.Registry
 	clientOps       *clientOps
 	c               *websocket.Conn
 	dialer          *websocket.Dialer
@@ -45,7 +45,7 @@ func NewClient(opts ...Option) (*Client, error) {
 			HandshakeTimeout: 45 * time.Second, // TODO parametrize this.
 		},
 		registry:        handler.Registry{},
-		messageRegistry: message.MessageRegistry{},
+		messageRegistry: message.Registry{},
 		reqRepRegistry:  map[string]chan proto.Message{},
 	}
 	c.clientOps = &clientOps{c: c}

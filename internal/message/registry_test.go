@@ -11,7 +11,7 @@ import (
 
 func TestMessageRegistry(t *testing.T) {
 	msg := &test.GreetV1{Message: "hi!"}
-	r := message.MessageRegistry{}
+	r := message.Registry{}
 	r.Register("m1", msg)
 	res, err := r.Message("m1")
 	require.NoError(t, err)
@@ -19,7 +19,7 @@ func TestMessageRegistry(t *testing.T) {
 }
 
 func TestMessageRegistryNotFound(t *testing.T) {
-	r := message.MessageRegistry{}
+	r := message.Registry{}
 	_, err := r.Message("m1")
 	require.EqualError(t, err, "cannot found message with key: m1")
 }

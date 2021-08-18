@@ -23,7 +23,7 @@ type Server struct {
 	L               *sync.Mutex
 	upgrader        *websocket.Upgrader
 	registry        handler.Registry
-	messageRegistry message.MessageRegistry
+	messageRegistry message.Registry
 	onErrorHandler  func(err error)
 	onCloseHandler  func()
 }
@@ -41,7 +41,7 @@ func NewServer(opts ...Option) (*Server, error) {
 		onErrorHandler:  cfg.ErrorHandler,
 		onCloseHandler:  cfg.OnCloseHandler,
 		registry:        handler.Registry{},
-		messageRegistry: message.MessageRegistry{},
+		messageRegistry: message.Registry{},
 		L:               &sync.Mutex{},
 	}
 	return s, nil
