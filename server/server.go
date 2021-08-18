@@ -19,7 +19,7 @@ type Handler func(ops Ops, msg proto.Message) error
 
 type Server struct {
 	intServer       *http.Server
-	c               []*websocket.Conn
+	c               map[*websocket.Conn]struct{}
 	L               *sync.Mutex
 	upgrader        *websocket.Upgrader
 	registry        engine.AppendableRegistry
@@ -42,6 +42,7 @@ func NewServer(opts ...Option) (*Server, error) {
 		onCloseHandler:  cfg.OnCloseHandler,
 		registry:        engine.AppendableRegistry{},
 		messageRegistry: message.Registry{},
+		c:               map[*websocket.Conn]struct{}{},
 		L:               &sync.Mutex{},
 	}
 	return s, nil
@@ -55,7 +56,7 @@ func (s *Server) ServerMainHandler() http.HandlerFunc {
 			return
 		}
 		s.L.Lock()
-		s.c = append(s.c, c)
+		s.c[c] = struct{}{}
 		s.L.Unlock()
 		sOpts := &serverOpts{s, c}
 		defer c.Close()
@@ -127,8 +128,8 @@ func (s *Server) Send(ctx context.Context, msg proto.Message) error {
 	defer s.L.Unlock()
 	var errList error
 	var count int
-	for i := 0; i < len(s.c); i++ {
-		if err := s.c[i].WriteMessage(websocket.BinaryMessage, bytes); err != nil && count < 100 {
+	for conn := range s.c {
+		if err := conn.WriteMessage(websocket.BinaryMessage, bytes); err != nil && count < 100 {
 			if errors.Is(err, websocket.ErrCloseSent) {
 				err = ErrClientDisconnected
 			}
@@ -152,8 +153,8 @@ func (s *Server) Shutdown(ctx context.Context) error {
 	defer s.L.Unlock()
 	var errList error
 	var count int
-	for i := 0; i < len(s.c); i++ {
-		err := s.c[i].WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, ""))
+	for conn := range s.c {
+		err := conn.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, ""))
 		if err != nil && err != websocket.ErrCloseSent && count < 100 {
 			errList = multierror.Append(errList, err)
 			count++
