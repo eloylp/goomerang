@@ -11,6 +11,7 @@ import (
 	"github.com/hashicorp/go-multierror"
 	"google.golang.org/protobuf/proto"
 
+	"go.eloylp.dev/goomerang/internal/handler"
 	"go.eloylp.dev/goomerang/internal/message"
 )
 
@@ -21,7 +22,7 @@ type Server struct {
 	c               []*websocket.Conn
 	L               *sync.Mutex
 	upgrader        *websocket.Upgrader
-	registry        message.Registry
+	registry        handler.Registry
 	messageRegistry message.MessageRegistry
 	onErrorHandler  func(err error)
 	onCloseHandler  func()
@@ -39,7 +40,7 @@ func NewServer(opts ...Option) (*Server, error) {
 		},
 		onErrorHandler:  cfg.ErrorHandler,
 		onCloseHandler:  cfg.OnCloseHandler,
-		registry:        message.Registry{},
+		registry:        handler.Registry{},
 		messageRegistry: message.MessageRegistry{},
 		L:               &sync.Mutex{},
 	}
