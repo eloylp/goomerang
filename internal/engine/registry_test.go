@@ -1,4 +1,4 @@
-package goomerang_test
+package engine_test
 
 import (
 	"errors"
@@ -7,13 +7,13 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"go.eloylp.dev/goomerang"
+	"go.eloylp.dev/goomerang/internal/engine"
 )
 
 type fakeHandler func() error
 
 func TestHandlerRegistry(t *testing.T) {
-	r := goomerang.AppendableRegistry{}
+	r := engine.AppendableRegistry{}
 
 	r.Register("m1", problematicHandler())
 	r.Register("m2", successfulHandler())
@@ -40,7 +40,7 @@ func problematicHandler() fakeHandler {
 }
 
 func TestMultipleCumulativeHandlersCanBeRegistered(t *testing.T) {
-	r := goomerang.AppendableRegistry{}
+	r := engine.AppendableRegistry{}
 	r.Register("m", successfulHandler(), successfulHandler())
 	r.Register("m", successfulHandler(), successfulHandler())
 	handlers, err := r.Elems("m")

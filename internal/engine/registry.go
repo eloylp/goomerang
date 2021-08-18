@@ -1,4 +1,4 @@
-package goomerang
+package engine
 
 import (
 	"fmt"
