@@ -17,13 +17,14 @@ import (
 type Handler func(ops Ops, msg proto.Message) error
 
 type Server struct {
-	intServer      *http.Server
-	c              []*websocket.Conn
-	L              *sync.Mutex
-	upgrader       *websocket.Upgrader
-	registry       message.Registry
-	onErrorHandler func(err error)
-	onCloseHandler func()
+	intServer       *http.Server
+	c               []*websocket.Conn
+	L               *sync.Mutex
+	upgrader        *websocket.Upgrader
+	registry        message.Registry
+	messageRegistry message.MessageRegistry
+	onErrorHandler  func(err error)
+	onCloseHandler  func()
 }
 
 func NewServer(opts ...Option) (*Server, error) {
@@ -36,10 +37,11 @@ func NewServer(opts ...Option) (*Server, error) {
 		intServer: &http.Server{
 			Addr: cfg.ListenURL,
 		},
-		onErrorHandler: cfg.ErrorHandler,
-		onCloseHandler: cfg.OnCloseHandler,
-		registry:       message.Registry{},
-		L:              &sync.Mutex{},
+		onErrorHandler:  cfg.ErrorHandler,
+		onCloseHandler:  cfg.OnCloseHandler,
+		registry:        message.Registry{},
+		messageRegistry: message.MessageRegistry{},
+		L:               &sync.Mutex{},
 	}
 	return s, nil
 }
@@ -72,13 +74,31 @@ func (s *Server) ServerMainHandler() http.HandlerFunc {
 				break
 			}
 			if m == websocket.BinaryMessage {
-				msg, handlers, err := message.UnPack(s.registry, data)
+				frame, err := message.UnPack(data)
 				if err != nil {
 					s.onErrorHandler(err)
 					continue
 				}
+				var currentOpts Ops = sOpts
+				if frame.Uuid != "" {
+					currentOpts = &serverOptsReqRep{c: c, s: s, frameUuid: frame.Uuid}
+				}
+				msg, err := s.messageRegistry.Message(frame.Type)
+				if err != nil {
+					s.onErrorHandler(err)
+					continue
+				}
+				handlers, err := s.registry.Handler(frame.Type)
+				if err != nil {
+					s.onErrorHandler(err)
+					continue
+				}
+				if err := proto.Unmarshal(frame.Payload, msg); err != nil {
+					s.onErrorHandler(err)
+					continue
+				}
 				for _, h := range handlers {
-					if err = h.(Handler)(sOpts, msg); err != nil {
+					if err = h.(Handler)(currentOpts, msg); err != nil {
 						s.onErrorHandler(fmt.Errorf("server handler err: %w", err))
 					}
 				}
@@ -92,7 +112,9 @@ func (s *Server) RegisterHandler(msg proto.Message, handlers ...Handler) {
 	for i := 0; i < len(handlers); i++ {
 		his[i] = handlers[i]
 	}
-	s.registry.Register(msg, his...)
+	fqdn := message.FQDN(msg)
+	s.messageRegistry.Register(fqdn, msg)
+	s.registry.Register(fqdn, his...)
 }
 
 func (s *Server) Send(ctx context.Context, msg proto.Message) error {

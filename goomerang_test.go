@@ -272,3 +272,28 @@ func TestServerSendWhenClientClosed(t *testing.T) {
 	msg := &testMessages.GreetV1{Message: "Hi!"}
 	require.ErrorIs(t, s.Send(defaultCtx, msg), server.ErrClientDisconnected)
 }
+
+func TestRequestReplyPattern(t *testing.T) {
+	s := PrepareServer(t)
+	defer s.Shutdown(defaultCtx)
+
+	s.RegisterHandler(&testMessages.PingPong{}, func(ops server.Ops, msg proto.Message) error {
+		if err := ops.Send(defaultCtx, &testMessages.PingPong{Message: "pong !"}); err != nil {
+			return err
+		}
+		return nil
+	})
+
+	c := PrepareClient(t)
+	defer c.Close()
+
+	c.RegisterMessage(&testMessages.PingPong{})
+
+	msg := &testMessages.PingPong{Message: "ping"}
+
+	reply, err := c.SendSync(defaultCtx, msg)
+	require.NoError(t, err)
+	repMsg := reply.(*testMessages.PingPong)
+
+	require.Equal(t, "pong !", repMsg.Message)
+}

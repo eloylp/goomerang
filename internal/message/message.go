@@ -8,11 +8,13 @@ import (
 	"go.eloylp.dev/goomerang/internal/message/protocol"
 )
 
+type FrameOption func(f *protocol.Frame)
+
 func FQDN(msg proto.Message) string {
 	return string(msg.ProtoReflect().Descriptor().FullName())
 }
 
-func Pack(msg proto.Message) ([]byte, error) {
+func Pack(msg proto.Message, opts ...FrameOption) ([]byte, error) {
 	payload, err := proto.Marshal(msg)
 	if err != nil {
 		return nil, err
@@ -21,6 +23,9 @@ func Pack(msg proto.Message) ([]byte, error) {
 		Type:    FQDN(msg),
 		Payload: payload,
 	}
+	for _, opt := range opts {
+		opt(envelope)
+	}
 	bytes, err := proto.Marshal(envelope)
 	if err != nil {
 		return nil, err
@@ -28,17 +33,16 @@ func Pack(msg proto.Message) ([]byte, error) {
 	return bytes, nil
 }
 
-func UnPack(registry Registry, data []byte) (proto.Message, []interface{}, error) {
+func UnPack(data []byte) (*protocol.Frame, error) {
 	frame := &protocol.Frame{}
 	if err := proto.Unmarshal(data, frame); err != nil {
-		return nil, nil, fmt.Errorf("protocol decoding err: %w", err)
+		return nil, fmt.Errorf("protocol decoding err: %w", err)
 	}
-	msg, handlers, err := registry.Handler(frame.GetType())
-	if err != nil {
-		return nil, nil, fmt.Errorf("handler registry: %w", err)
+	return frame, nil
+}
+
+func FrameWithUuid(uuid string) FrameOption {
+	return func(f *protocol.Frame) {
+		f.Uuid = uuid
 	}
-	if err = proto.Unmarshal(frame.Payload, msg); err != nil {
-		return nil, nil, fmt.Errorf("payload decoding err: %w", err)
-	}
-	return msg, handlers, nil
 }

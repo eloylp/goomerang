@@ -7,22 +7,27 @@ import (
 	"net/url"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/gorilla/websocket"
 	"google.golang.org/protobuf/proto"
 
 	"go.eloylp.dev/goomerang/internal/message"
+	testMessages "go.eloylp.dev/goomerang/internal/message/test"
 )
 
 type Handler func(ops Ops, msg proto.Message) error
 
 type Client struct {
-	ServerURL      url.URL
-	registry       message.Registry
-	clientOps      *clientOps
-	c              *websocket.Conn
-	dialer         *websocket.Dialer
-	onCloseHandler func()
-	onErrorHandler func(err error)
+	ServerURL       url.URL
+	registry        message.Registry
+	messageRegistry message.MessageRegistry
+	clientOps       *clientOps
+	c               *websocket.Conn
+	dialer          *websocket.Dialer
+	onCloseHandler  func()
+	onErrorHandler  func(err error)
+	reqRepRegistry  map[string]chan proto.Message
+	ids             uint64
 }
 
 func NewClient(opts ...Option) (*Client, error) {
@@ -38,7 +43,9 @@ func NewClient(opts ...Option) (*Client, error) {
 			Proxy:            http.ProxyFromEnvironment,
 			HandshakeTimeout: 45 * time.Second, // TODO parametrize this.
 		},
-		registry: message.Registry{},
+		registry:        message.Registry{},
+		messageRegistry: message.MessageRegistry{},
+		reqRepRegistry:  map[string]chan proto.Message{},
 	}
 	c.clientOps = &clientOps{c: c}
 	return c, nil
@@ -74,7 +81,31 @@ func (c *Client) startReceiver() {
 				return
 			}
 			if m == websocket.BinaryMessage {
-				msg, handlers, err := message.UnPack(c.registry, data)
+				frame, err := message.UnPack(data)
+				if err != nil {
+					c.onErrorHandler(err)
+					continue
+				}
+				msg, err := c.messageRegistry.Message(frame.Type)
+				if err != nil {
+					c.onErrorHandler(err)
+					continue
+				}
+				if err := proto.Unmarshal(frame.Payload, msg); err != nil {
+					c.onErrorHandler(err)
+					continue
+				}
+				if frame.Uuid != "" {
+					ch, ok := c.reqRepRegistry[frame.Uuid]
+					if !ok {
+						c.onErrorHandler(errors.New("frame is marked for req/rep tracking, but no channel receiver found in registry"))
+						continue
+					}
+					ch <- msg
+					delete(c.reqRepRegistry, frame.Uuid)
+					continue
+				}
+				handlers, err := c.registry.Handler(frame.Type)
 				if err != nil {
 					c.onErrorHandler(err)
 					continue
@@ -119,5 +150,41 @@ func (c *Client) RegisterHandler(msg proto.Message, handlers ...Handler) {
 	for i := 0; i < len(handlers); i++ {
 		his[i] = handlers[i]
 	}
-	c.registry.Register(msg, his...)
+	fqdn := message.FQDN(msg)
+	c.messageRegistry.Register(fqdn, msg)
+	c.registry.Register(fqdn, his...)
+}
+
+func (c *Client) SendSync(ctx context.Context, msg *testMessages.PingPong) (proto.Message, error) {
+	msgUuid := uuid.New().String()
+	data, err := message.Pack(msg, message.FrameWithUuid(msgUuid))
+	if err != nil {
+		return nil, err
+	}
+	resCh, err := c.interceptFrameID(msgUuid)
+	if err != nil {
+		return nil, err
+	}
+	if err := c.c.WriteMessage(websocket.BinaryMessage, data); err != nil {
+		if errors.Is(err, websocket.ErrCloseSent) {
+			return nil, ErrServerDisconnected
+		}
+		return nil, err
+	}
+	select {
+	case <-ctx.Done():
+		return nil, ctx.Err()
+	case respMsg := <-resCh:
+		return respMsg, nil
+	}
+}
+
+func (c *Client) interceptFrameID(uuid string) (chan proto.Message, error) {
+	repCh := make(chan proto.Message, 1)
+	c.reqRepRegistry[uuid] = repCh
+	return repCh, nil
+}
+
+func (c *Client) RegisterMessage(msg proto.Message) {
+	c.messageRegistry.Register(message.FQDN(msg), msg)
 }
