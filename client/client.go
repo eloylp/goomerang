@@ -3,7 +3,7 @@ package client
 import (
 	"context"
 	"errors"
-	"go.eloylp.dev/goomerang/internal/handler"
+	"go.eloylp.dev/goomerang"
 	"net/http"
 	"net/url"
 	"time"
@@ -20,7 +20,7 @@ type Handler func(ops Ops, msg proto.Message) error
 
 type Client struct {
 	ServerURL       url.URL
-	registry        handler.Registry
+	registry        goomerang.AppendableRegistry
 	messageRegistry message.Registry
 	clientOps       *clientOps
 	c               *websocket.Conn
@@ -44,7 +44,7 @@ func NewClient(opts ...Option) (*Client, error) {
 			Proxy:            http.ProxyFromEnvironment,
 			HandshakeTimeout: 45 * time.Second, // TODO parametrize this.
 		},
-		registry:        handler.Registry{},
+		registry:        goomerang.AppendableRegistry{},
 		messageRegistry: message.Registry{},
 		reqRepRegistry:  map[string]chan proto.Message{},
 	}
@@ -106,7 +106,7 @@ func (c *Client) startReceiver() {
 					delete(c.reqRepRegistry, frame.Uuid)
 					continue
 				}
-				handlers, err := c.registry.Handler(frame.Type)
+				handlers, err := c.registry.Elems(frame.Type)
 				if err != nil {
 					c.onErrorHandler(err)
 					continue

@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"go.eloylp.dev/goomerang"
 	"net/http"
 	"sync"
 
@@ -11,7 +12,6 @@ import (
 	"github.com/hashicorp/go-multierror"
 	"google.golang.org/protobuf/proto"
 
-	"go.eloylp.dev/goomerang/internal/handler"
 	"go.eloylp.dev/goomerang/internal/message"
 )
 
@@ -22,7 +22,7 @@ type Server struct {
 	c               []*websocket.Conn
 	L               *sync.Mutex
 	upgrader        *websocket.Upgrader
-	registry        handler.Registry
+	registry        goomerang.AppendableRegistry
 	messageRegistry message.Registry
 	onErrorHandler  func(err error)
 	onCloseHandler  func()
@@ -40,7 +40,7 @@ func NewServer(opts ...Option) (*Server, error) {
 		},
 		onErrorHandler:  cfg.ErrorHandler,
 		onCloseHandler:  cfg.OnCloseHandler,
-		registry:        handler.Registry{},
+		registry:        goomerang.AppendableRegistry{},
 		messageRegistry: message.Registry{},
 		L:               &sync.Mutex{},
 	}
@@ -89,7 +89,7 @@ func (s *Server) ServerMainHandler() http.HandlerFunc {
 					s.onErrorHandler(err)
 					continue
 				}
-				handlers, err := s.registry.Handler(frame.Type)
+				handlers, err := s.registry.Elems(frame.Type)
 				if err != nil {
 					s.onErrorHandler(err)
 					continue
