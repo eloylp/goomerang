@@ -76,37 +76,41 @@ func (s *Server) ServerMainHandler() http.HandlerFunc {
 				break
 			}
 			if m == websocket.BinaryMessage {
-				frame, err := message.UnPack(data)
-				if err != nil {
+				if err := s.process(c, data, sOpts); err != nil {
 					s.onErrorHandler(err)
 					continue
-				}
-				var currentOpts Ops = sOpts
-				if frame.Uuid != "" {
-					currentOpts = &serverOptsReqRep{c: c, s: s, frameUuid: frame.Uuid}
-				}
-				msg, err := s.messageRegistry.Message(frame.Type)
-				if err != nil {
-					s.onErrorHandler(err)
-					continue
-				}
-				handlers, err := s.registry.Elems(frame.Type)
-				if err != nil {
-					s.onErrorHandler(err)
-					continue
-				}
-				if err := proto.Unmarshal(frame.Payload, msg); err != nil {
-					s.onErrorHandler(err)
-					continue
-				}
-				for _, h := range handlers {
-					if err = h.(Handler)(currentOpts, msg); err != nil {
-						s.onErrorHandler(fmt.Errorf("server handler err: %w", err))
-					}
 				}
 			}
 		}
 	}
+}
+
+func (s *Server) process(c *websocket.Conn, data []byte, sOpts Ops) error {
+	frame, err := message.UnPack(data)
+	if err != nil {
+		return err
+	}
+	var currentOpts Ops = sOpts
+	if frame.Uuid != "" {
+		currentOpts = &serverOptsReqRep{c: c, s: s, frameUuid: frame.Uuid}
+	}
+	msg, err := s.messageRegistry.Message(frame.Type)
+	if err != nil {
+		return err
+	}
+	handlers, err := s.registry.Elems(frame.Type)
+	if err != nil {
+		return err
+	}
+	if err := proto.Unmarshal(frame.Payload, msg); err != nil {
+		return err
+	}
+	for _, h := range handlers {
+		if err = h.(Handler)(currentOpts, msg); err != nil {
+			s.onErrorHandler(fmt.Errorf("server handler err: %w", err))
+		}
+	}
+	return nil
 }
 
 func (s *Server) RegisterHandler(msg proto.Message, handlers ...Handler) {
