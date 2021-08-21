@@ -41,7 +41,7 @@ func UnPack(data []byte) (*protocol.Frame, error) {
 	return frame, nil
 }
 
-func FrameWithUuid(uuid string) FrameOption {
+func FrameWithUUID(uuid string) FrameOption {
 	return func(f *protocol.Frame) {
 		f.Uuid = uuid
 	}

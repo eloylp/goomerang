@@ -1,8 +1,9 @@
 package client
 
 import (
-	"go.eloylp.dev/goomerang/server"
 	"google.golang.org/protobuf/proto"
+
+	"go.eloylp.dev/goomerang/server"
 )
 
 type MultiReply struct {

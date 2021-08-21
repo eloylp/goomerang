@@ -112,7 +112,7 @@ func (s *Server) processMessage(c *websocket.Conn, data []byte, sOpts Ops) error
 	return nil
 }
 
-func (s *Server) doRPC(handlers []interface{}, c *websocket.Conn, frameUuid string, msg proto.Message) error {
+func (s *Server) doRPC(handlers []interface{}, c *websocket.Conn, frameUUID string, msg proto.Message) error {
 	ops := &serverOptsReqRep{}
 	multiReply := &protocol.MultiReply{}
 	replies := make([]*protocol.MultiReply_Reply, len(handlers))
@@ -133,7 +133,7 @@ func (s *Server) doRPC(handlers []interface{}, c *websocket.Conn, frameUuid stri
 		replies[i].MessageType = message.FQDN(msg)
 	}
 	multiReply.Replies = replies
-	responseMsg, err := message.Pack(multiReply, message.FrameWithUuid(frameUuid), message.FrameIsRPC())
+	responseMsg, err := message.Pack(multiReply, message.FrameWithUUID(frameUUID), message.FrameIsRPC())
 	if err != nil {
 		return err
 	}

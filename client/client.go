@@ -29,7 +29,6 @@ type Client struct {
 	onCloseHandler  func()
 	onErrorHandler  func(err error)
 	reqRepRegistry  map[string]chan *MultiReply
-	ids             uint64
 }
 
 func NewClient(opts ...Option) (*Client, error) {
@@ -122,8 +121,8 @@ func (c *Client) sendClosingSignal() error {
 	return c.conn.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, ""))
 }
 
-func (c *Client) doRPC(frameUuid string, msg proto.Message) error {
-	ch, ok := c.reqRepRegistry[frameUuid]
+func (c *Client) doRPC(frameUUID string, msg proto.Message) error {
+	ch, ok := c.reqRepRegistry[frameUUID]
 	if !ok {
 		return errors.New("frame is marked for req/rep tracking, but no channel receiver found in registry")
 	}
@@ -154,7 +153,7 @@ func (c *Client) doRPC(frameUuid string, msg proto.Message) error {
 		replies[i].Message = protoMsg
 	}
 	ch <- multiReply
-	delete(c.reqRepRegistry, frameUuid)
+	delete(c.reqRepRegistry, frameUUID)
 	return nil
 }
 
@@ -198,12 +197,12 @@ func (c *Client) RegisterHandler(msg proto.Message, handlers ...Handler) {
 }
 
 func (c *Client) RPC(ctx context.Context, msg proto.Message) (*MultiReply, error) {
-	msgUuid := uuid.New().String()
-	data, err := message.Pack(msg, message.FrameWithUuid(msgUuid), message.FrameIsRPC())
+	msgUUID := uuid.New().String()
+	data, err := message.Pack(msg, message.FrameWithUUID(msgUUID), message.FrameIsRPC())
 	if err != nil {
 		return nil, err
 	}
-	resCh, err := c.interceptFrameID(msgUuid)
+	resCh, err := c.interceptFrameID(msgUUID)
 	if err != nil {
 		return nil, err
 	}
@@ -221,9 +220,9 @@ func (c *Client) RPC(ctx context.Context, msg proto.Message) (*MultiReply, error
 	}
 }
 
-func (c *Client) interceptFrameID(uuid string) (chan *MultiReply, error) {
+func (c *Client) interceptFrameID(uid string) (chan *MultiReply, error) {
 	repCh := make(chan *MultiReply, 1)
-	c.reqRepRegistry[uuid] = repCh
+	c.reqRepRegistry[uid] = repCh
 	return repCh, nil
 }
 
