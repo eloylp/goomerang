@@ -13,9 +13,10 @@ import (
 
 	"go.eloylp.dev/goomerang/internal/engine"
 	"go.eloylp.dev/goomerang/internal/message"
+	"go.eloylp.dev/goomerang/internal/message/protocol"
 )
 
-type Handler func(ops Ops, msg proto.Message) error
+type Handler func(ops Ops, msg proto.Message) *HandlerError
 
 type Server struct {
 	intServer       *http.Server
@@ -76,7 +77,7 @@ func (s *Server) ServerMainHandler() http.HandlerFunc {
 				break
 			}
 			if m == websocket.BinaryMessage {
-				if err := s.process(c, data, sOpts); err != nil {
+				if err := s.processMessage(c, data, sOpts); err != nil {
 					s.onErrorHandler(err)
 					continue
 				}
@@ -85,14 +86,10 @@ func (s *Server) ServerMainHandler() http.HandlerFunc {
 	}
 }
 
-func (s *Server) process(c *websocket.Conn, data []byte, sOpts Ops) error {
+func (s *Server) processMessage(c *websocket.Conn, data []byte, sOpts Ops) error {
 	frame, err := message.UnPack(data)
 	if err != nil {
 		return err
-	}
-	var currentOpts Ops = sOpts
-	if frame.Uuid != "" {
-		currentOpts = &serverOptsReqRep{c: c, s: s, frameUuid: frame.Uuid}
 	}
 	msg, err := s.messageRegistry.Message(frame.Type)
 	if err != nil {
@@ -105,12 +102,53 @@ func (s *Server) process(c *websocket.Conn, data []byte, sOpts Ops) error {
 	if err := proto.Unmarshal(frame.Payload, msg); err != nil {
 		return err
 	}
+	if frame.IsRpc {
+		if err := s.processRepRepl(handlers, c, frame.Uuid, msg); err != nil {
+			return err
+		}
+		return nil
+	}
+	s.processAsync(handlers, sOpts, msg)
+	return nil
+}
+
+func (s *Server) processRepRepl(handlers []interface{}, c *websocket.Conn, frameUuid string, msg proto.Message) error {
+	ops := &serverOptsReqRep{}
+	multiReply := &protocol.MultiReply{}
+	replies := make([]*protocol.MultiReply_Reply, len(handlers))
+	for i := 0; i < len(handlers); i++ {
+		replies[i] = &protocol.MultiReply_Reply{}
+		if err := handlers[i].(Handler)(ops, msg); err != nil {
+			replies[i].Error = &protocol.MultiReply_Error{
+				Message: err.Message,
+				Code:    err.Code,
+			}
+			continue
+		}
+		data, err := proto.Marshal(ops.Index(i))
+		if err != nil {
+			return err
+		}
+		replies[i].Message = data
+		replies[i].MessageType = message.FQDN(msg)
+	}
+	multiReply.Replies = replies
+	responseMsg, err := message.Pack(multiReply, message.FrameWithUuid(frameUuid), message.FrameIsRPC())
+	if err != nil {
+		return err
+	}
+	if err := c.WriteMessage(websocket.BinaryMessage, responseMsg); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (s *Server) processAsync(handlers []interface{}, ops Ops, msg proto.Message) {
 	for _, h := range handlers {
-		if err = h.(Handler)(currentOpts, msg); err != nil {
+		if err := h.(Handler)(ops, msg); err != nil {
 			s.onErrorHandler(fmt.Errorf("server handler err: %w", err))
 		}
 	}
-	return nil
 }
 
 func (s *Server) RegisterHandler(msg proto.Message, handlers ...Handler) {

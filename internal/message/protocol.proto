@@ -6,6 +6,19 @@ option go_package = "protocol/";
 message Frame {
   string uuid = 1;
   string type = 2;
-  bytes payload = 3;
+  bool is_rpc = 3;
+  bytes payload = 4;
 }
 
+message MultiReply {
+  message Reply {
+    string messageType = 1;
+    bytes message = 2;
+    Error error = 3;
+  }
+  message Error {
+    string message = 1;
+    int32 code = 2;
+  }
+  repeated Reply replies = 4;
+}

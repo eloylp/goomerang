@@ -32,19 +32,18 @@ func (so *serverOpts) Shutdown(ctx context.Context) error {
 }
 
 type serverOptsReqRep struct {
-	s         *Server
-	c         *websocket.Conn
-	frameUuid string
+	replies []proto.Message
 }
 
 func (so *serverOptsReqRep) Send(ctx context.Context, msg proto.Message) error {
-	m, err := message.Pack(msg, message.FrameWithUuid(so.frameUuid))
-	if err != nil {
-		return err
-	}
-	return so.c.WriteMessage(websocket.BinaryMessage, m)
+	so.replies = append(so.replies, msg)
+	return nil
 }
 
 func (so *serverOptsReqRep) Shutdown(ctx context.Context) error {
-	return so.s.Shutdown(ctx)
+	return nil
+}
+
+func (so *serverOptsReqRep) Index(i int) proto.Message {
+	return so.replies[i]
 }

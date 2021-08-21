@@ -46,3 +46,9 @@ func FrameWithUuid(uuid string) FrameOption {
 		f.Uuid = uuid
 	}
 }
+
+func FrameIsRPC() FrameOption {
+	return func(f *protocol.Frame) {
+		f.IsRpc = true
+	}
+}

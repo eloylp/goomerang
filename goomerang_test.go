@@ -19,12 +19,12 @@ func TestPingPongServer(t *testing.T) {
 	arbiter := NewArbiter(t)
 	s := PrepareServer(t)
 	defer s.Shutdown(defaultCtx)
-	s.RegisterHandler(&testMessages.PingPong{}, func(s server.Ops, msg proto.Message) error {
+	s.RegisterHandler(&testMessages.PingPong{}, func(s server.Ops, msg proto.Message) *server.HandlerError {
 		_ = msg.(*testMessages.PingPong)
 		if err := s.Send(defaultCtx, &testMessages.PingPong{
 			Message: "pong",
 		}); err != nil {
-			return err
+			return server.NewHandlerError("sd")
 		}
 		arbiter.ItsAFactThat("SERVER_RECEIVED_PING")
 		return nil
@@ -49,15 +49,15 @@ func TestMultipleHandlersArePossibleInServer(t *testing.T) {
 	defer s.Shutdown(context.Background())
 	arbiter := NewArbiter(t)
 	m := &testMessages.GreetV1{Message: "Hi !"}
-	h := func(ops server.Ops, msg proto.Message) error {
+	h := func(ops server.Ops, msg proto.Message) *server.HandlerError {
 		arbiter.ItsAFactThat("HANDLER1_CALLED")
 		return nil
 	}
-	h2 := func(ops server.Ops, msg proto.Message) error {
+	h2 := func(ops server.Ops, msg proto.Message) *server.HandlerError {
 		arbiter.ItsAFactThat("HANDLER2_CALLED")
 		return nil
 	}
-	h3 := func(ops server.Ops, msg proto.Message) error {
+	h3 := func(ops server.Ops, msg proto.Message) *server.HandlerError {
 		arbiter.ItsAFactThat("HANDLER3_CALLED")
 		return nil
 	}
@@ -105,13 +105,13 @@ func TestMultipleHandlersArePossibleInClient(t *testing.T) {
 func TestServerErrorHandler(t *testing.T) {
 	arbiter := NewArbiter(t)
 	s := PrepareServer(t, server.WithErrorHandler(func(err error) {
-		if err != nil && err.Error() == "server handler err: a handler error" {
+		if err != nil {
 			arbiter.ItsAFactThat("ERROR_HANDLER_WORKS")
 		}
 	}))
 	defer s.Shutdown(defaultCtx)
-	s.RegisterHandler(&testMessages.PingPong{}, func(ops server.Ops, msg proto.Message) error {
-		return errors.New("a handler error")
+	s.RegisterHandler(&testMessages.PingPong{}, func(ops server.Ops, msg proto.Message) *server.HandlerError {
+		return server.NewHandlerError("a handler error")
 	})
 
 	c1 := PrepareClient(t)
@@ -158,13 +158,17 @@ func TestServerSupportMultipleClients(t *testing.T) {
 	s := PrepareServer(t, server.WithErrorHandler(func(err error) {
 		arbiter.ErrorHappened(err)
 	}))
-	s.RegisterHandler(&testMessages.PingPong{}, func(ops server.Ops, msg proto.Message) error {
+	s.RegisterHandler(&testMessages.PingPong{}, func(ops server.Ops, msg proto.Message) *server.HandlerError {
 		pingMsg, ok := msg.(*testMessages.PingPong)
 		if !ok {
-			return errors.New("cannot type assert message")
+			return server.NewHandlerError("cannot type assert message")
 		}
 		arbiter.ItsAFactThat("SERVER_RECEIVED_FROM_CLIENT_" + pingMsg.Message)
-		return ops.Send(defaultCtx, &testMessages.PingPong{Message: pingMsg.Message})
+		err := ops.Send(defaultCtx, &testMessages.PingPong{Message: pingMsg.Message})
+		if err != nil {
+			return server.NewHandlerError(err.Error())
+		}
+		return nil
 	})
 	defer s.Shutdown(defaultCtx)
 
@@ -277,12 +281,17 @@ func TestRequestReplyPattern(t *testing.T) {
 	s := PrepareServer(t)
 	defer s.Shutdown(defaultCtx)
 
-	s.RegisterHandler(&testMessages.PingPong{}, func(ops server.Ops, msg proto.Message) error {
+	h1 := func(ops server.Ops, msg proto.Message) *server.HandlerError {
 		if err := ops.Send(defaultCtx, &testMessages.PingPong{Message: "pong !"}); err != nil {
-			return err
+			return server.NewHandlerError(err.Error())
 		}
 		return nil
-	})
+	}
+	h2 := func(ops server.Ops, msg proto.Message) *server.HandlerError {
+		return server.NewHandlerErrorWith("happened at handler !", 500)
+	}
+
+	s.RegisterHandler(&testMessages.PingPong{}, h1, h2)
 
 	c := PrepareClient(t)
 	defer c.Close()
@@ -291,9 +300,14 @@ func TestRequestReplyPattern(t *testing.T) {
 
 	msg := &testMessages.PingPong{Message: "ping"}
 
-	reply, err := c.SendSync(defaultCtx, msg)
+	replies, err := c.RPC(defaultCtx, msg)
 	require.NoError(t, err)
-	repMsg := reply.(*testMessages.PingPong)
 
-	require.Equal(t, "pong !", repMsg.Message)
+	repMsg1 := replies.First()
+	require.Nil(t, repMsg1.Err)
+	require.Equal(t, "pong !", repMsg1.Message.(*testMessages.PingPong).Message)
+
+	repMsg2 := replies.Index(1)
+	require.Equal(t, "happened at handler !", repMsg2.Err.Message)
+	require.Equal(t, int32(500), repMsg2.Err.Code)
 }
