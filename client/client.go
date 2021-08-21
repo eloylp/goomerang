@@ -99,7 +99,7 @@ func (c *Client) startReceiver() {
 					continue
 				}
 				if frame.IsRpc {
-					if err := c.processMultiReply(frame.Uuid, msg); err != nil {
+					if err := c.doRPC(frame.Uuid, msg); err != nil {
 						c.onErrorHandler(err)
 					}
 					continue
@@ -119,7 +119,7 @@ func (c *Client) startReceiver() {
 	}()
 }
 
-func (c *Client) processMultiReply(frameUuid string, msg proto.Message) error {
+func (c *Client) doRPC(frameUuid string, msg proto.Message) error {
 	ch, ok := c.reqRepRegistry[frameUuid]
 	if !ok {
 		return errors.New("frame is marked for req/rep tracking, but no channel receiver found in registry")
