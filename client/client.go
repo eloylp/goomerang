@@ -202,10 +202,7 @@ func (c *Client) RPC(ctx context.Context, msg proto.Message) (*MultiReply, error
 	if err != nil {
 		return nil, err
 	}
-	resCh, err := c.interceptFrameID(msgUUID)
-	if err != nil {
-		return nil, err
-	}
+	resCh := c.interceptFrameID(msgUUID)
 	if err := c.writeMessage(data); err != nil {
 		if errors.Is(err, websocket.ErrCloseSent) {
 			return nil, ErrServerDisconnected
@@ -220,10 +217,10 @@ func (c *Client) RPC(ctx context.Context, msg proto.Message) (*MultiReply, error
 	}
 }
 
-func (c *Client) interceptFrameID(uid string) (chan *MultiReply, error) {
+func (c *Client) interceptFrameID(uid string) chan *MultiReply {
 	repCh := make(chan *MultiReply, 1)
 	c.reqRepRegistry[uid] = repCh
-	return repCh, nil
+	return repCh
 }
 
 func (c *Client) RegisterMessage(msg proto.Message) {
