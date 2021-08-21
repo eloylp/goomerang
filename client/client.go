@@ -37,9 +37,8 @@ func NewClient(opts ...Option) (*Client, error) {
 	for _, o := range opts {
 		o(cfg)
 	}
-	serverURL := url.URL{Scheme: "ws", Host: cfg.TargetServer, Path: "/ws"}
 	c := &Client{
-		ServerURL:      serverURL,
+		ServerURL:      url.URL{Scheme: "ws", Host: cfg.TargetServer, Path: "/ws"},
 		onCloseHandler: cfg.OnCloseHandler,
 		dialer: &websocket.Dialer{
 			Proxy:            http.ProxyFromEnvironment,
