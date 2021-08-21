@@ -21,7 +21,7 @@ type Handler func(ops Ops, msg proto.Message) error
 
 type Client struct {
 	ServerURL       url.URL
-	registry        engine.AppendableRegistry
+	handlerRegistry engine.AppendableRegistry
 	messageRegistry message.Registry
 	clientOps       *clientOps
 	c               *websocket.Conn
@@ -45,7 +45,7 @@ func NewClient(opts ...Option) (*Client, error) {
 			Proxy:            http.ProxyFromEnvironment,
 			HandshakeTimeout: 45 * time.Second, // TODO parametrize this.
 		},
-		registry:        engine.AppendableRegistry{},
+		handlerRegistry: engine.AppendableRegistry{},
 		messageRegistry: message.Registry{},
 		reqRepRegistry:  map[string]chan *MultiReply{},
 	}
@@ -104,7 +104,7 @@ func (c *Client) startReceiver() {
 					}
 					continue
 				}
-				handlers, err := c.registry.Elems(frame.Type)
+				handlers, err := c.handlerRegistry.Elems(frame.Type)
 				if err != nil {
 					c.onErrorHandler(err)
 					continue
@@ -187,7 +187,7 @@ func (c *Client) RegisterHandler(msg proto.Message, handlers ...Handler) {
 	}
 	fqdn := message.FQDN(msg)
 	c.messageRegistry.Register(fqdn, msg)
-	c.registry.Register(fqdn, his...)
+	c.handlerRegistry.Register(fqdn, his...)
 }
 
 func (c *Client) RPC(ctx context.Context, msg proto.Message) (*MultiReply, error) {

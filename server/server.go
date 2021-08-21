@@ -23,7 +23,7 @@ type Server struct {
 	c               map[*websocket.Conn]struct{}
 	L               *sync.Mutex
 	upgrader        *websocket.Upgrader
-	registry        engine.AppendableRegistry
+	handlerRegistry engine.AppendableRegistry
 	messageRegistry message.Registry
 	onErrorHandler  func(err error)
 	onCloseHandler  func()
@@ -41,7 +41,7 @@ func NewServer(opts ...Option) (*Server, error) {
 		},
 		onErrorHandler:  cfg.ErrorHandler,
 		onCloseHandler:  cfg.OnCloseHandler,
-		registry:        engine.AppendableRegistry{},
+		handlerRegistry: engine.AppendableRegistry{},
 		messageRegistry: message.Registry{},
 		c:               map[*websocket.Conn]struct{}{},
 		L:               &sync.Mutex{},
@@ -95,7 +95,7 @@ func (s *Server) processMessage(c *websocket.Conn, data []byte, sOpts Ops) error
 	if err != nil {
 		return err
 	}
-	handlers, err := s.registry.Elems(frame.Type)
+	handlers, err := s.handlerRegistry.Elems(frame.Type)
 	if err != nil {
 		return err
 	}
@@ -158,7 +158,7 @@ func (s *Server) RegisterHandler(msg proto.Message, handlers ...Handler) {
 	}
 	fqdn := message.FQDN(msg)
 	s.messageRegistry.Register(fqdn, msg)
-	s.registry.Register(fqdn, his...)
+	s.handlerRegistry.Register(fqdn, his...)
 }
 
 func (s *Server) Send(ctx context.Context, msg proto.Message) error {
