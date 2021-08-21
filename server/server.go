@@ -68,7 +68,7 @@ func (s *Server) ServerMainHandler() http.HandlerFunc {
 				var closeErr *websocket.CloseError
 				if errors.As(err, &closeErr) {
 					if closeErr.Code == websocket.CloseNormalClosure {
-						_ = c.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, ""))
+						_ = s.sendClosingSignal(c)
 						s.onCloseHandler()
 						return
 					}
@@ -137,10 +137,14 @@ func (s *Server) doRPC(handlers []interface{}, c *websocket.Conn, frameUuid stri
 	if err != nil {
 		return err
 	}
-	if err := c.WriteMessage(websocket.BinaryMessage, responseMsg); err != nil {
+	if err := s.writeMessage(c, responseMsg); err != nil {
 		return err
 	}
 	return nil
+}
+
+func (s *Server) writeMessage(c *websocket.Conn, responseMsg []byte) error {
+	return c.WriteMessage(websocket.BinaryMessage, responseMsg)
 }
 
 func (s *Server) processAsync(handlers []interface{}, ops Ops, msg proto.Message) {
@@ -196,7 +200,7 @@ func (s *Server) Shutdown(ctx context.Context) error {
 	var errList error
 	var count int
 	for conn := range s.c {
-		err := conn.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, ""))
+		err := s.sendClosingSignal(conn)
 		if err != nil && err != websocket.ErrCloseSent && count < 100 {
 			errList = multierror.Append(errList, err)
 			count++
@@ -207,4 +211,8 @@ func (s *Server) Shutdown(ctx context.Context) error {
 	}
 	// TODO. This must be done gracefully.
 	return s.intServer.Shutdown(ctx)
+}
+
+func (s *Server) sendClosingSignal(conn *websocket.Conn) error {
+	return conn.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, ""))
 }

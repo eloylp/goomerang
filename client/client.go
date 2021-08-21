@@ -74,7 +74,7 @@ func (c *Client) startReceiver() {
 				var closeErr *websocket.CloseError
 				if errors.As(err, &closeErr) {
 					if closeErr.Code == websocket.CloseNormalClosure {
-						_ = c.conn.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, ""))
+						_ = c.sendClosingSignal()
 						c.onCloseHandler()
 						return
 					}
@@ -118,6 +118,10 @@ func (c *Client) startReceiver() {
 	}()
 }
 
+func (c *Client) sendClosingSignal() error {
+	return c.conn.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, ""))
+}
+
 func (c *Client) doRPC(frameUuid string, msg proto.Message) error {
 	ch, ok := c.reqRepRegistry[frameUuid]
 	if !ok {
@@ -159,7 +163,7 @@ func (c *Client) Send(ctx context.Context, msg proto.Message) error {
 	if err != nil {
 		return err
 	}
-	if err := c.conn.WriteMessage(websocket.BinaryMessage, data); err != nil {
+	if err := c.writeMessage(data); err != nil {
 		if errors.Is(err, websocket.ErrCloseSent) {
 			return ErrServerDisconnected
 		}
@@ -168,8 +172,12 @@ func (c *Client) Send(ctx context.Context, msg proto.Message) error {
 	return nil
 }
 
+func (c *Client) writeMessage(data []byte) error {
+	return c.conn.WriteMessage(websocket.BinaryMessage, data)
+}
+
 func (c *Client) Close() error {
-	err := c.conn.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, ""))
+	err := c.sendClosingSignal()
 	if err != nil {
 		if errors.Is(err, websocket.ErrCloseSent) {
 			return ErrServerDisconnected
@@ -199,7 +207,7 @@ func (c *Client) RPC(ctx context.Context, msg proto.Message) (*MultiReply, error
 	if err != nil {
 		return nil, err
 	}
-	if err := c.conn.WriteMessage(websocket.BinaryMessage, data); err != nil {
+	if err := c.writeMessage(data); err != nil {
 		if errors.Is(err, websocket.ErrCloseSent) {
 			return nil, ErrServerDisconnected
 		}
