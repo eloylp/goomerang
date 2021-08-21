@@ -24,7 +24,7 @@ type Client struct {
 	handlerRegistry engine.AppendableRegistry
 	messageRegistry message.Registry
 	clientOps       *clientOps
-	c               *websocket.Conn
+	conn            *websocket.Conn
 	dialer          *websocket.Dialer
 	onCloseHandler  func()
 	onErrorHandler  func(err error)
@@ -59,7 +59,7 @@ func (c *Client) Connect(ctx context.Context) error {
 		return err
 	}
 	defer resp.Body.Close()
-	c.c = conn
+	c.conn = conn
 
 	go c.startReceiver()
 
@@ -69,12 +69,12 @@ func (c *Client) Connect(ctx context.Context) error {
 func (c *Client) startReceiver() {
 	func() {
 		for {
-			m, data, err := c.c.ReadMessage()
+			m, data, err := c.conn.ReadMessage()
 			if err != nil {
 				var closeErr *websocket.CloseError
 				if errors.As(err, &closeErr) {
 					if closeErr.Code == websocket.CloseNormalClosure {
-						_ = c.c.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, ""))
+						_ = c.conn.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, ""))
 						c.onCloseHandler()
 						return
 					}
@@ -159,7 +159,7 @@ func (c *Client) Send(ctx context.Context, msg proto.Message) error {
 	if err != nil {
 		return err
 	}
-	if err := c.c.WriteMessage(websocket.BinaryMessage, data); err != nil {
+	if err := c.conn.WriteMessage(websocket.BinaryMessage, data); err != nil {
 		if errors.Is(err, websocket.ErrCloseSent) {
 			return ErrServerDisconnected
 		}
@@ -169,7 +169,7 @@ func (c *Client) Send(ctx context.Context, msg proto.Message) error {
 }
 
 func (c *Client) Close() error {
-	err := c.c.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, ""))
+	err := c.conn.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, ""))
 	if err != nil {
 		if errors.Is(err, websocket.ErrCloseSent) {
 			return ErrServerDisconnected
@@ -199,7 +199,7 @@ func (c *Client) RPC(ctx context.Context, msg proto.Message) (*MultiReply, error
 	if err != nil {
 		return nil, err
 	}
-	if err := c.c.WriteMessage(websocket.BinaryMessage, data); err != nil {
+	if err := c.conn.WriteMessage(websocket.BinaryMessage, data); err != nil {
 		if errors.Is(err, websocket.ErrCloseSent) {
 			return nil, ErrServerDisconnected
 		}
