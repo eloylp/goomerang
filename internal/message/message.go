@@ -19,14 +19,14 @@ func Pack(msg proto.Message, opts ...FrameOption) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	envelope := &protocol.Frame{
+	frame := &protocol.Frame{
 		Type:    FQDN(msg),
 		Payload: payload,
 	}
 	for _, opt := range opts {
-		opt(envelope)
+		opt(frame)
 	}
-	bytes, err := proto.Marshal(envelope)
+	bytes, err := proto.Marshal(frame)
 	if err != nil {
 		return nil, err
 	}
