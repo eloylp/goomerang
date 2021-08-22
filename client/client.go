@@ -117,46 +117,6 @@ func (c *Client) startReceiver() {
 	}()
 }
 
-func (c *Client) sendClosingSignal() error {
-	return c.conn.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, ""))
-}
-
-func (c *Client) doRPC(frameUUID string, msg proto.Message) error {
-	ch, ok := c.reqRepRegistry[frameUUID]
-	if !ok {
-		return errors.New("frame is marked for req/rep tracking, but no channel receiver found in registry")
-	}
-	protoMultiReply, ok := msg.(*protocol.MultiReply)
-	if !ok {
-		return errors.New("frame is marked for req/rep tracking, cannot cast to multi-reply message")
-	}
-	repliesCount := len(protoMultiReply.Replies)
-	multiReply := &MultiReply{}
-	replies := make([]*Reply, repliesCount)
-	multiReply.Replies = replies
-	for i := 0; i < repliesCount; i++ {
-		replies[i] = &Reply{}
-		if protoMultiReply.Replies[i].Error != nil {
-			replies[i].Err = server.NewHandlerErrorWith(
-				protoMultiReply.Replies[i].Error.Message,
-				protoMultiReply.Replies[i].Error.Code,
-			)
-			continue
-		}
-		protoMsg, err := c.messageRegistry.Message(protoMultiReply.Replies[i].MessageType)
-		if err != nil {
-			return errors.New("error parsing message in multi-reply")
-		}
-		if err := proto.Unmarshal(protoMultiReply.Replies[i].Message, protoMsg); err != nil {
-			return errors.New("error parsing message in multi-reply")
-		}
-		replies[i].Message = protoMsg
-	}
-	ch <- multiReply
-	delete(c.reqRepRegistry, frameUUID)
-	return nil
-}
-
 func (c *Client) Send(ctx context.Context, msg proto.Message) error {
 	data, err := message.Pack(msg)
 	if err != nil {
@@ -169,10 +129,6 @@ func (c *Client) Send(ctx context.Context, msg proto.Message) error {
 		return err
 	}
 	return nil
-}
-
-func (c *Client) writeMessage(data []byte) error {
-	return c.conn.WriteMessage(websocket.BinaryMessage, data)
 }
 
 func (c *Client) Close() error {
@@ -217,12 +173,56 @@ func (c *Client) RPC(ctx context.Context, msg proto.Message) (*MultiReply, error
 	}
 }
 
+func (c *Client) RegisterMessage(msg proto.Message) {
+	c.messageRegistry.Register(message.FQDN(msg), msg)
+}
+
 func (c *Client) interceptFrame(uid string) chan *MultiReply {
 	repCh := make(chan *MultiReply, 1)
 	c.reqRepRegistry[uid] = repCh
 	return repCh
 }
 
-func (c *Client) RegisterMessage(msg proto.Message) {
-	c.messageRegistry.Register(message.FQDN(msg), msg)
+func (c *Client) writeMessage(data []byte) error {
+	return c.conn.WriteMessage(websocket.BinaryMessage, data)
+}
+
+func (c *Client) sendClosingSignal() error {
+	return c.conn.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, ""))
+}
+
+func (c *Client) doRPC(frameUUID string, msg proto.Message) error {
+	ch, ok := c.reqRepRegistry[frameUUID]
+	if !ok {
+		return errors.New("frame is marked for req/rep tracking, but no channel receiver found in registry")
+	}
+	protoMultiReply, ok := msg.(*protocol.MultiReply)
+	if !ok {
+		return errors.New("frame is marked for req/rep tracking, cannot cast to multi-reply message")
+	}
+	repliesCount := len(protoMultiReply.Replies)
+	multiReply := &MultiReply{}
+	replies := make([]*Reply, repliesCount)
+	multiReply.Replies = replies
+	for i := 0; i < repliesCount; i++ {
+		replies[i] = &Reply{}
+		if protoMultiReply.Replies[i].Error != nil {
+			replies[i].Err = server.NewHandlerErrorWith(
+				protoMultiReply.Replies[i].Error.Message,
+				protoMultiReply.Replies[i].Error.Code,
+			)
+			continue
+		}
+		protoMsg, err := c.messageRegistry.Message(protoMultiReply.Replies[i].MessageType)
+		if err != nil {
+			return errors.New("error parsing message in multi-reply")
+		}
+		if err := proto.Unmarshal(protoMultiReply.Replies[i].Message, protoMsg); err != nil {
+			return errors.New("error parsing message in multi-reply")
+		}
+		replies[i].Message = protoMsg
+	}
+	ch <- multiReply
+	delete(c.reqRepRegistry, frameUUID)
+	return nil
 }
