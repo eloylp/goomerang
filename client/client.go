@@ -59,60 +59,58 @@ func (c *Client) Connect(ctx context.Context) error {
 	}
 	defer resp.Body.Close()
 	c.conn = conn
-	go c.startReceiver()
+	go c.receiver()
 	return nil
 }
 
-func (c *Client) startReceiver() {
-	func() {
-		for {
-			m, data, err := c.conn.ReadMessage()
-			if err != nil {
-				var closeErr *websocket.CloseError
-				if errors.As(err, &closeErr) {
-					if closeErr.Code == websocket.CloseNormalClosure {
-						_ = c.sendClosingSignal()
-						c.onCloseHandler()
-						return
-					}
+func (c *Client) receiver() {
+	for {
+		m, data, err := c.conn.ReadMessage()
+		if err != nil {
+			var closeErr *websocket.CloseError
+			if errors.As(err, &closeErr) {
+				if closeErr.Code == websocket.CloseNormalClosure {
+					_ = c.sendClosingSignal()
+					c.onCloseHandler()
+					return
 				}
-				c.onErrorHandler(err)
-				return
 			}
-			if m == websocket.BinaryMessage {
-				frame, err := message.UnPack(data)
-				if err != nil {
+			c.onErrorHandler(err)
+			return
+		}
+		if m == websocket.BinaryMessage {
+			frame, err := message.UnPack(data)
+			if err != nil {
+				c.onErrorHandler(err)
+				continue
+			}
+			msg, err := c.messageRegistry.Message(frame.Type)
+			if err != nil {
+				c.onErrorHandler(err)
+				continue
+			}
+			if err := proto.Unmarshal(frame.Payload, msg); err != nil {
+				c.onErrorHandler(err)
+				continue
+			}
+			if frame.IsRpc {
+				if err := c.doRPC(frame.Uuid, msg); err != nil {
 					c.onErrorHandler(err)
-					continue
 				}
-				msg, err := c.messageRegistry.Message(frame.Type)
-				if err != nil {
+				continue
+			}
+			handlers, err := c.handlerRegistry.Elems(frame.Type)
+			if err != nil {
+				c.onErrorHandler(err)
+				continue
+			}
+			for _, h := range handlers {
+				if err = h.(Handler)(c.clientOps, msg); err != nil {
 					c.onErrorHandler(err)
-					continue
-				}
-				if err := proto.Unmarshal(frame.Payload, msg); err != nil {
-					c.onErrorHandler(err)
-					continue
-				}
-				if frame.IsRpc {
-					if err := c.doRPC(frame.Uuid, msg); err != nil {
-						c.onErrorHandler(err)
-					}
-					continue
-				}
-				handlers, err := c.handlerRegistry.Elems(frame.Type)
-				if err != nil {
-					c.onErrorHandler(err)
-					continue
-				}
-				for _, h := range handlers {
-					if err = h.(Handler)(c.clientOps, msg); err != nil {
-						c.onErrorHandler(err)
-					}
 				}
 			}
 		}
-	}()
+	}
 }
 
 func (c *Client) Send(ctx context.Context, msg proto.Message) error {
