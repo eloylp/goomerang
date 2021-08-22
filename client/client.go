@@ -59,9 +59,7 @@ func (c *Client) Connect(ctx context.Context) error {
 	}
 	defer resp.Body.Close()
 	c.conn = conn
-
 	go c.startReceiver()
-
 	return nil
 }
 
