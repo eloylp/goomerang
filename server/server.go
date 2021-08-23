@@ -95,11 +95,11 @@ func (s *Server) processMessage(c *websocket.Conn, data []byte, sOpts Ops) error
 	if err != nil {
 		return err
 	}
-	handlers, err := s.handlerRegistry.Elems(frame.Type)
-	if err != nil {
+	if err := proto.Unmarshal(frame.Payload, msg); err != nil {
 		return err
 	}
-	if err := proto.Unmarshal(frame.Payload, msg); err != nil {
+	handlers, err := s.handlerRegistry.Elems(frame.Type)
+	if err != nil {
 		return err
 	}
 	if frame.IsRpc {
