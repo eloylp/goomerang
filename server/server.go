@@ -100,7 +100,7 @@ func (s *Server) readMessages(c *websocket.Conn) chan *receivedMessage {
 	go func() {
 		defer s.wg.Done()
 		for {
-			m, data, err := c.ReadMessage()
+			messageType, data, err := c.ReadMessage()
 			if err != nil {
 				var closeErr *websocket.CloseError
 				if errors.As(err, &closeErr) {
@@ -114,7 +114,7 @@ func (s *Server) readMessages(c *websocket.Conn) chan *receivedMessage {
 				return
 			}
 			ch <- &receivedMessage{
-				mType: m,
+				mType: messageType,
 				data:  data,
 			}
 		}

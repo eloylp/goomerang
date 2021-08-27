@@ -65,7 +65,7 @@ func (c *Client) Connect(ctx context.Context) error {
 
 func (c *Client) receiver() {
 	for {
-		m, data, err := c.conn.ReadMessage()
+		messageType, data, err := c.conn.ReadMessage()
 		if err != nil {
 			var closeErr *websocket.CloseError
 			if errors.As(err, &closeErr) {
@@ -78,7 +78,7 @@ func (c *Client) receiver() {
 			c.onErrorHandler(err)
 			return
 		}
-		if m == websocket.BinaryMessage {
+		if messageType == websocket.BinaryMessage {
 			frame, err := message.UnPack(data)
 			if err != nil {
 				c.onErrorHandler(err)
