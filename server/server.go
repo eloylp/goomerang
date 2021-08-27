@@ -256,7 +256,6 @@ func (s *Server) Shutdown(ctx context.Context) error {
 	case <-ctx.Done():
 		multiErr = multierror.Append(multiErr, ctx.Err())
 	case <-ch:
-
 	}
 	s.onCloseHandler()
 	return multiErr
