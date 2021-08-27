@@ -65,11 +65,9 @@ func (s *Server) ServerMainHandler() http.HandlerFunc {
 			s.onErrorHandler(err)
 			return
 		}
-		// Todo, extract this its own function "register connection"
-		s.L.Lock()
-		s.c[c] = struct{}{}
-		s.L.Unlock()
+		s.addConnection(c)
 		sOpts := &serverOpts{s, c}
+		defer s.removeConnection(c)
 		defer s.closeConnection(c)
 
 		messageReader := s.readMessages(c)
@@ -92,6 +90,18 @@ func (s *Server) ServerMainHandler() http.HandlerFunc {
 			}
 		}
 	}
+}
+
+func (s *Server) addConnection(c *websocket.Conn) {
+	s.L.Lock()
+	defer s.L.Unlock()
+	s.c[c] = struct{}{}
+}
+
+func (s *Server) removeConnection(c *websocket.Conn) {
+	s.L.Lock()
+	defer s.L.Unlock()
+	delete(s.c, c)
 }
 
 func (s *Server) readMessages(c *websocket.Conn) chan *receivedMessage {
@@ -240,8 +250,6 @@ func (s *Server) Run() error {
 }
 
 func (s *Server) Shutdown(ctx context.Context) error {
-	s.L.Lock()
-	defer s.L.Unlock()
 	var multiErr error
 	if err := s.intServer.Shutdown(ctx); err != nil {
 		multiErr = multierror.Append(multiErr, err)
@@ -262,7 +270,6 @@ func (s *Server) Shutdown(ctx context.Context) error {
 }
 
 func (s *Server) closeConnection(c *websocket.Conn) {
-	delete(s.c, c) // todo move this to upper level and extract to its function
 	if err := s.sendClosingSignal(c); err != nil {
 		s.onErrorHandler(err)
 	}
