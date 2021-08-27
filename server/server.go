@@ -22,6 +22,9 @@ type Server struct {
 	intServer       *http.Server
 	c               map[*websocket.Conn]struct{}
 	L               *sync.Mutex
+	wg              *sync.WaitGroup
+	ctx             context.Context
+	cancl           context.CancelFunc
 	upgrader        *websocket.Upgrader
 	handlerRegistry engine.AppendableRegistry
 	messageRegistry message.Registry
@@ -34,6 +37,7 @@ func NewServer(opts ...Option) (*Server, error) {
 	for _, o := range opts {
 		o(cfg)
 	}
+	ctx, cancl := context.WithCancel(context.Background())
 	s := &Server{
 		upgrader: &websocket.Upgrader{},
 		intServer: &http.Server{
@@ -45,23 +49,56 @@ func NewServer(opts ...Option) (*Server, error) {
 		messageRegistry: message.Registry{},
 		c:               map[*websocket.Conn]struct{}{},
 		L:               &sync.Mutex{},
+		cancl:           cancl,
+		wg:              &sync.WaitGroup{},
+		ctx:             ctx,
 	}
 	return s, nil
 }
 
 func (s *Server) ServerMainHandler() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		s.wg.Add(1)
+		defer s.wg.Done()
 		c, err := s.upgrader.Upgrade(w, r, nil)
 		if err != nil {
 			s.onErrorHandler(err)
 			return
 		}
+		// Todo, extract this its own function "register connection"
 		s.L.Lock()
 		s.c[c] = struct{}{}
 		s.L.Unlock()
 		sOpts := &serverOpts{s, c}
-		defer c.Close()
+		defer s.closeConnection(c)
 
+		messageReader := s.readMessages(c)
+
+		for {
+			select {
+			case <-s.ctx.Done():
+				s.onErrorHandler(s.ctx.Err())
+				return
+			case msg, ok := <-messageReader:
+				if !ok {
+					return
+				}
+				if msg.mType == websocket.BinaryMessage {
+					if err := s.processMessage(c, msg.data, sOpts); err != nil {
+						s.onErrorHandler(err)
+						continue
+					}
+				}
+			}
+		}
+	}
+}
+
+func (s *Server) readMessages(c *websocket.Conn) chan *receivedMessage {
+	ch := make(chan *receivedMessage)
+	s.wg.Add(1)
+	go func() {
+		defer s.wg.Done()
 		for {
 			m, data, err := c.ReadMessage()
 			if err != nil {
@@ -69,21 +106,25 @@ func (s *Server) ServerMainHandler() http.HandlerFunc {
 				if errors.As(err, &closeErr) {
 					if closeErr.Code == websocket.CloseNormalClosure {
 						_ = s.sendClosingSignal(c)
-						s.onCloseHandler()
-						return
 					}
-				}
-				s.onErrorHandler(err)
-				break
-			}
-			if m == websocket.BinaryMessage {
-				if err := s.processMessage(c, data, sOpts); err != nil {
+				} else {
 					s.onErrorHandler(err)
-					continue
 				}
+				close(ch)
+				return
+			}
+			ch <- &receivedMessage{
+				mType: m,
+				data:  data,
 			}
 		}
-	}
+	}()
+	return ch
+}
+
+type receivedMessage struct {
+	mType int
+	data  []byte
 }
 
 func (s *Server) processMessage(c *websocket.Conn, data []byte, sOpts Ops) error {
@@ -191,26 +232,41 @@ func (s *Server) Send(ctx context.Context, msg proto.Message) error {
 
 func (s *Server) Run() error {
 	s.intServer.Handler = s.ServerMainHandler()
-	return s.intServer.ListenAndServe()
+	if err := s.intServer.ListenAndServe(); err != http.ErrServerClosed {
+		s.onErrorHandler(err)
+		return err
+	}
+	return nil
 }
 
 func (s *Server) Shutdown(ctx context.Context) error {
 	s.L.Lock()
 	defer s.L.Unlock()
-	var errList error
-	var count int
-	for conn := range s.c {
-		err := s.sendClosingSignal(conn)
-		if err != nil && err != websocket.ErrCloseSent && count < 100 {
-			errList = multierror.Append(errList, err)
-			count++
-		}
+	var multiErr error
+	if err := s.intServer.Shutdown(ctx); err != nil {
+		multiErr = multierror.Append(multiErr, err)
 	}
-	if errList != nil {
-		return errList
+	s.cancl()
+	ch := make(chan struct{})
+	go func() {
+		s.wg.Wait()
+		ch <- struct{}{}
+	}()
+	select {
+	case <-ctx.Done():
+		multiErr = multierror.Append(multiErr, ctx.Err())
+	case <-ch:
+
 	}
-	// TODO. This must be done gracefully.
-	return s.intServer.Shutdown(ctx)
+	s.onCloseHandler()
+	return multiErr
+}
+
+func (s *Server) closeConnection(c *websocket.Conn) {
+	delete(s.c, c) // todo move this to upper level and extract to its function
+	if err := s.sendClosingSignal(c); err != nil {
+		s.onErrorHandler(err)
+	}
 }
 
 func (s *Server) sendClosingSignal(conn *websocket.Conn) error {
