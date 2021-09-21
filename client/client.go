@@ -39,6 +39,7 @@ func NewClient(opts ...Option) (*Client, error) {
 	c := &Client{
 		ServerURL:      url.URL{Scheme: "ws", Host: cfg.TargetServer, Path: "/ws"},
 		onCloseHandler: cfg.OnCloseHandler,
+		onErrorHandler: cfg.OnErrorHandler,
 		dialer: &websocket.Dialer{
 			Proxy:            http.ProxyFromEnvironment,
 			HandshakeTimeout: 45 * time.Second, // TODO parametrize this.
