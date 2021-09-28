@@ -227,7 +227,7 @@ func (s *Server) Send(ctx context.Context, msg proto.Message) error {
 	var errList error
 	var count int
 	for conn := range s.c {
-		if err := conn.WriteMessage(websocket.BinaryMessage, bytes); err != nil && count < 100 {
+		if err := s.writeMessage(conn, bytes); err != nil && count < 100 {
 			if errors.Is(err, websocket.ErrCloseSent) {
 				err = ErrClientDisconnected
 			}
