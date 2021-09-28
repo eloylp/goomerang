@@ -53,10 +53,11 @@ func NewServer(opts ...Option) (*Server, error) {
 		wg:              &sync.WaitGroup{},
 		ctx:             ctx,
 	}
+	s.intServer.Handler = MainHandler(s)
 	return s, nil
 }
 
-func (s *Server) ServerMainHandler() http.HandlerFunc {
+func MainHandler(s *Server) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		s.wg.Add(1)
 		defer s.wg.Done()
@@ -241,7 +242,6 @@ func (s *Server) Send(ctx context.Context, msg proto.Message) error {
 }
 
 func (s *Server) Run() error {
-	s.intServer.Handler = s.ServerMainHandler()
 	if err := s.intServer.ListenAndServe(); err != http.ErrServerClosed {
 		s.onErrorHandler(err)
 		return err
