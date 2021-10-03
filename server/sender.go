@@ -10,17 +10,17 @@ import (
 	"go.eloylp.dev/goomerang/internal/message"
 )
 
-type Ops interface {
+type Sender interface {
 	Send(ctx context.Context, msg proto.Message) error
 }
 
-type serverOpts struct {
+type immediateSender struct {
 	s *Server
 	c *websocket.Conn
 	l *sync.Mutex
 }
 
-func (so *serverOpts) Send(ctx context.Context, msg proto.Message) error {
+func (so *immediateSender) Send(ctx context.Context, msg proto.Message) error {
 	m, err := message.Pack(msg)
 	if err != nil {
 		return err
@@ -30,15 +30,15 @@ func (so *serverOpts) Send(ctx context.Context, msg proto.Message) error {
 	return so.c.WriteMessage(websocket.BinaryMessage, m)
 }
 
-type serverOptsReqRep struct {
+type bufferedSender struct {
 	replies []proto.Message
 }
 
-func (so *serverOptsReqRep) Send(ctx context.Context, msg proto.Message) error {
+func (so *bufferedSender) Send(ctx context.Context, msg proto.Message) error {
 	so.replies = append(so.replies, msg)
 	return nil
 }
 
-func (so *serverOptsReqRep) Index(i int) proto.Message {
+func (so *bufferedSender) Index(i int) proto.Message {
 	return so.replies[i]
 }

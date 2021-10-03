@@ -16,7 +16,7 @@ import (
 	"go.eloylp.dev/goomerang/internal/message/protocol"
 )
 
-type Handler func(ops Ops, msg proto.Message) *HandlerError
+type Handler func(ops Sender, msg proto.Message) *HandlerError
 
 type Server struct {
 	intServer       *http.Server
@@ -67,7 +67,7 @@ func MainHandler(s *Server) http.HandlerFunc {
 			return
 		}
 		s.addConnection(c)
-		sOpts := &serverOpts{s, c, s.l}
+		sOpts := &immediateSender{s, c, s.l}
 		defer s.removeConnection(c)
 		defer s.closeConnection(c)
 
@@ -138,7 +138,7 @@ type receivedMessage struct {
 	data  []byte
 }
 
-func (s *Server) processMessage(c *websocket.Conn, data []byte, sOpts Ops) error {
+func (s *Server) processMessage(c *websocket.Conn, data []byte, sOpts Sender) error {
 	frame, err := message.UnPack(data)
 	if err != nil {
 		return err
@@ -165,7 +165,7 @@ func (s *Server) processMessage(c *websocket.Conn, data []byte, sOpts Ops) error
 }
 
 func (s *Server) doRPC(handlers []interface{}, c *websocket.Conn, frameUUID string, msg proto.Message) error {
-	ops := &serverOptsReqRep{}
+	ops := &bufferedSender{}
 	multiReply := &protocol.MultiReply{}
 	replies := make([]*protocol.MultiReply_Reply, len(handlers))
 	for i := 0; i < len(handlers); i++ {
@@ -205,7 +205,7 @@ func (s *Server) writeMessage(c *websocket.Conn, responseMsg []byte) error {
 	return c.WriteMessage(websocket.BinaryMessage, responseMsg)
 }
 
-func (s *Server) processAsync(handlers []interface{}, ops Ops, msg proto.Message) {
+func (s *Server) processAsync(handlers []interface{}, ops Sender, msg proto.Message) {
 	for _, h := range handlers {
 		if err := h.(Handler)(ops, msg); err != nil {
 			s.onErrorHandler(fmt.Errorf("server handler err: %w", err))

@@ -19,7 +19,7 @@ func TestPingPongServer(t *testing.T) {
 	arbiter := NewArbiter(t)
 	s := PrepareServer(t)
 	defer s.Shutdown(defaultCtx)
-	s.RegisterHandler(&testMessages.PingPong{}, func(s server.Ops, msg proto.Message) *server.HandlerError {
+	s.RegisterHandler(&testMessages.PingPong{}, func(s server.Sender, msg proto.Message) *server.HandlerError {
 		_ = msg.(*testMessages.PingPong)
 		if err := s.Send(defaultCtx, &testMessages.PingPong{
 			Message: "pong",
@@ -33,7 +33,7 @@ func TestPingPongServer(t *testing.T) {
 	c := PrepareClient(t)
 	defer c.Close()
 
-	c.RegisterHandler(&testMessages.PingPong{}, func(c client.Ops, msg proto.Message) error {
+	c.RegisterHandler(&testMessages.PingPong{}, func(c client.Sender, msg proto.Message) error {
 		_ = msg.(*testMessages.PingPong)
 		arbiter.ItsAFactThat("CLIENT_RECEIVED_PONG")
 		return nil
@@ -49,15 +49,15 @@ func TestMultipleHandlersArePossibleInServer(t *testing.T) {
 	defer s.Shutdown(context.Background())
 	arbiter := NewArbiter(t)
 	m := &testMessages.GreetV1{Message: "Hi !"}
-	h := func(ops server.Ops, msg proto.Message) *server.HandlerError {
+	h := func(ops server.Sender, msg proto.Message) *server.HandlerError {
 		arbiter.ItsAFactThat("HANDLER1_CALLED")
 		return nil
 	}
-	h2 := func(ops server.Ops, msg proto.Message) *server.HandlerError {
+	h2 := func(ops server.Sender, msg proto.Message) *server.HandlerError {
 		arbiter.ItsAFactThat("HANDLER2_CALLED")
 		return nil
 	}
-	h3 := func(ops server.Ops, msg proto.Message) *server.HandlerError {
+	h3 := func(ops server.Sender, msg proto.Message) *server.HandlerError {
 		arbiter.ItsAFactThat("HANDLER3_CALLED")
 		return nil
 	}
@@ -80,15 +80,15 @@ func TestMultipleHandlersArePossibleInClient(t *testing.T) {
 	c := PrepareClient(t)
 	defer c.Close()
 	m := &testMessages.GreetV1{Message: "Hi !"}
-	h := func(opts client.Ops, msg proto.Message) error {
+	h := func(opts client.Sender, msg proto.Message) error {
 		arbiter.ItsAFactThat("HANDLER1_CALLED")
 		return nil
 	}
-	h2 := func(ops client.Ops, msg proto.Message) error {
+	h2 := func(ops client.Sender, msg proto.Message) error {
 		arbiter.ItsAFactThat("HANDLER2_CALLED")
 		return nil
 	}
-	h3 := func(ops client.Ops, msg proto.Message) error {
+	h3 := func(ops client.Sender, msg proto.Message) error {
 		arbiter.ItsAFactThat("HANDLER3_CALLED")
 		return nil
 	}
@@ -110,7 +110,7 @@ func TestServerErrorHandler(t *testing.T) {
 		}
 	}))
 	defer s.Shutdown(defaultCtx)
-	s.RegisterHandler(&testMessages.PingPong{}, func(ops server.Ops, msg proto.Message) *server.HandlerError {
+	s.RegisterHandler(&testMessages.PingPong{}, func(ops server.Sender, msg proto.Message) *server.HandlerError {
 		return server.NewHandlerError("a handler error")
 	})
 
@@ -158,7 +158,7 @@ func TestServerSupportMultipleClients(t *testing.T) {
 	s := PrepareServer(t, server.WithErrorHandler(func(err error) {
 		arbiter.ErrorHappened(err)
 	}))
-	s.RegisterHandler(&testMessages.PingPong{}, func(ops server.Ops, msg proto.Message) *server.HandlerError {
+	s.RegisterHandler(&testMessages.PingPong{}, func(ops server.Sender, msg proto.Message) *server.HandlerError {
 		pingMsg, ok := msg.(*testMessages.PingPong)
 		if !ok {
 			return server.NewHandlerError("cannot type assert message")
@@ -173,7 +173,7 @@ func TestServerSupportMultipleClients(t *testing.T) {
 	defer s.Shutdown(defaultCtx)
 
 	c1 := PrepareClient(t)
-	c1.RegisterHandler(&testMessages.PingPong{}, func(ops client.Ops, msg proto.Message) error {
+	c1.RegisterHandler(&testMessages.PingPong{}, func(ops client.Sender, msg proto.Message) error {
 		pongMsg, ok := msg.(*testMessages.PingPong)
 		if !ok {
 			return errors.New("cannot type assert message")
@@ -183,7 +183,7 @@ func TestServerSupportMultipleClients(t *testing.T) {
 	})
 	defer c1.Close()
 	c2 := PrepareClient(t)
-	c2.RegisterHandler(&testMessages.PingPong{}, func(ops client.Ops, msg proto.Message) error {
+	c2.RegisterHandler(&testMessages.PingPong{}, func(ops client.Sender, msg proto.Message) error {
 		pongMsg, ok := msg.(*testMessages.PingPong)
 		if !ok {
 			return errors.New("cannot type assert message")
@@ -212,14 +212,14 @@ func TestServerCanBroadCastMessages(t *testing.T) {
 
 	c1 := PrepareClient(t)
 	defer c1.Close()
-	c1.RegisterHandler(&testMessages.GreetV1{}, func(ops client.Ops, msg proto.Message) error {
+	c1.RegisterHandler(&testMessages.GreetV1{}, func(ops client.Sender, msg proto.Message) error {
 		arbiter.ItsAFactThat("CLIENT1_RECEIVED_SERVER_GREET")
 		return nil
 	})
 
 	c2 := PrepareClient(t)
 	defer c2.Close()
-	c2.RegisterHandler(&testMessages.GreetV1{}, func(ops client.Ops, msg proto.Message) error {
+	c2.RegisterHandler(&testMessages.GreetV1{}, func(ops client.Sender, msg proto.Message) error {
 		arbiter.ItsAFactThat("CLIENT2_RECEIVED_SERVER_GREET")
 		return nil
 	})
@@ -281,13 +281,13 @@ func TestRequestReplyPattern(t *testing.T) {
 	s := PrepareServer(t)
 	defer s.Shutdown(defaultCtx)
 
-	h1 := func(ops server.Ops, msg proto.Message) *server.HandlerError {
+	h1 := func(ops server.Sender, msg proto.Message) *server.HandlerError {
 		if err := ops.Send(defaultCtx, &testMessages.PingPong{Message: "pong !"}); err != nil {
 			return server.NewHandlerError(err.Error())
 		}
 		return nil
 	}
-	h2 := func(ops server.Ops, msg proto.Message) *server.HandlerError {
+	h2 := func(ops server.Sender, msg proto.Message) *server.HandlerError {
 		return server.NewHandlerErrorWith("happened at handler !", 500)
 	}
 

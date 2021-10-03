@@ -18,13 +18,13 @@ import (
 	"go.eloylp.dev/goomerang/server"
 )
 
-type Handler func(ops Ops, msg proto.Message) error
+type Handler func(ops Sender, msg proto.Message) error
 
 type Client struct {
 	ServerURL       url.URL
 	handlerRegistry engine.AppendableRegistry
 	messageRegistry message.Registry
-	clientOps       *clientOps
+	clientOps       *immediateSender
 	l               *sync.Mutex
 	conn            *websocket.Conn
 	dialer          *websocket.Dialer
@@ -51,7 +51,7 @@ func NewClient(opts ...Option) (*Client, error) {
 		messageRegistry: message.Registry{},
 		reqRepRegistry:  map[string]chan *MultiReply{},
 	}
-	c.clientOps = &clientOps{c: c}
+	c.clientOps = &immediateSender{c: c}
 	c.RegisterMessage(&protocol.MultiReply{})
 	return c, nil
 }
