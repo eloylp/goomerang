@@ -5,6 +5,7 @@ import (
 	"errors"
 	"net/http"
 	"net/url"
+	"sync"
 	"time"
 
 	"github.com/google/uuid"
@@ -24,6 +25,7 @@ type Client struct {
 	handlerRegistry engine.AppendableRegistry
 	messageRegistry message.Registry
 	clientOps       *clientOps
+	l               *sync.Mutex
 	conn            *websocket.Conn
 	dialer          *websocket.Dialer
 	onCloseHandler  func()
@@ -44,6 +46,7 @@ func NewClient(opts ...Option) (*Client, error) {
 			Proxy:            http.ProxyFromEnvironment,
 			HandshakeTimeout: 45 * time.Second, // TODO parametrize this.
 		},
+		l:               &sync.Mutex{},
 		handlerRegistry: engine.AppendableRegistry{},
 		messageRegistry: message.Registry{},
 		reqRepRegistry:  map[string]chan *MultiReply{},
@@ -181,10 +184,14 @@ func (c *Client) interceptFrame(uid string) chan *MultiReply {
 }
 
 func (c *Client) writeMessage(data []byte) error {
+	c.l.Lock()
+	defer c.l.Unlock()
 	return c.conn.WriteMessage(websocket.BinaryMessage, data)
 }
 
 func (c *Client) sendClosingSignal() error {
+	c.l.Lock()
+	defer c.l.Unlock()
 	return c.conn.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, ""))
 }
 

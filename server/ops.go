@@ -2,6 +2,7 @@ package server
 
 import (
 	"context"
+	"sync"
 
 	"github.com/gorilla/websocket"
 	"google.golang.org/protobuf/proto"
@@ -16,6 +17,7 @@ type Ops interface {
 type serverOpts struct {
 	s *Server
 	c *websocket.Conn
+	l *sync.Mutex
 }
 
 func (so *serverOpts) Send(ctx context.Context, msg proto.Message) error {
@@ -23,6 +25,8 @@ func (so *serverOpts) Send(ctx context.Context, msg proto.Message) error {
 	if err != nil {
 		return err
 	}
+	so.l.Lock()
+	defer so.l.Unlock()
 	return so.c.WriteMessage(websocket.BinaryMessage, m)
 }
 

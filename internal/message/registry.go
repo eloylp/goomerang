@@ -2,6 +2,7 @@ package message
 
 import (
 	"fmt"
+	"reflect"
 
 	"google.golang.org/protobuf/proto"
 )
@@ -17,5 +18,6 @@ func (r Registry) Message(key string) (proto.Message, error) {
 	if !ok {
 		return nil, fmt.Errorf("cannot found message with key: %s", key)
 	}
-	return msg, nil
+	msgCopy := reflect.New(reflect.ValueOf(msg).Elem().Type()).Interface().(proto.Message)
+	return msgCopy, nil
 }

@@ -21,7 +21,7 @@ type Handler func(ops Ops, msg proto.Message) *HandlerError
 type Server struct {
 	intServer       *http.Server
 	c               map[*websocket.Conn]struct{}
-	L               *sync.Mutex
+	l               *sync.Mutex
 	wg              *sync.WaitGroup
 	ctx             context.Context
 	cancl           context.CancelFunc
@@ -48,7 +48,7 @@ func NewServer(opts ...Option) (*Server, error) {
 		handlerRegistry: engine.AppendableRegistry{},
 		messageRegistry: message.Registry{},
 		c:               map[*websocket.Conn]struct{}{},
-		L:               &sync.Mutex{},
+		l:               &sync.Mutex{},
 		cancl:           cancl,
 		wg:              &sync.WaitGroup{},
 		ctx:             ctx,
@@ -67,7 +67,7 @@ func MainHandler(s *Server) http.HandlerFunc {
 			return
 		}
 		s.addConnection(c)
-		sOpts := &serverOpts{s, c}
+		sOpts := &serverOpts{s, c, s.l}
 		defer s.removeConnection(c)
 		defer s.closeConnection(c)
 
@@ -94,14 +94,14 @@ func MainHandler(s *Server) http.HandlerFunc {
 }
 
 func (s *Server) addConnection(c *websocket.Conn) {
-	s.L.Lock()
-	defer s.L.Unlock()
+	s.l.Lock()
+	defer s.l.Unlock()
 	s.c[c] = struct{}{}
 }
 
 func (s *Server) removeConnection(c *websocket.Conn) {
-	s.L.Lock()
-	defer s.L.Unlock()
+	s.l.Lock()
+	defer s.l.Unlock()
 	delete(s.c, c)
 }
 
@@ -195,7 +195,13 @@ func (s *Server) doRPC(handlers []interface{}, c *websocket.Conn, frameUUID stri
 	return nil
 }
 
+func (s *Server) nolockWriteMessage(c *websocket.Conn, responseMsg []byte) error {
+	return c.WriteMessage(websocket.BinaryMessage, responseMsg)
+}
+
 func (s *Server) writeMessage(c *websocket.Conn, responseMsg []byte) error {
+	s.l.Lock()
+	defer s.l.Unlock()
 	return c.WriteMessage(websocket.BinaryMessage, responseMsg)
 }
 
@@ -218,16 +224,16 @@ func (s *Server) RegisterHandler(msg proto.Message, handlers ...Handler) {
 }
 
 func (s *Server) Send(ctx context.Context, msg proto.Message) error {
+	s.l.Lock()
+	defer s.l.Unlock()
 	bytes, err := message.Pack(msg)
 	if err != nil {
 		return err
 	}
-	s.L.Lock()
-	defer s.L.Unlock()
 	var errList error
 	var count int
 	for conn := range s.c {
-		if err := s.writeMessage(conn, bytes); err != nil && count < 100 {
+		if err := s.nolockWriteMessage(conn, bytes); err != nil && count < 100 {
 			if errors.Is(err, websocket.ErrCloseSent) {
 				err = ErrClientDisconnected
 			}
@@ -276,5 +282,7 @@ func (s *Server) closeConnection(c *websocket.Conn) {
 }
 
 func (s *Server) sendClosingSignal(conn *websocket.Conn) error {
+	s.l.Lock()
+	defer s.l.Unlock()
 	return conn.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, ""))
 }
