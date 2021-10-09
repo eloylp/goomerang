@@ -122,13 +122,23 @@ func (c *Client) Send(ctx context.Context, msg proto.Message) error {
 	if err != nil {
 		return err
 	}
-	if err := c.writeMessage(data); err != nil {
-		if errors.Is(err, websocket.ErrCloseSent) {
-			return ErrServerDisconnected
+	ch := make(chan error, 1)
+	go func() {
+		if err := c.writeMessage(data); err != nil {
+			if errors.Is(err, websocket.ErrCloseSent) {
+				ch <- ErrServerDisconnected
+			} else {
+				ch <- err
+			}
 		}
+		close(ch)
+	}()
+	select {
+	case <-ctx.Done():
+		return ctx.Err()
+	case err := <-ch:
 		return err
 	}
-	return nil
 }
 
 func (c *Client) Close() error {
