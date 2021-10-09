@@ -141,15 +141,25 @@ func (c *Client) Send(ctx context.Context, msg proto.Message) error {
 	}
 }
 
-func (c *Client) Close() error {
-	err := c.sendClosingSignal()
-	if err != nil {
-		if errors.Is(err, websocket.ErrCloseSent) {
-			return ErrServerDisconnected
+func (c *Client) Close(ctx context.Context) error {
+	ch := make(chan error, 1)
+	go func() {
+		err := c.sendClosingSignal()
+		if err != nil {
+			if errors.Is(err, websocket.ErrCloseSent) {
+				ch <- ErrServerDisconnected
+			} else {
+				ch <- err
+			}
 		}
+		close(ch)
+	}()
+	select {
+	case <-ctx.Done():
+		return ctx.Err()
+	case err := <-ch:
 		return err
 	}
-	return nil
 }
 
 func (c *Client) RegisterHandler(msg proto.Message, handlers ...Handler) {

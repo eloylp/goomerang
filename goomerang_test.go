@@ -31,7 +31,7 @@ func TestPingPongServer(t *testing.T) {
 	})
 
 	c := PrepareClient(t)
-	defer c.Close()
+	defer c.Close(defaultCtx)
 
 	c.RegisterHandler(&testMessages.PingPong{}, func(c client.Sender, msg proto.Message) error {
 		_ = msg.(*testMessages.PingPong)
@@ -65,7 +65,7 @@ func TestMultipleHandlersArePossibleInServer(t *testing.T) {
 	s.RegisterHandler(m, h3)
 
 	c := PrepareClient(t)
-	defer c.Close()
+	defer c.Close(defaultCtx)
 
 	err := c.Send(defaultCtx, m)
 	require.NoError(t, err)
@@ -78,7 +78,7 @@ func TestMultipleHandlersArePossibleInClient(t *testing.T) {
 	defer s.Shutdown(defaultCtx)
 	arbiter := NewArbiter(t)
 	c := PrepareClient(t)
-	defer c.Close()
+	defer c.Close(defaultCtx)
 	m := &testMessages.GreetV1{Message: "Hi !"}
 	h := func(opts client.Sender, msg proto.Message) error {
 		arbiter.ItsAFactThat("HANDLER1_CALLED")
@@ -115,7 +115,7 @@ func TestServerErrorHandler(t *testing.T) {
 	})
 
 	c1 := PrepareClient(t)
-	defer c1.Close()
+	defer c1.Close(defaultCtx)
 
 	err := c1.Send(defaultCtx, &testMessages.PingPong{Message: "ping"})
 	require.NoError(t, err)
@@ -130,7 +130,7 @@ func TestShutdownProcedureClientSideInit(t *testing.T) {
 	c := PrepareClient(t, client.WithOnCloseHandler(func() {
 		arbiter.ItsAFactThat("CLIENT_PROPERLY_CLOSED")
 	}))
-	err := c.Close()
+	err := c.Close(defaultCtx)
 	require.NoError(t, err)
 	err = s.Shutdown(context.Background())
 	require.NoError(t, err)
@@ -146,7 +146,7 @@ func TestShutdownProcedureServerSideInit(t *testing.T) {
 	c := PrepareClient(t, client.WithOnCloseHandler(func() {
 		arbiter.ItsAFactThat("CLIENT_PROPERLY_CLOSED")
 	}))
-	defer c.Close()
+	defer c.Close(defaultCtx)
 	err := s.Shutdown(context.Background())
 	require.NoError(t, err)
 	arbiter.RequireHappened("SERVER_PROPERLY_CLOSED")
@@ -181,7 +181,7 @@ func TestServerSupportMultipleClients(t *testing.T) {
 		arbiter.ItsAFactThat("CLIENT1_RECEIVED_FROM_SERVER_" + pongMsg.Message)
 		return nil
 	})
-	defer c1.Close()
+	defer c1.Close(defaultCtx)
 	c2 := PrepareClient(t)
 	c2.RegisterHandler(&testMessages.PingPong{}, func(ops client.Sender, msg proto.Message) error {
 		pongMsg, ok := msg.(*testMessages.PingPong)
@@ -191,7 +191,7 @@ func TestServerSupportMultipleClients(t *testing.T) {
 		arbiter.ItsAFactThat("CLIENT2_RECEIVED_FROM_SERVER_" + pongMsg.Message)
 		return nil
 	})
-	defer c2.Close()
+	defer c2.Close(defaultCtx)
 
 	err := c1.Send(defaultCtx, &testMessages.PingPong{Message: "1"})
 	require.NoError(t, err)
@@ -211,14 +211,14 @@ func TestServerCanBroadCastMessages(t *testing.T) {
 	defer s.Shutdown(defaultCtx)
 
 	c1 := PrepareClient(t)
-	defer c1.Close()
+	defer c1.Close(defaultCtx)
 	c1.RegisterHandler(&testMessages.GreetV1{}, func(ops client.Sender, msg proto.Message) error {
 		arbiter.ItsAFactThat("CLIENT1_RECEIVED_SERVER_GREET")
 		return nil
 	})
 
 	c2 := PrepareClient(t)
-	defer c2.Close()
+	defer c2.Close(defaultCtx)
 	c2.RegisterHandler(&testMessages.GreetV1{}, func(ops client.Sender, msg proto.Message) error {
 		arbiter.ItsAFactThat("CLIENT2_RECEIVED_SERVER_GREET")
 		return nil
@@ -235,9 +235,9 @@ func TestServerShutdownIsPropagatedToAllClients(t *testing.T) {
 	s := PrepareServer(t)
 
 	c1 := PrepareClient(t)
-	defer c1.Close()
+	defer c1.Close(defaultCtx)
 	c2 := PrepareClient(t)
-	defer c2.Close()
+	defer c2.Close(defaultCtx)
 
 	s.Shutdown(defaultCtx)
 
@@ -253,7 +253,7 @@ func TestClientNormalClose(t *testing.T) {
 
 	c := PrepareClient(t)
 
-	require.NoError(t, c.Close())
+	require.NoError(t, c.Close(defaultCtx))
 }
 
 func TestClientCloseWhenServerClosed(t *testing.T) {
@@ -263,7 +263,7 @@ func TestClientCloseWhenServerClosed(t *testing.T) {
 	err := s.Shutdown(defaultCtx)
 	require.NoError(t, err)
 
-	require.ErrorIs(t, c.Close(), client.ErrServerDisconnected)
+	require.ErrorIs(t, c.Close(defaultCtx), client.ErrServerDisconnected)
 }
 
 func TestServerSendWhenClientClosed(t *testing.T) {
@@ -271,7 +271,7 @@ func TestServerSendWhenClientClosed(t *testing.T) {
 	defer s.Shutdown(defaultCtx)
 	c := PrepareClient(t)
 
-	require.NoError(t, c.Close())
+	require.NoError(t, c.Close(defaultCtx))
 
 	msg := &testMessages.GreetV1{Message: "Hi!"}
 	require.ErrorIs(t, s.Send(defaultCtx, msg), server.ErrClientDisconnected)
@@ -294,7 +294,7 @@ func TestRequestReplyPattern(t *testing.T) {
 	s.RegisterHandler(&testMessages.PingPong{}, h1, h2)
 
 	c := PrepareClient(t)
-	defer c.Close()
+	defer c.Close(defaultCtx)
 
 	c.RegisterMessage(&testMessages.PingPong{})
 
