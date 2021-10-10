@@ -34,7 +34,7 @@ type bufferedSender struct {
 	replies []proto.Message
 }
 
-func (so *bufferedSender) Send(ctx context.Context, msg proto.Message) error {
+func (so *bufferedSender) Send(_ context.Context, msg proto.Message) error {
 	so.replies = append(so.replies, msg)
 	return nil
 }
