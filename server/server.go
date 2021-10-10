@@ -226,25 +226,36 @@ func (s *Server) RegisterHandler(msg proto.Message, handlers ...Handler) {
 func (s *Server) Send(ctx context.Context, msg proto.Message) error {
 	s.l.Lock()
 	defer s.l.Unlock()
-	bytes, err := message.Pack(msg)
-	if err != nil {
+	ch := make(chan error, 1)
+	go func() {
+		bytes, err := message.Pack(msg)
+		if err != nil {
+			ch <- err
+			close(ch)
+			return
+		}
+		var errList error
+		var count int
+		for conn := range s.c {
+			if err := s.nolockWriteMessage(conn, bytes); err != nil && count < 100 {
+				if errors.Is(err, websocket.ErrCloseSent) {
+					err = ErrClientDisconnected
+				}
+				errList = multierror.Append(err, errList)
+				count++
+			}
+		}
+		if errList != nil {
+			ch <- errList
+		}
+		close(ch)
+	}()
+	select {
+	case <-ctx.Done():
+		return ctx.Err()
+	case err := <-ch:
 		return err
 	}
-	var errList error
-	var count int
-	for conn := range s.c {
-		if err := s.nolockWriteMessage(conn, bytes); err != nil && count < 100 {
-			if errors.Is(err, websocket.ErrCloseSent) {
-				err = ErrClientDisconnected
-			}
-			errList = multierror.Append(err, errList)
-			count++
-		}
-	}
-	if errList != nil {
-		return errList
-	}
-	return nil
 }
 
 func (s *Server) Run() error {
