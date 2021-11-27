@@ -12,6 +12,7 @@ import (
 	"github.com/gorilla/websocket"
 	"google.golang.org/protobuf/proto"
 
+	"go.eloylp.dev/goomerang/client/internal/rpc"
 	"go.eloylp.dev/goomerang/internal/engine"
 	"go.eloylp.dev/goomerang/internal/message"
 	"go.eloylp.dev/goomerang/internal/message/protocol"
@@ -30,7 +31,7 @@ type Client struct {
 	dialer          *websocket.Dialer
 	onCloseHandler  func()
 	onErrorHandler  func(err error)
-	reqRepRegistry  map[string]chan *MultiReply
+	rpcRegistry     *rpc.Registry
 }
 
 func NewClient(opts ...Option) (*Client, error) {
@@ -49,7 +50,7 @@ func NewClient(opts ...Option) (*Client, error) {
 		l:               &sync.Mutex{},
 		handlerRegistry: engine.AppendableRegistry{},
 		messageRegistry: message.Registry{},
-		reqRepRegistry:  map[string]chan *MultiReply{},
+		rpcRegistry:     rpc.NewRegistry(),
 	}
 	c.clientOps = &immediateSender{c: c}
 	c.RegisterMessage(&protocol.MultiReply{})
@@ -172,35 +173,28 @@ func (c *Client) RegisterHandler(msg proto.Message, handlers ...Handler) {
 	c.handlerRegistry.Register(fqdn, his...)
 }
 
-func (c *Client) RPC(ctx context.Context, msg proto.Message) (*MultiReply, error) {
+func (c *Client) RPC(ctx context.Context, msg proto.Message) (*rpc.MultiReply, error) {
 	UUID := uuid.New().String()
 	data, err := message.Pack(msg, message.FrameWithUUID(UUID), message.FrameIsRPC())
 	if err != nil {
 		return nil, err
 	}
-	resCh := c.interceptFrame(UUID)
+	c.rpcRegistry.CreateListener(UUID)
 	if err := c.writeMessage(data); err != nil {
 		if errors.Is(err, websocket.ErrCloseSent) {
 			return nil, ErrServerDisconnected
 		}
 		return nil, err
 	}
-	select {
-	case <-ctx.Done():
-		return nil, ctx.Err()
-	case multiReply := <-resCh:
-		return multiReply, nil
+	multiReply, err := c.rpcRegistry.ResultFor(ctx, UUID)
+	if err != nil {
+		return nil, err
 	}
+	return multiReply, nil
 }
 
 func (c *Client) RegisterMessage(msg proto.Message) {
 	c.messageRegistry.Register(message.FQDN(msg), msg)
-}
-
-func (c *Client) interceptFrame(uid string) chan *MultiReply {
-	repCh := make(chan *MultiReply, 1)
-	c.reqRepRegistry[uid] = repCh
-	return repCh
 }
 
 func (c *Client) writeMessage(data []byte) error {
@@ -216,20 +210,16 @@ func (c *Client) sendClosingSignal() error {
 }
 
 func (c *Client) doRPC(frameUUID string, msg proto.Message) error {
-	ch, ok := c.reqRepRegistry[frameUUID]
-	if !ok {
-		return errors.New("frame is marked for req/rep tracking, but no channel receiver found in registry")
-	}
 	protoMultiReply, ok := msg.(*protocol.MultiReply)
 	if !ok {
 		return errors.New("frame is marked for req/rep tracking, cannot cast to multi-reply message")
 	}
 	repliesCount := len(protoMultiReply.Replies)
-	multiReply := &MultiReply{}
-	replies := make([]*Reply, repliesCount)
+	multiReply := &rpc.MultiReply{}
+	replies := make([]*rpc.Reply, repliesCount)
 	multiReply.Replies = replies
 	for i := 0; i < repliesCount; i++ {
-		replies[i] = &Reply{}
+		replies[i] = &rpc.Reply{}
 		if protoMultiReply.Replies[i].Error != nil {
 			replies[i].Err = server.NewHandlerErrorWith(
 				protoMultiReply.Replies[i].Error.Message,
@@ -246,7 +236,8 @@ func (c *Client) doRPC(frameUUID string, msg proto.Message) error {
 		}
 		replies[i].Message = protoMsg
 	}
-	ch <- multiReply
-	delete(c.reqRepRegistry, frameUUID)
+	if err := c.rpcRegistry.SubmitResult(frameUUID, multiReply); err != nil {
+		return err
+	}
 	return nil
 }

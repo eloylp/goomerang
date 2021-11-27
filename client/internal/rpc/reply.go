@@ -1,4 +1,4 @@
-package client
+package rpc
 
 import (
 	"google.golang.org/protobuf/proto"
