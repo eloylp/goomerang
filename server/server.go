@@ -20,7 +20,7 @@ type Handler func(ops Sender, msg proto.Message) *HandlerError
 
 type Server struct {
 	intServer       *http.Server
-	c               map[*websocket.Conn]struct{}
+	connTrack       map[*websocket.Conn]struct{}
 	l               *sync.Mutex
 	wg              *sync.WaitGroup
 	ctx             context.Context
@@ -47,7 +47,7 @@ func NewServer(opts ...Option) (*Server, error) {
 		onCloseHandler:  cfg.OnCloseHandler,
 		handlerRegistry: engine.AppendableRegistry{},
 		messageRegistry: message.Registry{},
-		c:               map[*websocket.Conn]struct{}{},
+		connTrack:       map[*websocket.Conn]struct{}{},
 		l:               &sync.Mutex{},
 		cancl:           cancl,
 		wg:              &sync.WaitGroup{},
@@ -96,13 +96,13 @@ func MainHandler(s *Server) http.HandlerFunc {
 func (s *Server) addConnection(c *websocket.Conn) {
 	s.l.Lock()
 	defer s.l.Unlock()
-	s.c[c] = struct{}{}
+	s.connTrack[c] = struct{}{}
 }
 
 func (s *Server) removeConnection(c *websocket.Conn) {
 	s.l.Lock()
 	defer s.l.Unlock()
-	delete(s.c, c)
+	delete(s.connTrack, c)
 }
 
 func (s *Server) readMessages(c *websocket.Conn) chan *receivedMessage {
@@ -236,7 +236,7 @@ func (s *Server) Send(ctx context.Context, msg proto.Message) error {
 		}
 		var errList error
 		var count int
-		for conn := range s.c {
+		for conn := range s.connTrack {
 			if err := s.nolockWriteMessage(conn, bytes); err != nil && count < 100 {
 				if errors.Is(err, websocket.ErrCloseSent) {
 					err = ErrClientDisconnected
