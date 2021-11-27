@@ -84,6 +84,7 @@ func mainHandler(s *Server) http.HandlerFunc {
 				}
 				if msg.mType != websocket.BinaryMessage {
 					s.onErrorHandler(fmt.Errorf("server: cannot process websocket frame type %v", msg.mType))
+					return
 				}
 				if err := s.processMessage(c, msg.data, sOpts); err != nil {
 					s.onErrorHandler(err)
