@@ -2,8 +2,6 @@ package rpc
 
 import (
 	"google.golang.org/protobuf/proto"
-
-	"go.eloylp.dev/goomerang/server"
 )
 
 type MultiReply struct {
@@ -20,5 +18,5 @@ func (m *MultiReply) Index(i int) *Reply {
 
 type Reply struct {
 	Message proto.Message
-	Err     *server.HandlerError
+	Err     *HandlerError
 }

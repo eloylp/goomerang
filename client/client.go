@@ -16,7 +16,6 @@ import (
 	"go.eloylp.dev/goomerang/internal/engine"
 	"go.eloylp.dev/goomerang/internal/message"
 	"go.eloylp.dev/goomerang/internal/message/protocol"
-	"go.eloylp.dev/goomerang/server"
 )
 
 type Handler func(ops Sender, msg proto.Message) error
@@ -221,7 +220,7 @@ func (c *Client) doRPC(frameUUID string, msg proto.Message) error {
 	for i := 0; i < repliesCount; i++ {
 		replies[i] = &rpc.Reply{}
 		if protoMultiReply.Replies[i].Error != nil {
-			replies[i].Err = server.NewHandlerErrorWith(
+			replies[i].Err = rpc.NewHandlerError(
 				protoMultiReply.Replies[i].Error.Message,
 				protoMultiReply.Replies[i].Error.Code,
 			)
