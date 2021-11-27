@@ -87,35 +87,39 @@ func (c *Client) receiver() {
 			c.onErrorHandler(fmt.Errorf("protocol: unexpected message type %v", messageType))
 			return
 		}
-		frame, err := message.UnPack(data)
-		if err != nil {
+		c.processMessage(data)
+	}
+}
+
+func (c *Client) processMessage(data []byte) {
+	frame, err := message.UnPack(data)
+	if err != nil {
+		c.onErrorHandler(err)
+		return
+	}
+	msg, err := c.messageRegistry.Message(frame.Type)
+	if err != nil {
+		c.onErrorHandler(err)
+		return
+	}
+	if err := proto.Unmarshal(frame.Payload, msg); err != nil {
+		c.onErrorHandler(err)
+		return
+	}
+	if frame.IsRpc {
+		if err := c.doRPC(frame.Uuid, msg); err != nil {
 			c.onErrorHandler(err)
-			continue
 		}
-		msg, err := c.messageRegistry.Message(frame.Type)
-		if err != nil {
+		return
+	}
+	handlers, err := c.handlerRegistry.Elems(frame.Type)
+	if err != nil {
+		c.onErrorHandler(err)
+		return
+	}
+	for _, h := range handlers {
+		if err = h.(Handler)(c.clientOps, msg); err != nil {
 			c.onErrorHandler(err)
-			continue
-		}
-		if err := proto.Unmarshal(frame.Payload, msg); err != nil {
-			c.onErrorHandler(err)
-			continue
-		}
-		if frame.IsRpc {
-			if err := c.doRPC(frame.Uuid, msg); err != nil {
-				c.onErrorHandler(err)
-			}
-			continue
-		}
-		handlers, err := c.handlerRegistry.Elems(frame.Type)
-		if err != nil {
-			c.onErrorHandler(err)
-			continue
-		}
-		for _, h := range handlers {
-			if err = h.(Handler)(c.clientOps, msg); err != nil {
-				c.onErrorHandler(err)
-			}
 		}
 	}
 }
