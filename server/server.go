@@ -120,9 +120,9 @@ func (s *Server) readMessages(c *websocket.Conn) chan *receivedMessage {
 					if closeErr.Code == websocket.CloseNormalClosure {
 						_ = s.sendClosingSignal(c)
 					}
-				} else {
-					s.onErrorHandler(err)
+					return
 				}
+				s.onErrorHandler(err)
 				close(ch)
 				return
 			}
