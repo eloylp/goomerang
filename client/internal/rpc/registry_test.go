@@ -28,7 +28,6 @@ func TestRPCRegistry(t *testing.T) {
 
 	err = reg.SubmitResult(id, m)
 	assert.Errorf(t, err, "rpc-registry: cannot find key for 09AF", "Last r.ResultFor key should remove key entry")
-
 }
 
 func TestRPCRegistry_SubmitResult(t *testing.T) {
