@@ -53,11 +53,11 @@ func NewServer(opts ...Option) (*Server, error) {
 		wg:              &sync.WaitGroup{},
 		ctx:             ctx,
 	}
-	s.intServer.Handler = MainHandler(s)
+	s.intServer.Handler = mainHandler(s)
 	return s, nil
 }
 
-func MainHandler(s *Server) http.HandlerFunc {
+func mainHandler(s *Server) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		s.wg.Add(1)
 		defer s.wg.Done()
