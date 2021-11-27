@@ -25,9 +25,18 @@ func (so *immediateSender) Send(ctx context.Context, msg proto.Message) error {
 	if err != nil {
 		return err
 	}
-	so.l.Lock()
-	defer so.l.Unlock()
-	return so.c.WriteMessage(websocket.BinaryMessage, m)
+	ch := make(chan error, 1)
+	go func() {
+		so.l.Lock()
+		defer so.l.Unlock()
+		ch <- so.c.WriteMessage(websocket.BinaryMessage, m)
+	}()
+	select {
+	case <-ctx.Done():
+		return ctx.Err()
+	case err := <-ch:
+		return err
+	}
 }
 
 type bufferedSender struct {
