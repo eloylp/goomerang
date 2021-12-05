@@ -10,7 +10,7 @@ import (
 	"go.eloylp.dev/goomerang/server"
 )
 
-func TestRequestReplyPattern(t *testing.T) {
+func TestRPC(t *testing.T) {
 	s := PrepareServer(t)
 	defer s.Shutdown(defaultCtx)
 
