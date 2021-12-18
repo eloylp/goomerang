@@ -8,6 +8,14 @@ type Config struct {
 	OnErrorHandler func(err error)
 }
 
+func defaultConfig() *Config {
+	cfg := &Config{
+		OnErrorHandler: func(err error) {},
+		OnCloseHandler: func() {},
+	}
+	return cfg
+}
+
 func WithTargetServer(addr string) Option {
 	return func(cfg *Config) {
 		cfg.TargetServer = addr
@@ -24,12 +32,4 @@ func WithOnErrorHandler(h func(err error)) Option {
 	return func(cfg *Config) {
 		cfg.OnErrorHandler = h
 	}
-}
-
-func defaultConfig() *Config {
-	cfg := &Config{
-		OnErrorHandler: func(err error) {},
-		OnCloseHandler: func() {},
-	}
-	return cfg
 }
