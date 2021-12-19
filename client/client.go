@@ -22,16 +22,17 @@ import (
 type Handler func(ops Sender, msg proto.Message) error
 
 type Client struct {
-	ServerURL       url.URL
-	handlerRegistry engine.AppendableRegistry
-	messageRegistry message.Registry
-	clientOps       *immediateSender
-	l               *sync.Mutex
-	conn            *websocket.Conn
-	dialer          *websocket.Dialer
-	onCloseHandler  func()
-	onErrorHandler  func(err error)
-	rpcRegistry     *rpc.Registry
+	ServerURL                 url.URL
+	handlerRegistry           engine.AppendableRegistry
+	messageRegistry           message.Registry
+	clientOps                 *immediateSender
+	l                         *sync.Mutex
+	conn                      *websocket.Conn
+	dialer                    *websocket.Dialer
+	onCloseHandler            func()
+	onErrorHandler            func(err error)
+	onMessageProcessedHandler timedHandler
+	rpcRegistry               *rpc.Registry
 }
 
 func NewClient(opts ...Option) (*Client, error) {
@@ -40,9 +41,10 @@ func NewClient(opts ...Option) (*Client, error) {
 		o(cfg)
 	}
 	c := &Client{
-		ServerURL:      url.URL{Scheme: "ws", Host: cfg.TargetServer, Path: "/ws"},
-		onCloseHandler: cfg.OnCloseHandler,
-		onErrorHandler: cfg.OnErrorHandler,
+		ServerURL:                 url.URL{Scheme: "ws", Host: cfg.TargetServer, Path: "/ws"},
+		onCloseHandler:            cfg.OnCloseHandler,
+		onErrorHandler:            cfg.OnErrorHandler,
+		onMessageProcessedHandler: cfg.OnMessageProcessedHandler,
 		dialer: &websocket.Dialer{
 			Proxy:            http.ProxyFromEnvironment,
 			HandshakeTimeout: 45 * time.Second, // TODO parametrize this.
@@ -92,11 +94,20 @@ func (c *Client) receiver() {
 }
 
 func (c *Client) processMessage(data []byte) {
+	start := time.Now()
+	var messageFQDN string
+	defer func() {
+		if c.onMessageProcessedHandler == nil {
+			return
+		}
+		c.onMessageProcessedHandler(messageFQDN, time.Since(start))
+	}()
 	frame, err := message.UnPack(data)
 	if err != nil {
 		c.onErrorHandler(err)
 		return
 	}
+	messageFQDN = frame.Type
 	msg, err := c.messageRegistry.Message(frame.Type)
 	if err != nil {
 		c.onErrorHandler(err)
