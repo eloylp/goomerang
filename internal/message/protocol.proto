@@ -1,7 +1,7 @@
 syntax = "proto3";
 
 package goomerang.protocol;
-option go_package = "protocol/";
+option go_package = "go.eloylp.dev/goomerang/internal/protocol";
 
 message Frame {
   string uuid = 1;
