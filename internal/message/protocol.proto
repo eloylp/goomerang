@@ -1,5 +1,7 @@
 syntax = "proto3";
 
+import "google/protobuf/timestamp.proto";
+
 package goomerang.protocol;
 option go_package = "go.eloylp.dev/goomerang/internal/protocol";
 
@@ -7,7 +9,8 @@ message Frame {
   string uuid = 1;
   string type = 2;
   bool is_rpc = 3;
-  bytes payload = 4;
+  google.protobuf.Timestamp creation = 4;
+  bytes payload = 5;
 }
 
 message MultiReply {
