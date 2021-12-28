@@ -2,8 +2,10 @@ package message
 
 import (
 	"fmt"
+	"time"
 
 	"google.golang.org/protobuf/proto"
+	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"go.eloylp.dev/goomerang/internal/message/protocol"
 )
@@ -20,8 +22,9 @@ func Pack(msg proto.Message, opts ...FrameOption) ([]byte, error) {
 		return nil, err
 	}
 	frame := &protocol.Frame{
-		Type:    FQDN(msg),
-		Payload: payload,
+		Type:     FQDN(msg),
+		Payload:  payload,
+		Creation: timestamppb.New(time.Now()),
 	}
 	for _, opt := range opts {
 		opt(frame)
