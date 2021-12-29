@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"sync"
+	"time"
 
 	"github.com/gorilla/websocket"
 	"github.com/hashicorp/go-multierror"
@@ -19,17 +20,18 @@ import (
 type Handler func(ops Sender, msg proto.Message) *HandlerError
 
 type Server struct {
-	intServer       *http.Server
-	connTrack       map[*websocket.Conn]struct{}
-	l               *sync.Mutex
-	wg              *sync.WaitGroup
-	ctx             context.Context
-	cancl           context.CancelFunc
-	upgrader        *websocket.Upgrader
-	handlerRegistry engine.AppendableRegistry
-	messageRegistry message.Registry
-	onErrorHook     func(err error)
-	onCloseHook     func()
+	intServer              *http.Server
+	connTrack              map[*websocket.Conn]struct{}
+	l                      *sync.Mutex
+	wg                     *sync.WaitGroup
+	ctx                    context.Context
+	cancl                  context.CancelFunc
+	upgrader               *websocket.Upgrader
+	handlerRegistry        engine.AppendableRegistry
+	messageRegistry        message.Registry
+	onErrorHook            func(err error)
+	onCloseHook            func()
+	onMessageProcessedHook func(name string, duration time.Duration)
 }
 
 func NewServer(opts ...Option) (*Server, error) {
@@ -43,15 +45,16 @@ func NewServer(opts ...Option) (*Server, error) {
 		intServer: &http.Server{
 			Addr: cfg.ListenURL,
 		},
-		onErrorHook:     cfg.ErrorHook,
-		onCloseHook:     cfg.OnCloseHook,
-		handlerRegistry: engine.AppendableRegistry{},
-		messageRegistry: message.Registry{},
-		connTrack:       map[*websocket.Conn]struct{}{},
-		l:               &sync.Mutex{},
-		cancl:           cancl,
-		wg:              &sync.WaitGroup{},
-		ctx:             ctx,
+		onErrorHook:            cfg.ErrorHook,
+		onCloseHook:            cfg.OnCloseHook,
+		onMessageProcessedHook: cfg.OnMessageProcessedHook,
+		handlerRegistry:        engine.AppendableRegistry{},
+		messageRegistry:        message.Registry{},
+		connTrack:              map[*websocket.Conn]struct{}{},
+		l:                      &sync.Mutex{},
+		cancl:                  cancl,
+		wg:                     &sync.WaitGroup{},
+		ctx:                    ctx,
 	}
 	s.intServer.Handler = mainHandler(s)
 	return s, nil
@@ -141,6 +144,7 @@ type receivedMessage struct {
 }
 
 func (s *Server) processMessage(c *websocket.Conn, data []byte, sOpts Sender) error {
+	start := time.Now()
 	frame, err := message.UnPack(data)
 	if err != nil {
 		return err
@@ -160,9 +164,11 @@ func (s *Server) processMessage(c *websocket.Conn, data []byte, sOpts Sender) er
 		if err := s.doRPC(handlers, c, frame.Uuid, msg); err != nil {
 			return err
 		}
+		s.onMessageProcessedHook(frame.Type, time.Since(start))
 		return nil
 	}
 	s.processAsync(handlers, sOpts, msg)
+	s.onMessageProcessedHook(frame.Type, time.Since(start))
 	return nil
 }
 

@@ -58,3 +58,28 @@ func TestClientMessageProcessedHook(t *testing.T) {
 	arbiter.RequireHappened("MESSAGE_PROCESSED_HANDLER_RECEIVED_NAME")
 	arbiter.RequireHappened("MESSAGE_PROCESSED_HANDLER_RECEIVED_DURATION")
 }
+
+func TestServerMessageProcessedHook(t *testing.T) {
+	arbiter := NewArbiter(t)
+	msg := &testMessages.PingPong{}
+	s := PrepareServer(t, server.WithOnMessageProcessedHook(func(name string, duration time.Duration) {
+		if name == message.FQDN(msg) {
+			arbiter.ItsAFactThat("MESSAGE_PROCESSED_HANDLER_RECEIVED_NAME")
+		}
+		if duration.Seconds() != 0 {
+			arbiter.ItsAFactThat("MESSAGE_PROCESSED_HANDLER_RECEIVED_DURATION")
+		}
+	}))
+	s.RegisterHandler(msg, func(ops server.Sender, msg proto.Message) *server.HandlerError {
+		return server.NewHandlerError("a message")
+	})
+	defer s.Shutdown(defaultCtx)
+
+	c := PrepareClient(t)
+	defer c.Close(defaultCtx)
+	err := c.Send(defaultCtx, msg)
+	require.NoError(t, err)
+
+	arbiter.RequireHappened("MESSAGE_PROCESSED_HANDLER_RECEIVED_NAME")
+	arbiter.RequireHappened("MESSAGE_PROCESSED_HANDLER_RECEIVED_DURATION")
+}
