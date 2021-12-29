@@ -13,10 +13,10 @@ import (
 
 func TestShutdownProcedureClientSideInit(t *testing.T) {
 	arbiter := NewArbiter(t)
-	s := PrepareServer(t, server.WithOnCloseHandler(func() {
+	s := PrepareServer(t, server.WithOnCloseHook(func() {
 		arbiter.ItsAFactThat("SERVER_PROPERLY_CLOSED")
 	}))
-	c := PrepareClient(t, client.WithOnCloseHandler(func() {
+	c := PrepareClient(t, client.WithOnCloseHook(func() {
 		arbiter.ItsAFactThat("CLIENT_PROPERLY_CLOSED")
 	}))
 	err := c.Close(defaultCtx)
@@ -29,10 +29,10 @@ func TestShutdownProcedureClientSideInit(t *testing.T) {
 
 func TestShutdownProcedureServerSideInit(t *testing.T) {
 	arbiter := NewArbiter(t)
-	s := PrepareServer(t, server.WithOnCloseHandler(func() {
+	s := PrepareServer(t, server.WithOnCloseHook(func() {
 		arbiter.ItsAFactThat("SERVER_PROPERLY_CLOSED")
 	}))
-	c := PrepareClient(t, client.WithOnCloseHandler(func() {
+	c := PrepareClient(t, client.WithOnCloseHook(func() {
 		arbiter.ItsAFactThat("CLIENT_PROPERLY_CLOSED")
 	}))
 	defer c.Close(defaultCtx)

@@ -9,16 +9,16 @@ type Option func(cfg *Config)
 type timedHandler func(name string, duration time.Duration)
 
 type Config struct {
-	TargetServer              string
-	OnCloseHandler            func()
-	OnErrorHandler            func(err error)
-	OnMessageProcessedHandler timedHandler
+	TargetServer           string
+	OnCloseHook            func()
+	OnErrorHook            func(err error)
+	OnMessageProcessedHook timedHandler
 }
 
 func defaultConfig() *Config {
 	cfg := &Config{
-		OnErrorHandler: func(err error) {},
-		OnCloseHandler: func() {},
+		OnErrorHook: func(err error) {},
+		OnCloseHook: func() {},
 	}
 	return cfg
 }
@@ -29,20 +29,20 @@ func WithTargetServer(addr string) Option {
 	}
 }
 
-func WithOnCloseHandler(h func()) Option {
+func WithOnCloseHook(h func()) Option {
 	return func(cfg *Config) {
-		cfg.OnCloseHandler = h
+		cfg.OnCloseHook = h
 	}
 }
 
 func WithOnErrorHandler(h func(err error)) Option {
 	return func(cfg *Config) {
-		cfg.OnErrorHandler = h
+		cfg.OnErrorHook = h
 	}
 }
 
-func WithOnMessageProcessedHandler(h timedHandler) Option {
+func WithOnMessageProcessedHook(h timedHandler) Option {
 	return func(cfg *Config) {
-		cfg.OnMessageProcessedHandler = h
+		cfg.OnMessageProcessedHook = h
 	}
 }

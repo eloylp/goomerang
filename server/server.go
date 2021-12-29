@@ -28,8 +28,8 @@ type Server struct {
 	upgrader        *websocket.Upgrader
 	handlerRegistry engine.AppendableRegistry
 	messageRegistry message.Registry
-	onErrorHandler  func(err error)
-	onCloseHandler  func()
+	onErrorHook     func(err error)
+	onCloseHook     func()
 }
 
 func NewServer(opts ...Option) (*Server, error) {
@@ -43,8 +43,8 @@ func NewServer(opts ...Option) (*Server, error) {
 		intServer: &http.Server{
 			Addr: cfg.ListenURL,
 		},
-		onErrorHandler:  cfg.ErrorHandler,
-		onCloseHandler:  cfg.OnCloseHandler,
+		onErrorHook:     cfg.ErrorHook,
+		onCloseHook:     cfg.OnCloseHook,
 		handlerRegistry: engine.AppendableRegistry{},
 		messageRegistry: message.Registry{},
 		connTrack:       map[*websocket.Conn]struct{}{},
@@ -63,7 +63,7 @@ func mainHandler(s *Server) http.HandlerFunc {
 		defer s.wg.Done()
 		c, err := s.upgrader.Upgrade(w, r, nil)
 		if err != nil {
-			s.onErrorHandler(err)
+			s.onErrorHook(err)
 			return
 		}
 		s.addConnection(c)
@@ -76,18 +76,18 @@ func mainHandler(s *Server) http.HandlerFunc {
 		for {
 			select {
 			case <-s.ctx.Done():
-				s.onErrorHandler(s.ctx.Err())
+				s.onErrorHook(s.ctx.Err())
 				return
 			case msg, ok := <-messageReader:
 				if !ok {
 					return
 				}
 				if msg.mType != websocket.BinaryMessage {
-					s.onErrorHandler(fmt.Errorf("server: cannot process websocket frame type %v", msg.mType))
+					s.onErrorHook(fmt.Errorf("server: cannot process websocket frame type %v", msg.mType))
 					return
 				}
 				if err := s.processMessage(c, msg.data, sOpts); err != nil {
-					s.onErrorHandler(err)
+					s.onErrorHook(err)
 					continue
 				}
 			}
@@ -122,7 +122,7 @@ func (s *Server) readMessages(c *websocket.Conn) chan *receivedMessage {
 					}
 					return
 				}
-				s.onErrorHandler(err)
+				s.onErrorHook(err)
 				close(ch)
 				return
 			}
@@ -210,7 +210,7 @@ func (s *Server) writeMessage(c *websocket.Conn, responseMsg []byte) error {
 func (s *Server) processAsync(handlers []interface{}, ops Sender, msg proto.Message) {
 	for _, h := range handlers {
 		if err := h.(Handler)(ops, msg); err != nil {
-			s.onErrorHandler(fmt.Errorf("server handler err: %w", err))
+			s.onErrorHook(fmt.Errorf("server handler err: %w", err))
 		}
 	}
 }
@@ -262,7 +262,7 @@ func (s *Server) Send(ctx context.Context, msg proto.Message) error {
 
 func (s *Server) Run() error {
 	if err := s.intServer.ListenAndServe(); err != http.ErrServerClosed {
-		s.onErrorHandler(err)
+		s.onErrorHook(err)
 		return err
 	}
 	return nil
@@ -284,13 +284,13 @@ func (s *Server) Shutdown(ctx context.Context) error {
 		multiErr = multierror.Append(multiErr, ctx.Err())
 	case <-ch:
 	}
-	s.onCloseHandler()
+	s.onCloseHook()
 	return multiErr
 }
 
 func (s *Server) closeConnection(c *websocket.Conn) {
 	if err := s.sendClosingSignal(c); err != nil {
-		s.onErrorHandler(err)
+		s.onErrorHook(err)
 	}
 }
 

@@ -8,28 +8,28 @@ func WithListenAddr(addr string) Option {
 	}
 }
 
-func WithErrorHandler(h func(err error)) Option {
+func WithErrorHook(h func(err error)) Option {
 	return func(cfg *Config) {
-		cfg.ErrorHandler = h
+		cfg.ErrorHook = h
 	}
 }
 
-func WithOnCloseHandler(h func()) Option {
+func WithOnCloseHook(h func()) Option {
 	return func(cfg *Config) {
-		cfg.OnCloseHandler = h
+		cfg.OnCloseHook = h
 	}
 }
 
 type Config struct {
-	ListenURL      string
-	ErrorHandler   func(err error)
-	OnCloseHandler func()
+	ListenURL   string
+	ErrorHook   func(err error)
+	OnCloseHook func()
 }
 
 func defaultConfig() *Config {
 	cfg := &Config{
-		ErrorHandler:   func(err error) {},
-		OnCloseHandler: func() {},
+		ErrorHook:   func(err error) {},
+		OnCloseHook: func() {},
 	}
 	return cfg
 }

@@ -14,9 +14,9 @@ import (
 	"go.eloylp.dev/goomerang/server"
 )
 
-func TestServerErrorHandler(t *testing.T) {
+func TestServerErrorHook(t *testing.T) {
 	arbiter := NewArbiter(t)
-	s := PrepareServer(t, server.WithErrorHandler(func(err error) {
+	s := PrepareServer(t, server.WithErrorHook(func(err error) {
 		if err != nil {
 			arbiter.ItsAFactThat("ERROR_HANDLER_WORKS")
 		}
@@ -34,12 +34,12 @@ func TestServerErrorHandler(t *testing.T) {
 	arbiter.RequireHappened("ERROR_HANDLER_WORKS")
 }
 
-func TestClientMessageProcessedHandler(t *testing.T) {
+func TestClientMessageProcessedHook(t *testing.T) {
 	arbiter := NewArbiter(t)
 	s := PrepareServer(t)
 	defer s.Shutdown(defaultCtx)
 	msg := &testMessages.PingPong{}
-	c := PrepareClient(t, client.WithOnMessageProcessedHandler(func(name string, duration time.Duration) {
+	c := PrepareClient(t, client.WithOnMessageProcessedHook(func(name string, duration time.Duration) {
 		if name == message.FQDN(msg) {
 			arbiter.ItsAFactThat("MESSAGE_PROCESSED_HANDLER_RECEIVED_NAME")
 		}

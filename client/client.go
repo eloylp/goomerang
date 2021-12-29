@@ -22,17 +22,17 @@ import (
 type Handler func(ops Sender, msg proto.Message) error
 
 type Client struct {
-	ServerURL                 url.URL
-	handlerRegistry           engine.AppendableRegistry
-	messageRegistry           message.Registry
-	clientOps                 *immediateSender
-	l                         *sync.Mutex
-	conn                      *websocket.Conn
-	dialer                    *websocket.Dialer
-	onCloseHandler            func()
-	onErrorHandler            func(err error)
-	onMessageProcessedHandler timedHandler
-	rpcRegistry               *rpc.Registry
+	ServerURL              url.URL
+	handlerRegistry        engine.AppendableRegistry
+	messageRegistry        message.Registry
+	clientOps              *immediateSender
+	l                      *sync.Mutex
+	conn                   *websocket.Conn
+	dialer                 *websocket.Dialer
+	onCloseHook            func()
+	onErrorHook            func(err error)
+	onMessageProcessedHook timedHandler
+	rpcRegistry            *rpc.Registry
 }
 
 func NewClient(opts ...Option) (*Client, error) {
@@ -41,10 +41,10 @@ func NewClient(opts ...Option) (*Client, error) {
 		o(cfg)
 	}
 	c := &Client{
-		ServerURL:                 url.URL{Scheme: "ws", Host: cfg.TargetServer, Path: "/ws"},
-		onCloseHandler:            cfg.OnCloseHandler,
-		onErrorHandler:            cfg.OnErrorHandler,
-		onMessageProcessedHandler: cfg.OnMessageProcessedHandler,
+		ServerURL:              url.URL{Scheme: "ws", Host: cfg.TargetServer, Path: "/ws"},
+		onCloseHook:            cfg.OnCloseHook,
+		onErrorHook:            cfg.OnErrorHook,
+		onMessageProcessedHook: cfg.OnMessageProcessedHook,
 		dialer: &websocket.Dialer{
 			Proxy:            http.ProxyFromEnvironment,
 			HandshakeTimeout: 45 * time.Second, // TODO parametrize this.
@@ -78,15 +78,15 @@ func (c *Client) receiver() {
 			if errors.As(err, &closeErr) {
 				if closeErr.Code == websocket.CloseNormalClosure {
 					_ = c.sendClosingSignal()
-					c.onCloseHandler()
+					c.onCloseHook()
 					return
 				}
 			}
-			c.onErrorHandler(err)
+			c.onErrorHook(err)
 			return
 		}
 		if messageType != websocket.BinaryMessage {
-			c.onErrorHandler(fmt.Errorf("protocol: unexpected message type %v", messageType))
+			c.onErrorHook(fmt.Errorf("protocol: unexpected message type %v", messageType))
 			return
 		}
 		c.processMessage(data)
@@ -97,40 +97,40 @@ func (c *Client) processMessage(data []byte) {
 	start := time.Now()
 	var messageFQDN string
 	defer func() {
-		if c.onMessageProcessedHandler == nil {
+		if c.onMessageProcessedHook == nil {
 			return
 		}
-		c.onMessageProcessedHandler(messageFQDN, time.Since(start))
+		c.onMessageProcessedHook(messageFQDN, time.Since(start))
 	}()
 	frame, err := message.UnPack(data)
 	if err != nil {
-		c.onErrorHandler(err)
+		c.onErrorHook(err)
 		return
 	}
 	messageFQDN = frame.Type
 	msg, err := c.messageRegistry.Message(frame.Type)
 	if err != nil {
-		c.onErrorHandler(err)
+		c.onErrorHook(err)
 		return
 	}
 	if err := proto.Unmarshal(frame.Payload, msg); err != nil {
-		c.onErrorHandler(err)
+		c.onErrorHook(err)
 		return
 	}
 	if frame.IsRpc {
 		if err := c.doRPC(frame.Uuid, msg); err != nil {
-			c.onErrorHandler(err)
+			c.onErrorHook(err)
 		}
 		return
 	}
 	handlers, err := c.handlerRegistry.Elems(frame.Type)
 	if err != nil {
-		c.onErrorHandler(err)
+		c.onErrorHook(err)
 		return
 	}
 	for _, h := range handlers {
 		if err = h.(Handler)(c.clientOps, msg); err != nil {
-			c.onErrorHandler(err)
+			c.onErrorHook(err)
 		}
 	}
 }
