@@ -6,6 +6,8 @@ import (
 
 type Option func(cfg *Config)
 
+type timedHook func(name string, duration time.Duration)
+
 func WithListenAddr(addr string) Option {
 	return func(cfg *Config) {
 		cfg.ListenURL = addr
@@ -24,7 +26,7 @@ func WithOnCloseHook(h func()) Option {
 	}
 }
 
-func WithOnMessageProcessedHook(h func(name string, duration time.Duration)) Option {
+func WithOnMessageProcessedHook(h timedHook) Option {
 	return func(cfg *Config) {
 		cfg.OnMessageProcessedHook = h
 	}
@@ -34,7 +36,7 @@ type Config struct {
 	ListenURL              string
 	ErrorHook              func(err error)
 	OnCloseHook            func()
-	OnMessageProcessedHook func(name string, duration time.Duration)
+	OnMessageProcessedHook timedHook
 }
 
 func defaultConfig() *Config {
