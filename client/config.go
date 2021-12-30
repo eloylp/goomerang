@@ -13,6 +13,7 @@ type Config struct {
 	OnCloseHook            func()
 	OnErrorHook            func(err error)
 	OnMessageProcessedHook timedHook
+	OnMessageReceivedHook  timedHook
 }
 
 func defaultConfig() *Config {
@@ -44,5 +45,11 @@ func WithOnErrorHook(h func(err error)) Option {
 func WithOnMessageProcessedHook(h timedHook) Option {
 	return func(cfg *Config) {
 		cfg.OnMessageProcessedHook = h
+	}
+}
+
+func WithOnMessageReceivedHook(h timedHook) Option {
+	return func(cfg *Config) {
+		cfg.OnMessageReceivedHook = h
 	}
 }

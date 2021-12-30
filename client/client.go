@@ -32,6 +32,7 @@ type Client struct {
 	onCloseHook            func()
 	onErrorHook            func(err error)
 	onMessageProcessedHook timedHook
+	onMessageReceivedHook  timedHook
 	rpcRegistry            *rpc.Registry
 }
 
@@ -45,6 +46,7 @@ func NewClient(opts ...Option) (*Client, error) {
 		onCloseHook:            cfg.OnCloseHook,
 		onErrorHook:            cfg.OnErrorHook,
 		onMessageProcessedHook: cfg.OnMessageProcessedHook,
+		onMessageReceivedHook:  cfg.OnMessageReceivedHook,
 		dialer: &websocket.Dialer{
 			Proxy:            http.ProxyFromEnvironment,
 			HandshakeTimeout: 45 * time.Second, // TODO parametrize this.
@@ -107,6 +109,7 @@ func (c *Client) processMessage(data []byte) {
 		c.onErrorHook(err)
 		return
 	}
+	c.onMessageReceivedHook(frame.Type, time.Since(frame.Creation.AsTime()))
 	messageFQDN = frame.Type
 	msg, err := c.messageRegistry.Message(frame.Type)
 	if err != nil {
