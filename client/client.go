@@ -31,7 +31,7 @@ type Client struct {
 	dialer                 *websocket.Dialer
 	onCloseHook            func()
 	onErrorHook            func(err error)
-	onMessageProcessedHook timedHandler
+	onMessageProcessedHook timedHook
 	rpcRegistry            *rpc.Registry
 }
 

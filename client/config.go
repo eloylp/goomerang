@@ -6,13 +6,13 @@ import (
 
 type Option func(cfg *Config)
 
-type timedHandler func(name string, duration time.Duration)
+type timedHook func(name string, duration time.Duration)
 
 type Config struct {
 	TargetServer           string
 	OnCloseHook            func()
 	OnErrorHook            func(err error)
-	OnMessageProcessedHook timedHandler
+	OnMessageProcessedHook timedHook
 }
 
 func defaultConfig() *Config {
@@ -41,7 +41,7 @@ func WithOnErrorHook(h func(err error)) Option {
 	}
 }
 
-func WithOnMessageProcessedHook(h timedHandler) Option {
+func WithOnMessageProcessedHook(h timedHook) Option {
 	return func(cfg *Config) {
 		cfg.OnMessageProcessedHook = h
 	}
