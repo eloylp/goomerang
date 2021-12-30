@@ -164,11 +164,15 @@ func (s *Server) processMessage(c *websocket.Conn, data []byte, sOpts Sender) er
 		if err := s.doRPC(handlers, c, frame.Uuid, msg); err != nil {
 			return err
 		}
-		s.onMessageProcessedHook(frame.Type, time.Since(start))
+		if s.onMessageProcessedHook != nil {
+			s.onMessageProcessedHook(frame.Type, time.Since(start))
+		}
 		return nil
 	}
 	s.processAsync(handlers, sOpts, msg)
-	s.onMessageProcessedHook(frame.Type, time.Since(start))
+	if s.onMessageProcessedHook != nil {
+		s.onMessageProcessedHook(frame.Type, time.Since(start))
+	}
 	return nil
 }
 
