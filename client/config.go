@@ -35,7 +35,7 @@ func WithOnCloseHook(h func()) Option {
 	}
 }
 
-func WithOnErrorHandler(h func(err error)) Option {
+func WithOnErrorHook(h func(err error)) Option {
 	return func(cfg *Config) {
 		cfg.OnErrorHook = h
 	}
