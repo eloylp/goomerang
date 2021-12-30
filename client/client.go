@@ -97,20 +97,14 @@ func (c *Client) receiver() {
 
 func (c *Client) processMessage(data []byte) {
 	start := time.Now()
-	var messageFQDN string
-	defer func() {
-		if c.onMessageProcessedHook == nil {
-			return
-		}
-		c.onMessageProcessedHook(messageFQDN, time.Since(start))
-	}()
 	frame, err := message.UnPack(data)
 	if err != nil {
 		c.onErrorHook(err)
 		return
 	}
-	c.onMessageReceivedHook(frame.Type, time.Since(frame.Creation.AsTime()))
-	messageFQDN = frame.Type
+	if c.onMessageReceivedHook != nil {
+		c.onMessageReceivedHook(frame.Type, time.Since(frame.Creation.AsTime()))
+	}
 	msg, err := c.messageRegistry.Message(frame.Type)
 	if err != nil {
 		c.onErrorHook(err)
@@ -135,6 +129,9 @@ func (c *Client) processMessage(data []byte) {
 		if err = h.(Handler)(c.clientOps, msg); err != nil {
 			c.onErrorHook(err)
 		}
+	}
+	if c.onMessageProcessedHook != nil {
+		c.onMessageProcessedHook(frame.Type, time.Since(start))
 	}
 }
 
