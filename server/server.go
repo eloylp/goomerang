@@ -46,7 +46,7 @@ func NewServer(opts ...Option) (*Server, error) {
 		intServer: &http.Server{
 			Addr: cfg.ListenURL,
 		},
-		onErrorHook:            cfg.ErrorHook,
+		onErrorHook:            cfg.OnErrorHook,
 		onCloseHook:            cfg.OnCloseHook,
 		onMessageProcessedHook: cfg.OnMessageProcessedHook,
 		onMessageReceivedHook:  cfg.OnMessageReceivedHook,

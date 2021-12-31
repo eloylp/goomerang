@@ -16,7 +16,7 @@ import (
 
 func TestServerErrorHook(t *testing.T) {
 	arbiter := NewArbiter(t)
-	s := PrepareServer(t, server.WithErrorHook(func(err error) {
+	s := PrepareServer(t, server.WithOnErrorHook(func(err error) {
 		if err != nil {
 			arbiter.ItsAFactThat("ERROR_HANDLER_WORKS")
 		}

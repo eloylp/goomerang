@@ -15,9 +15,9 @@ func WithListenAddr(addr string) Option {
 	}
 }
 
-func WithErrorHook(h func(err error)) Option {
+func WithOnErrorHook(h func(err error)) Option {
 	return func(cfg *Config) {
-		cfg.ErrorHook = h
+		cfg.OnErrorHook = h
 	}
 }
 
@@ -41,7 +41,7 @@ func WithOnMessageReceivedHook(h timedHook) Option {
 
 type Config struct {
 	ListenURL              string
-	ErrorHook              func(err error)
+	OnErrorHook            func(err error)
 	OnCloseHook            func()
 	OnMessageProcessedHook timedHook
 	OnMessageReceivedHook  timedHook
@@ -49,7 +49,7 @@ type Config struct {
 
 func defaultConfig() *Config {
 	cfg := &Config{
-		ErrorHook: func(err error) {
+		OnErrorHook: func(err error) {
 			log.Printf("goomerang error: %v", err)
 		},
 	}
