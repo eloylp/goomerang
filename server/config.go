@@ -9,36 +9,6 @@ type Option func(cfg *Config)
 
 type timedHook func(name string, duration time.Duration)
 
-func WithListenAddr(addr string) Option {
-	return func(cfg *Config) {
-		cfg.ListenURL = addr
-	}
-}
-
-func WithOnErrorHook(h func(err error)) Option {
-	return func(cfg *Config) {
-		cfg.OnErrorHook = h
-	}
-}
-
-func WithOnCloseHook(h func()) Option {
-	return func(cfg *Config) {
-		cfg.OnCloseHook = h
-	}
-}
-
-func WithOnMessageProcessedHook(h timedHook) Option {
-	return func(cfg *Config) {
-		cfg.OnMessageProcessedHook = h
-	}
-}
-
-func WithOnMessageReceivedHook(h timedHook) Option {
-	return func(cfg *Config) {
-		cfg.OnMessageReceivedHook = h
-	}
-}
-
 type Config struct {
 	ListenURL              string
 	OnErrorHook            func(err error)
@@ -54,4 +24,34 @@ func defaultConfig() *Config {
 		},
 	}
 	return cfg
+}
+
+func WithListenAddr(addr string) Option {
+	return func(cfg *Config) {
+		cfg.ListenURL = addr
+	}
+}
+
+func WithOnCloseHook(h func()) Option {
+	return func(cfg *Config) {
+		cfg.OnCloseHook = h
+	}
+}
+
+func WithOnErrorHook(h func(err error)) Option {
+	return func(cfg *Config) {
+		cfg.OnErrorHook = h
+	}
+}
+
+func WithOnMessageReceivedHook(h timedHook) Option {
+	return func(cfg *Config) {
+		cfg.OnMessageReceivedHook = h
+	}
+}
+
+func WithOnMessageProcessedHook(h timedHook) Option {
+	return func(cfg *Config) {
+		cfg.OnMessageProcessedHook = h
+	}
 }

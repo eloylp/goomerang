@@ -42,14 +42,14 @@ func WithOnErrorHook(h func(err error)) Option {
 	}
 }
 
-func WithOnMessageProcessedHook(h timedHook) Option {
-	return func(cfg *Config) {
-		cfg.OnMessageProcessedHook = h
-	}
-}
-
 func WithOnMessageReceivedHook(h timedHook) Option {
 	return func(cfg *Config) {
 		cfg.OnMessageReceivedHook = h
+	}
+}
+
+func WithOnMessageProcessedHook(h timedHook) Option {
+	return func(cfg *Config) {
+		cfg.OnMessageProcessedHook = h
 	}
 }
