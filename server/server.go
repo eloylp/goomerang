@@ -299,7 +299,9 @@ func (s *Server) Shutdown(ctx context.Context) error {
 		multiErr = multierror.Append(multiErr, ctx.Err())
 	case <-ch:
 	}
-	s.onCloseHook()
+	if s.onCloseHook != nil {
+		s.onCloseHook()
+	}
 	return multiErr
 }
 
