@@ -1,6 +1,7 @@
 package server
 
 import (
+	"log"
 	"time"
 )
 
@@ -48,9 +49,9 @@ type Config struct {
 
 func defaultConfig() *Config {
 	cfg := &Config{
-		ErrorHook:              func(err error) {},
-		OnCloseHook:            func() {},
-		OnMessageProcessedHook: func(name string, duration time.Duration) {},
+		ErrorHook: func(err error) {
+			log.Printf("goomerang error: %v", err)
+		},
 	}
 	return cfg
 }
