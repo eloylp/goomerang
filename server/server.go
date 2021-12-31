@@ -31,7 +31,8 @@ type Server struct {
 	messageRegistry        message.Registry
 	onErrorHook            func(err error)
 	onCloseHook            func()
-	onMessageProcessedHook func(name string, duration time.Duration)
+	onMessageProcessedHook timedHook
+	onMessageReceivedHook  timedHook
 }
 
 func NewServer(opts ...Option) (*Server, error) {
@@ -48,6 +49,7 @@ func NewServer(opts ...Option) (*Server, error) {
 		onErrorHook:            cfg.ErrorHook,
 		onCloseHook:            cfg.OnCloseHook,
 		onMessageProcessedHook: cfg.OnMessageProcessedHook,
+		onMessageReceivedHook:  cfg.OnMessageReceivedHook,
 		handlerRegistry:        engine.AppendableRegistry{},
 		messageRegistry:        message.Registry{},
 		connTrack:              map[*websocket.Conn]struct{}{},
@@ -148,6 +150,9 @@ func (s *Server) processMessage(c *websocket.Conn, data []byte, sOpts Sender) er
 	frame, err := message.UnPack(data)
 	if err != nil {
 		return err
+	}
+	if s.onMessageReceivedHook != nil {
+		s.onMessageReceivedHook(frame.Type, time.Since(frame.Creation.AsTime()))
 	}
 	msg, err := s.messageRegistry.Message(frame.Type)
 	if err != nil {

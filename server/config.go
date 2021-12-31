@@ -32,11 +32,18 @@ func WithOnMessageProcessedHook(h timedHook) Option {
 	}
 }
 
+func WithOnMessageReceivedHook(h timedHook) Option {
+	return func(cfg *Config) {
+		cfg.OnMessageReceivedHook = h
+	}
+}
+
 type Config struct {
 	ListenURL              string
 	ErrorHook              func(err error)
 	OnCloseHook            func()
 	OnMessageProcessedHook timedHook
+	OnMessageReceivedHook  timedHook
 }
 
 func defaultConfig() *Config {
