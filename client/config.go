@@ -1,6 +1,7 @@
 package client
 
 import (
+	"crypto/tls"
 	"time"
 )
 
@@ -14,6 +15,7 @@ type Config struct {
 	OnErrorHook            func(err error)
 	OnMessageProcessedHook timedHook
 	OnMessageReceivedHook  timedHook
+	TLSConfig              *tls.Config
 }
 
 func defaultConfig() *Config {
@@ -51,5 +53,11 @@ func WithOnMessageReceivedHook(h timedHook) Option {
 func WithOnMessageProcessedHook(h timedHook) Option {
 	return func(cfg *Config) {
 		cfg.OnMessageProcessedHook = h
+	}
+}
+
+func WithWithTLSConfig(tlsCfg *tls.Config) Option {
+	return func(cfg *Config) {
+		cfg.TLSConfig = tlsCfg
 	}
 }

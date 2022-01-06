@@ -42,14 +42,18 @@ func NewClient(opts ...Option) (*Client, error) {
 		o(cfg)
 	}
 	c := &Client{
-		ServerURL:              url.URL{Scheme: "ws", Host: cfg.TargetServer, Path: "/ws"},
+		ServerURL:              serverURL(cfg),
 		onCloseHook:            cfg.OnCloseHook,
 		onErrorHook:            cfg.OnErrorHook,
 		onMessageProcessedHook: cfg.OnMessageProcessedHook,
 		onMessageReceivedHook:  cfg.OnMessageReceivedHook,
 		dialer: &websocket.Dialer{
 			Proxy:            http.ProxyFromEnvironment,
+			TLSClientConfig:  cfg.TLSConfig,
 			HandshakeTimeout: 45 * time.Second, // TODO parametrize this.
+			ReadBufferSize:   0,                // TODO parametrize this.
+			WriteBufferSize:  0,                // TODO parametrize this.
+			WriteBufferPool:  nil,              // TODO parametrize this.
 		},
 		l:               &sync.Mutex{},
 		handlerRegistry: engine.AppendableRegistry{},
@@ -59,6 +63,13 @@ func NewClient(opts ...Option) (*Client, error) {
 	c.clientOps = &immediateSender{c: c}
 	c.RegisterMessage(&protocol.MultiReply{})
 	return c, nil
+}
+
+func serverURL(cfg *Config) url.URL {
+	if cfg.TLSConfig != nil {
+		return url.URL{Scheme: "wss", Host: cfg.TargetServer, Path: "/wss"}
+	}
+	return url.URL{Scheme: "ws", Host: cfg.TargetServer, Path: "/ws"}
 }
 
 func (c *Client) Connect(ctx context.Context) error {

@@ -33,6 +33,7 @@ type Server struct {
 	onCloseHook            func()
 	onMessageProcessedHook timedHook
 	onMessageReceivedHook  timedHook
+	cfg                    *Config
 }
 
 func NewServer(opts ...Option) (*Server, error) {
@@ -44,7 +45,8 @@ func NewServer(opts ...Option) (*Server, error) {
 	s := &Server{
 		upgrader: &websocket.Upgrader{},
 		intServer: &http.Server{
-			Addr: cfg.ListenURL,
+			Addr:      cfg.ListenURL,
+			TLSConfig: cfg.TLSConfig,
 		},
 		onErrorHook:            cfg.OnErrorHook,
 		onCloseHook:            cfg.OnCloseHook,
@@ -57,9 +59,19 @@ func NewServer(opts ...Option) (*Server, error) {
 		cancl:                  cancl,
 		wg:                     &sync.WaitGroup{},
 		ctx:                    ctx,
+		cfg:                    cfg,
 	}
-	s.intServer.Handler = mainHandler(s)
+	mux := http.NewServeMux()
+	mux.Handle(endpoint(cfg), mainHandler(s))
+	s.intServer.Handler = mux
 	return s, nil
+}
+
+func endpoint(cfg *Config) string {
+	if cfg.TLSConfig != nil {
+		return "/wss"
+	}
+	return "/ws"
 }
 
 func mainHandler(s *Server) http.HandlerFunc {
@@ -276,6 +288,13 @@ func (s *Server) Send(ctx context.Context, msg proto.Message) error {
 }
 
 func (s *Server) Run() error {
+	if s.cfg.TLSConfig != nil {
+		if err := s.intServer.ListenAndServeTLS("", ""); err != http.ErrServerClosed { // The "certFile" and "keyFile" params are with "" values, since the server has the certificates already configured.
+			s.onErrorHook(err)
+			return err
+		}
+		return nil
+	}
 	if err := s.intServer.ListenAndServe(); err != http.ErrServerClosed {
 		s.onErrorHook(err)
 		return err

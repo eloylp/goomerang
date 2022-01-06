@@ -2,6 +2,7 @@ package goomerang_test
 
 import (
 	"context"
+	"crypto/tls"
 	"fmt"
 	"strings"
 	"sync"
@@ -106,14 +107,48 @@ func (a *Arbiter) RequireNoErrors() {
 
 func PrepareServer(t *testing.T, opts ...server.Option) *server.Server {
 	t.Helper()
+	s := configureServer(t, opts)
+	go s.Run()
+	test.WaitTCPService(t, serverAddr, 50*time.Millisecond, 2*time.Second)
+	return s
+}
+
+func configureServer(t *testing.T, opts []server.Option) *server.Server {
 	opts = append(opts, server.WithListenAddr(serverAddr))
 	s, err := server.NewServer(opts...)
 	if err != nil {
 		t.Fatal(err)
 	}
-	go s.Run()
-	test.WaitTCPService(t, serverAddr, 50*time.Millisecond, 2*time.Second)
 	return s
+}
+
+func PrepareTLSServer(t *testing.T, opts ...server.Option) *server.Server {
+	t.Helper()
+	s := configureServer(t, opts)
+	go s.Run()
+	WaitTLSService(t, serverAddr, 50*time.Millisecond, 2*time.Second)
+	return s
+}
+
+func WaitTLSService(t *testing.T, addr string, interval, maxWait time.Duration) {
+	t.Helper()
+	ctx, cancl := context.WithTimeout(context.Background(), maxWait)
+	defer cancl()
+	for {
+		select {
+		case <-ctx.Done():
+			t.Fatalf("WaitTLSService(): %v", ctx.Err())
+		default:
+			con, conErr := tls.Dial("tcp", addr, &tls.Config{
+				InsecureSkipVerify: true,
+			})
+			if conErr == nil {
+				_ = con.Close()
+				return
+			}
+			time.Sleep(interval)
+		}
+	}
 }
 
 func PrepareClient(t *testing.T, opts ...client.Option) *client.Client {
