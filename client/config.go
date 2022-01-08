@@ -16,12 +16,14 @@ type Config struct {
 	OnMessageProcessedHook timedHook
 	OnMessageReceivedHook  timedHook
 	TLSConfig              *tls.Config
+	MaxConcurrency         int
 }
 
 func defaultConfig() *Config {
 	cfg := &Config{
-		OnErrorHook: func(err error) {},
-		OnCloseHook: func() {},
+		OnErrorHook:    func(err error) {},
+		OnCloseHook:    func() {},
+		MaxConcurrency: 10,
 	}
 	return cfg
 }
@@ -53,6 +55,12 @@ func WithOnMessageReceivedHook(h timedHook) Option {
 func WithOnMessageProcessedHook(h timedHook) Option {
 	return func(cfg *Config) {
 		cfg.OnMessageProcessedHook = h
+	}
+}
+
+func WithMaxConcurrency(n int) Option {
+	return func(cfg *Config) {
+		cfg.MaxConcurrency = n
 	}
 }
 

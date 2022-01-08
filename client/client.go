@@ -13,6 +13,7 @@ import (
 	"github.com/gorilla/websocket"
 	"google.golang.org/protobuf/proto"
 
+	"go.eloylp.dev/goomerang"
 	"go.eloylp.dev/goomerang/client/internal/rpc"
 	"go.eloylp.dev/goomerang/internal/engine"
 	"go.eloylp.dev/goomerang/internal/message"
@@ -34,12 +35,17 @@ type Client struct {
 	onMessageProcessedHook timedHook
 	onMessageReceivedHook  timedHook
 	rpcRegistry            *rpc.Registry
+	workerPool             *goomerang.WorkerPool
 }
 
 func NewClient(opts ...Option) (*Client, error) {
 	cfg := defaultConfig()
 	for _, o := range opts {
 		o(cfg)
+	}
+	wp, err := goomerang.NewWorkerPool(cfg.MaxConcurrency)
+	if err != nil {
+		return nil, fmt.Errorf("goomerang client: %w", err)
 	}
 	c := &Client{
 		ServerURL:              serverURL(cfg),
@@ -59,6 +65,7 @@ func NewClient(opts ...Option) (*Client, error) {
 		handlerRegistry: engine.AppendableRegistry{},
 		messageRegistry: message.Registry{},
 		rpcRegistry:     rpc.NewRegistry(),
+		workerPool:      wp,
 	}
 	c.clientOps = &immediateSender{c: c}
 	c.RegisterMessage(&protocol.MultiReply{})
@@ -102,7 +109,11 @@ func (c *Client) receiver() {
 			c.onErrorHook(fmt.Errorf("protocol: unexpected message type %v", messageType))
 			return
 		}
-		c.processMessage(data)
+		c.workerPool.Add()
+		go func() {
+			c.processMessage(data)
+			c.workerPool.Done()
+		}()
 	}
 }
 

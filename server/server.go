@@ -12,6 +12,7 @@ import (
 	"github.com/hashicorp/go-multierror"
 	"google.golang.org/protobuf/proto"
 
+	"go.eloylp.dev/goomerang"
 	"go.eloylp.dev/goomerang/internal/engine"
 	"go.eloylp.dev/goomerang/internal/message"
 	"go.eloylp.dev/goomerang/internal/message/protocol"
@@ -34,12 +35,17 @@ type Server struct {
 	onMessageProcessedHook timedHook
 	onMessageReceivedHook  timedHook
 	cfg                    *Config
+	workerPool             *goomerang.WorkerPool
 }
 
 func NewServer(opts ...Option) (*Server, error) {
 	cfg := defaultConfig()
 	for _, o := range opts {
 		o(cfg)
+	}
+	wp, err := goomerang.NewWorkerPool(cfg.MaxConcurrency)
+	if err != nil {
+		return nil, fmt.Errorf("goomerang server: %w", err)
 	}
 	ctx, cancl := context.WithCancel(context.Background())
 	s := &Server{
@@ -60,6 +66,7 @@ func NewServer(opts ...Option) (*Server, error) {
 		wg:                     &sync.WaitGroup{},
 		ctx:                    ctx,
 		cfg:                    cfg,
+		workerPool:             wp,
 	}
 	mux := http.NewServeMux()
 	mux.Handle(endpoint(cfg), mainHandler(s))
@@ -103,10 +110,13 @@ func mainHandler(s *Server) http.HandlerFunc {
 					s.onErrorHook(fmt.Errorf("server: cannot process websocket frame type %v", msg.mType))
 					return
 				}
-				if err := s.processMessage(c, msg.data, sOpts); err != nil {
-					s.onErrorHook(err)
-					continue
-				}
+				s.workerPool.Add() // Will block till more processing slots are available.
+				go func() {
+					if err := s.processMessage(c, msg.data, sOpts); err != nil {
+						s.onErrorHook(err)
+					}
+					s.workerPool.Done()
+				}()
 			}
 		}
 	}
