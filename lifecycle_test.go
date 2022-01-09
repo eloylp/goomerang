@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
+
 	testMessages "go.eloylp.dev/goomerang/internal/message/test"
 
 	"go.eloylp.dev/goomerang/client"

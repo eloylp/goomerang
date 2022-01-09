@@ -47,7 +47,6 @@ func TestPingPongServer(t *testing.T) {
 }
 
 func TestSecuredPingPongServer(t *testing.T) {
-
 	arbiter := NewArbiter(t)
 	// Get self-signed certificate.
 	certificate, err := security.SelfSignedCertificate()

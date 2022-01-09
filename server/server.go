@@ -299,7 +299,8 @@ func (s *Server) Send(ctx context.Context, msg proto.Message) error {
 
 func (s *Server) Run() error {
 	if s.cfg.TLSConfig != nil {
-		if err := s.intServer.ListenAndServeTLS("", ""); err != http.ErrServerClosed { // The "certFile" and "keyFile" params are with "" values, since the server has the certificates already configured.
+		// The "certFile" and "keyFile" params are with "" values, since the server has the certificates already configured.
+		if err := s.intServer.ListenAndServeTLS("", ""); err != http.ErrServerClosed {
 			s.onErrorHook(err)
 			return err
 		}

@@ -146,7 +146,7 @@ func (c *Client) processMessage(data []byte) error {
 		return err
 	}
 	for _, h := range handlers {
-		if err = h.(Handler)(c.clientOps, msg); err != nil {
+		if err := h.(Handler)(c.clientOps, msg); err != nil {
 			return err
 		}
 	}

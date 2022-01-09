@@ -21,6 +21,7 @@ func TestPackTimestamp(t *testing.T) {
 	pack, err := message.Pack(m)
 	require.NoError(t, err)
 	unpack, err := message.UnPack(pack)
+	require.NoError(t, err)
 	now := time.Now().UnixMicro()
 	packTime := unpack.Creation.AsTime().UnixMicro()
 	assert.InDelta(t, now, packTime, 1000)

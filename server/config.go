@@ -23,7 +23,7 @@ type Config struct {
 func defaultConfig() *Config {
 	cfg := &Config{
 		OnErrorHook: func(err error) {
-			log.Printf("goomerang error: %v", err)
+			log.Printf("goomerang error: %v", err) //nolint:forbidigo
 		},
 		MaxConcurrency: 10,
 	}
