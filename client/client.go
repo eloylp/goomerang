@@ -111,50 +111,49 @@ func (c *Client) receiver() {
 		}
 		c.workerPool.Add()
 		go func() {
-			c.processMessage(data)
+			if err := c.processMessage(data); err != nil {
+				c.onErrorHook(err)
+			}
 			c.workerPool.Done()
 		}()
 	}
 }
 
-func (c *Client) processMessage(data []byte) {
+func (c *Client) processMessage(data []byte) error {
 	start := time.Now()
 	frame, err := message.UnPack(data)
 	if err != nil {
-		c.onErrorHook(err)
-		return
+		return err
 	}
 	if c.onMessageReceivedHook != nil {
 		c.onMessageReceivedHook(frame.Type, time.Since(frame.Creation.AsTime()))
 	}
 	msg, err := c.messageRegistry.Message(frame.Type)
 	if err != nil {
-		c.onErrorHook(err)
-		return
+		return err
 	}
 	if err := proto.Unmarshal(frame.Payload, msg); err != nil {
-		c.onErrorHook(err)
-		return
+		return err
 	}
 	if frame.IsRpc {
 		if err := c.doRPC(frame.Uuid, msg); err != nil {
-			c.onErrorHook(err)
+			return err
 		}
-		return
+		return nil
 	}
 	handlers, err := c.handlerRegistry.Elems(frame.Type)
 	if err != nil {
-		c.onErrorHook(err)
-		return
+		return err
 	}
 	for _, h := range handlers {
 		if err = h.(Handler)(c.clientOps, msg); err != nil {
-			c.onErrorHook(err)
+			return err
 		}
 	}
 	if c.onMessageProcessedHook != nil {
 		c.onMessageProcessedHook(frame.Type, time.Since(start))
 	}
+	return nil
 }
 
 func (c *Client) Send(ctx context.Context, msg proto.Message) error {
