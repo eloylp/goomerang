@@ -23,11 +23,11 @@ type Handler func(ops Sender, msg proto.Message) *HandlerError
 type Server struct {
 	intServer              *http.Server
 	connTrack              map[*websocket.Conn]struct{}
-	l                      *sync.Mutex
+	writeLock              *sync.Mutex
 	wg                     *sync.WaitGroup
 	ctx                    context.Context
 	cancl                  context.CancelFunc
-	upgrader               *websocket.Upgrader
+	wsUpgrader             *websocket.Upgrader
 	handlerRegistry        engine.AppendableRegistry
 	messageRegistry        message.Registry
 	onErrorHook            func(err error)
@@ -49,7 +49,7 @@ func NewServer(opts ...Option) (*Server, error) {
 	}
 	ctx, cancl := context.WithCancel(context.Background())
 	s := &Server{
-		upgrader: &websocket.Upgrader{},
+		wsUpgrader: &websocket.Upgrader{},
 		intServer: &http.Server{
 			Addr:      cfg.ListenURL,
 			TLSConfig: cfg.TLSConfig,
@@ -61,7 +61,7 @@ func NewServer(opts ...Option) (*Server, error) {
 		handlerRegistry:        engine.AppendableRegistry{},
 		messageRegistry:        message.Registry{},
 		connTrack:              map[*websocket.Conn]struct{}{},
-		l:                      &sync.Mutex{},
+		writeLock:              &sync.Mutex{},
 		cancl:                  cancl,
 		wg:                     &sync.WaitGroup{},
 		ctx:                    ctx,
@@ -85,13 +85,13 @@ func mainHandler(s *Server) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		s.wg.Add(1)
 		defer s.wg.Done()
-		c, err := s.upgrader.Upgrade(w, r, nil)
+		c, err := s.wsUpgrader.Upgrade(w, r, nil)
 		if err != nil {
 			s.onErrorHook(err)
 			return
 		}
 		s.addConnection(c)
-		sOpts := &immediateSender{s, c, s.l}
+		sOpts := &immediateSender{s, c, s.writeLock}
 		defer s.removeConnection(c)
 		defer s.closeConnection(c)
 
@@ -123,14 +123,14 @@ func mainHandler(s *Server) http.HandlerFunc {
 }
 
 func (s *Server) addConnection(c *websocket.Conn) {
-	s.l.Lock()
-	defer s.l.Unlock()
+	s.writeLock.Lock()
+	defer s.writeLock.Unlock()
 	s.connTrack[c] = struct{}{}
 }
 
 func (s *Server) removeConnection(c *websocket.Conn) {
-	s.l.Lock()
-	defer s.l.Unlock()
+	s.writeLock.Lock()
+	defer s.writeLock.Unlock()
 	delete(s.connTrack, c)
 }
 
@@ -239,8 +239,8 @@ func (s *Server) nolockWriteMessage(c *websocket.Conn, responseMsg []byte) error
 }
 
 func (s *Server) writeMessage(c *websocket.Conn, responseMsg []byte) error {
-	s.l.Lock()
-	defer s.l.Unlock()
+	s.writeLock.Lock()
+	defer s.writeLock.Unlock()
 	return c.WriteMessage(websocket.BinaryMessage, responseMsg)
 }
 
@@ -263,8 +263,8 @@ func (s *Server) RegisterHandler(msg proto.Message, handlers ...Handler) {
 }
 
 func (s *Server) Send(ctx context.Context, msg proto.Message) error {
-	s.l.Lock()
-	defer s.l.Unlock()
+	s.writeLock.Lock()
+	defer s.writeLock.Unlock()
 	ch := make(chan error, 1)
 	go func() {
 		bytes, err := message.Pack(msg)
@@ -342,7 +342,7 @@ func (s *Server) closeConnection(c *websocket.Conn) {
 }
 
 func (s *Server) sendClosingSignal(conn *websocket.Conn) error {
-	s.l.Lock()
-	defer s.l.Unlock()
+	s.writeLock.Lock()
+	defer s.writeLock.Unlock()
 	return conn.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, ""))
 }
