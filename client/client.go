@@ -27,7 +27,7 @@ type Client struct {
 	handlerRegistry        engine.AppendableRegistry
 	messageRegistry        message.Registry
 	clientOps              *immediateSender
-	l                      *sync.Mutex
+	writeLock              *sync.Mutex
 	conn                   *websocket.Conn
 	dialer                 *websocket.Dialer
 	onCloseHook            func()
@@ -61,7 +61,7 @@ func NewClient(opts ...Option) (*Client, error) {
 			WriteBufferSize:  0,                // TODO parametrize this.
 			WriteBufferPool:  nil,              // TODO parametrize this.
 		},
-		l:               &sync.Mutex{},
+		writeLock:       &sync.Mutex{},
 		handlerRegistry: engine.AppendableRegistry{},
 		messageRegistry: message.Registry{},
 		rpcRegistry:     rpc.NewRegistry(),
@@ -236,14 +236,14 @@ func (c *Client) RegisterMessage(msg proto.Message) {
 }
 
 func (c *Client) writeMessage(data []byte) error {
-	c.l.Lock()
-	defer c.l.Unlock()
+	c.writeLock.Lock()
+	defer c.writeLock.Unlock()
 	return c.conn.WriteMessage(websocket.BinaryMessage, data)
 }
 
 func (c *Client) sendClosingSignal() error {
-	c.l.Lock()
-	defer c.l.Unlock()
+	c.writeLock.Lock()
+	defer c.writeLock.Unlock()
 	return c.conn.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, ""))
 }
 
