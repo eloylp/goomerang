@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/require"
+	"go.eloylp.dev/kit/pki"
 	"go.eloylp.dev/kit/test"
 
 	"go.eloylp.dev/goomerang/client"
@@ -126,29 +127,8 @@ func PrepareTLSServer(t *testing.T, opts ...server.Option) *server.Server {
 	t.Helper()
 	s := configureServer(t, opts)
 	go s.Run()
-	WaitTLSService(t, serverAddr, 50*time.Millisecond, 2*time.Second)
+	test.WaitTLSService(t, serverAddr, 50*time.Millisecond, 2*time.Second)
 	return s
-}
-
-func WaitTLSService(t *testing.T, addr string, interval, maxWait time.Duration) {
-	t.Helper()
-	ctx, cancl := context.WithTimeout(context.Background(), maxWait)
-	defer cancl()
-	for {
-		select {
-		case <-ctx.Done():
-			t.Fatalf("WaitTLSService(): %v", ctx.Err())
-		default:
-			con, conErr := tls.Dial("tcp", addr, &tls.Config{
-				InsecureSkipVerify: true,
-			})
-			if conErr == nil {
-				_ = con.Close()
-				return
-			}
-			time.Sleep(interval)
-		}
-	}
 }
 
 func PrepareClient(t *testing.T, opts ...client.Option) *client.Client {
@@ -163,4 +143,18 @@ func PrepareClient(t *testing.T, opts ...client.Option) *client.Client {
 		t.Fatal(err)
 	}
 	return c
+}
+
+func SelfSignedCert(t *testing.T) tls.Certificate {
+	crt, err := pki.SelfSignedCert(pki.WithCertSerialNumber(1),
+		pki.WithCertCommonName("127.0.0.1"),
+		pki.WithCertOrganization([]string{"goomerang"}),
+		pki.WithCertIpAddresses([]string{"0.0.0.0"}),
+		pki.WithCertNotBefore(time.Now()),
+		pki.WithCertNotAfter(time.Now().Add(time.Hour*24*365)),
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return crt
 }

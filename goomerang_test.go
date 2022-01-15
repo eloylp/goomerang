@@ -11,7 +11,6 @@ import (
 
 	"go.eloylp.dev/goomerang/client"
 	testMessages "go.eloylp.dev/goomerang/internal/message/test"
-	"go.eloylp.dev/goomerang/security"
 	"go.eloylp.dev/goomerang/server"
 )
 
@@ -49,8 +48,7 @@ func TestPingPongServer(t *testing.T) {
 func TestSecuredPingPongServer(t *testing.T) {
 	arbiter := NewArbiter(t)
 	// Get self-signed certificate.
-	certificate, err := security.SelfSignedCertificate()
-	require.NoError(t, err)
+	certificate := SelfSignedCert(t)
 
 	s := PrepareTLSServer(t, server.WithTLSConfig(&tls.Config{
 		Certificates: []tls.Certificate{certificate},
