@@ -56,10 +56,9 @@ func NewClient(opts ...Option) (*Client, error) {
 		dialer: &websocket.Dialer{
 			Proxy:            http.ProxyFromEnvironment,
 			TLSClientConfig:  cfg.TLSConfig,
-			HandshakeTimeout: 45 * time.Second, // TODO parametrize this.
-			ReadBufferSize:   0,                // TODO parametrize this.
-			WriteBufferSize:  0,                // TODO parametrize this.
-			WriteBufferPool:  nil,              // TODO parametrize this.
+			ReadBufferSize:   cfg.ReadBufferSize,
+			WriteBufferSize:  cfg.WriteBufferSize,
+			HandshakeTimeout: 2 * time.Second,
 		},
 		writeLock:       &sync.Mutex{},
 		handlerRegistry: engine.AppendableRegistry{},

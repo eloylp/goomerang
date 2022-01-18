@@ -17,6 +17,8 @@ type Config struct {
 	OnMessageReceivedHook  timedHook
 	TLSConfig              *tls.Config
 	MaxConcurrency         int
+	ReadBufferSize         int
+	WriteBufferSize        int
 }
 
 func defaultConfig() *Config {
@@ -67,5 +69,17 @@ func WithMaxConcurrency(n int) Option {
 func WithWithTLSConfig(tlsCfg *tls.Config) Option {
 	return func(cfg *Config) {
 		cfg.TLSConfig = tlsCfg
+	}
+}
+
+func WithReadBufferSize(s int) Option {
+	return func(cfg *Config) {
+		cfg.ReadBufferSize = s
+	}
+}
+
+func WithWriteBufferSize(s int) Option {
+	return func(cfg *Config) {
+		cfg.WriteBufferSize = s
 	}
 }

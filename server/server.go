@@ -49,10 +49,17 @@ func NewServer(opts ...Option) (*Server, error) {
 	}
 	ctx, cancl := context.WithCancel(context.Background())
 	s := &Server{
-		wsUpgrader: &websocket.Upgrader{},
+		wsUpgrader: &websocket.Upgrader{
+			HandshakeTimeout: 2 * time.Second,
+			ReadBufferSize:   cfg.ReadBufferSize,
+			WriteBufferSize:  cfg.WriteBufferSize,
+		},
 		intServer: &http.Server{
-			Addr:      cfg.ListenURL,
-			TLSConfig: cfg.TLSConfig,
+			Addr:              cfg.ListenURL,
+			TLSConfig:         cfg.TLSConfig,
+			ReadHeaderTimeout: cfg.HTTPReadHeaderTimeout,
+			ReadTimeout:       cfg.HTTPReadTimeout,
+			WriteTimeout:      cfg.HTTPWriteTimeout,
 		},
 		onErrorHook:            cfg.OnErrorHook,
 		onCloseHook:            cfg.OnCloseHook,
