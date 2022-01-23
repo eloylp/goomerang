@@ -213,7 +213,7 @@ func (s *Server) processMessage(cs connSlot, data []byte, sOpts Sender) error {
 		}
 		return nil
 	}
-	s.processAsync(handlers, sOpts, msg)
+	s.exec(handlers, sOpts, msg)
 	if s.onMessageProcessedHook != nil {
 		s.onMessageProcessedHook(frame.Type, time.Since(start))
 	}
@@ -257,7 +257,7 @@ func (s *Server) writeMessage(cs connSlot, responseMsg []byte) error {
 	return cs.c.WriteMessage(websocket.BinaryMessage, responseMsg)
 }
 
-func (s *Server) processAsync(handlers []interface{}, ops Sender, msg proto.Message) {
+func (s *Server) exec(handlers []interface{}, ops Sender, msg proto.Message) {
 	for _, h := range handlers {
 		if err := h.(Handler)(ops, msg); err != nil {
 			s.onErrorHook(fmt.Errorf("server handler err: %w", err))
