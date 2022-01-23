@@ -20,10 +20,15 @@ import (
 
 type Handler func(ops Sender, msg proto.Message) *HandlerError
 
+type connSlot struct {
+	l *sync.Mutex
+	c *websocket.Conn
+}
+
 type Server struct {
 	intServer              *http.Server
-	connTrack              map[*websocket.Conn]struct{}
-	writeLock              *sync.Mutex
+	connRegistry           map[*websocket.Conn]connSlot
+	serverL                *sync.Mutex
 	wg                     *sync.WaitGroup
 	ctx                    context.Context
 	cancl                  context.CancelFunc
@@ -67,8 +72,8 @@ func NewServer(opts ...Option) (*Server, error) {
 		onMessageReceivedHook:  cfg.OnMessageReceivedHook,
 		handlerRegistry:        engine.AppendableRegistry{},
 		messageRegistry:        message.Registry{},
-		connTrack:              map[*websocket.Conn]struct{}{},
-		writeLock:              &sync.Mutex{},
+		connRegistry:           map[*websocket.Conn]connSlot{},
+		serverL:                &sync.Mutex{},
 		cancl:                  cancl,
 		wg:                     &sync.WaitGroup{},
 		ctx:                    ctx,
@@ -97,12 +102,12 @@ func mainHandler(s *Server) http.HandlerFunc {
 			s.onErrorHook(err)
 			return
 		}
-		s.addConnection(c)
-		sOpts := &immediateSender{s, c, s.writeLock}
-		defer s.removeConnection(c)
-		defer s.closeConnection(c)
+		cs := s.addConnection(c)
+		sOpts := &immediateSender{s: s, connSlot: cs}
+		defer s.removeConnection(cs)
+		defer s.closeConnection(cs)
 
-		messageReader := s.readMessages(c)
+		messageReader := s.readMessages(cs)
 
 		for {
 			select {
@@ -119,7 +124,7 @@ func mainHandler(s *Server) http.HandlerFunc {
 				}
 				s.workerPool.Add() // Will block till more processing slots are available.
 				go func() {
-					if err := s.processMessage(c, msg.data, sOpts); err != nil {
+					if err := s.processMessage(cs, msg.data, sOpts); err != nil {
 						s.onErrorHook(err)
 					}
 					s.workerPool.Done()
@@ -129,30 +134,35 @@ func mainHandler(s *Server) http.HandlerFunc {
 	}
 }
 
-func (s *Server) addConnection(c *websocket.Conn) {
-	s.writeLock.Lock()
-	defer s.writeLock.Unlock()
-	s.connTrack[c] = struct{}{}
+func (s *Server) addConnection(c *websocket.Conn) connSlot {
+	s.serverL.Lock()
+	defer s.serverL.Unlock()
+	slot := connSlot{
+		l: &sync.Mutex{},
+		c: c,
+	}
+	s.connRegistry[c] = slot
+	return slot
 }
 
-func (s *Server) removeConnection(c *websocket.Conn) {
-	s.writeLock.Lock()
-	defer s.writeLock.Unlock()
-	delete(s.connTrack, c)
+func (s *Server) removeConnection(c connSlot) {
+	s.serverL.Lock()
+	defer s.serverL.Unlock()
+	delete(s.connRegistry, c.c)
 }
 
-func (s *Server) readMessages(c *websocket.Conn) chan *receivedMessage {
+func (s *Server) readMessages(cs connSlot) chan *receivedMessage {
 	ch := make(chan *receivedMessage)
 	s.wg.Add(1)
 	go func() {
 		defer s.wg.Done()
 		for {
-			messageType, data, err := c.ReadMessage()
+			messageType, data, err := cs.c.ReadMessage()
 			if err != nil {
 				var closeErr *websocket.CloseError
 				if errors.As(err, &closeErr) {
 					if closeErr.Code == websocket.CloseNormalClosure {
-						_ = s.sendClosingSignal(c)
+						_ = s.sendClosingSignal(cs)
 					}
 					return
 				}
@@ -174,7 +184,7 @@ type receivedMessage struct {
 	data  []byte
 }
 
-func (s *Server) processMessage(c *websocket.Conn, data []byte, sOpts Sender) error {
+func (s *Server) processMessage(cs connSlot, data []byte, sOpts Sender) error {
 	start := time.Now()
 	frame, err := message.UnPack(data)
 	if err != nil {
@@ -195,7 +205,7 @@ func (s *Server) processMessage(c *websocket.Conn, data []byte, sOpts Sender) er
 		return err
 	}
 	if frame.IsRpc {
-		if err := s.doRPC(handlers, c, frame.Uuid, msg); err != nil {
+		if err := s.doRPC(handlers, cs, frame.Uuid, msg); err != nil {
 			return err
 		}
 		if s.onMessageProcessedHook != nil {
@@ -210,7 +220,7 @@ func (s *Server) processMessage(c *websocket.Conn, data []byte, sOpts Sender) er
 	return nil
 }
 
-func (s *Server) doRPC(handlers []interface{}, c *websocket.Conn, frameUUID string, msg proto.Message) error {
+func (s *Server) doRPC(handlers []interface{}, cs connSlot, frameUUID string, msg proto.Message) error {
 	ops := &bufferedSender{}
 	multiReply := &protocol.MultiReply{}
 	replies := make([]*protocol.MultiReply_Reply, len(handlers))
@@ -235,20 +245,16 @@ func (s *Server) doRPC(handlers []interface{}, c *websocket.Conn, frameUUID stri
 	if err != nil {
 		return err
 	}
-	if err := s.writeMessage(c, responseMsg); err != nil {
+	if err := s.writeMessage(cs, responseMsg); err != nil {
 		return err
 	}
 	return nil
 }
 
-func (s *Server) nolockWriteMessage(c *websocket.Conn, responseMsg []byte) error {
-	return c.WriteMessage(websocket.BinaryMessage, responseMsg)
-}
-
-func (s *Server) writeMessage(c *websocket.Conn, responseMsg []byte) error {
-	s.writeLock.Lock()
-	defer s.writeLock.Unlock()
-	return c.WriteMessage(websocket.BinaryMessage, responseMsg)
+func (s *Server) writeMessage(cs connSlot, responseMsg []byte) error {
+	cs.l.Lock()
+	defer cs.l.Unlock()
+	return cs.c.WriteMessage(websocket.BinaryMessage, responseMsg)
 }
 
 func (s *Server) processAsync(handlers []interface{}, ops Sender, msg proto.Message) {
@@ -270,8 +276,6 @@ func (s *Server) RegisterHandler(msg proto.Message, handlers ...Handler) {
 }
 
 func (s *Server) Send(ctx context.Context, msg proto.Message) error {
-	s.writeLock.Lock()
-	defer s.writeLock.Unlock()
 	ch := make(chan error, 1)
 	go func() {
 		bytes, err := message.Pack(msg)
@@ -282,8 +286,8 @@ func (s *Server) Send(ctx context.Context, msg proto.Message) error {
 		}
 		var errList error
 		var count int
-		for conn := range s.connTrack {
-			if err := s.nolockWriteMessage(conn, bytes); err != nil && count < 100 {
+		for conn := range s.connRegistry {
+			if err := s.writeMessage(s.connRegistry[conn], bytes); err != nil && count < 100 {
 				if errors.Is(err, websocket.ErrCloseSent) {
 					err = ErrClientDisconnected
 				}
@@ -342,14 +346,14 @@ func (s *Server) Shutdown(ctx context.Context) error {
 	return multiErr
 }
 
-func (s *Server) closeConnection(c *websocket.Conn) {
-	if err := s.sendClosingSignal(c); err != nil {
+func (s *Server) closeConnection(cs connSlot) {
+	if err := s.sendClosingSignal(cs); err != nil {
 		s.onErrorHook(err)
 	}
 }
 
-func (s *Server) sendClosingSignal(conn *websocket.Conn) error {
-	s.writeLock.Lock()
-	defer s.writeLock.Unlock()
-	return conn.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, ""))
+func (s *Server) sendClosingSignal(cs connSlot) error {
+	cs.l.Lock()
+	defer cs.l.Unlock()
+	return cs.c.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, ""))
 }

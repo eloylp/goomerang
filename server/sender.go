@@ -2,7 +2,6 @@ package server
 
 import (
 	"context"
-	"sync"
 
 	"github.com/gorilla/websocket"
 	"google.golang.org/protobuf/proto"
@@ -15,9 +14,8 @@ type Sender interface {
 }
 
 type immediateSender struct {
-	s *Server
-	c *websocket.Conn
-	l *sync.Mutex
+	s        *Server
+	connSlot connSlot
 }
 
 func (so *immediateSender) Send(ctx context.Context, msg proto.Message) error {
@@ -27,9 +25,9 @@ func (so *immediateSender) Send(ctx context.Context, msg proto.Message) error {
 	}
 	ch := make(chan error, 1)
 	go func() {
-		so.l.Lock()
-		defer so.l.Unlock()
-		ch <- so.c.WriteMessage(websocket.BinaryMessage, m)
+		so.connSlot.l.Lock()
+		defer so.connSlot.l.Unlock()
+		ch <- so.connSlot.c.WriteMessage(websocket.BinaryMessage, m)
 	}()
 	select {
 	case <-ctx.Done():
