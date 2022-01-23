@@ -135,7 +135,7 @@ func (c *Client) processMessage(data []byte) error {
 		return err
 	}
 	if frame.IsRpc {
-		if err := c.doRPC(frame.Uuid, msg); err != nil {
+		if err := c.processRPC(frame.Uuid, msg); err != nil {
 			return err
 		}
 		return nil
@@ -246,7 +246,7 @@ func (c *Client) sendClosingSignal() error {
 	return c.conn.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, ""))
 }
 
-func (c *Client) doRPC(frameUUID string, msg proto.Message) error {
+func (c *Client) processRPC(frameUUID string, msg proto.Message) error {
 	protoMultiReply, ok := msg.(*protocol.MultiReply)
 	if !ok {
 		return errors.New("frame is marked for req/rep tracking, cannot cast to multi-reply message")
