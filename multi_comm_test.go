@@ -10,11 +10,12 @@ import (
 
 	"go.eloylp.dev/goomerang/client"
 	testMessages "go.eloylp.dev/goomerang/internal/message/test"
+	"go.eloylp.dev/goomerang/internal/test"
 	"go.eloylp.dev/goomerang/server"
 )
 
 func TestServerCanBroadCastMessages(t *testing.T) {
-	arbiter := NewArbiter(t)
+	arbiter := test.NewArbiter(t)
 	s := PrepareServer(t)
 	defer s.Shutdown(defaultCtx)
 
@@ -56,7 +57,7 @@ func TestServerShutdownIsPropagatedToAllClients(t *testing.T) {
 }
 
 func TestServerSupportMultipleClients(t *testing.T) {
-	arbiter := NewArbiter(t)
+	arbiter := test.NewArbiter(t)
 	s := PrepareServer(t, server.WithOnErrorHook(func(err error) {
 		arbiter.ErrorHappened(err)
 	}))
@@ -110,7 +111,7 @@ func TestServerSupportMultipleClients(t *testing.T) {
 func TestMultipleHandlersArePossibleInServer(t *testing.T) {
 	s := PrepareServer(t)
 	defer s.Shutdown(context.Background())
-	arbiter := NewArbiter(t)
+	arbiter := test.NewArbiter(t)
 	m := &testMessages.GreetV1{Message: "Hi !"}
 	h := func(ops server.Sender, msg proto.Message) *server.HandlerError {
 		arbiter.ItsAFactThat("HANDLER1_CALLED")
@@ -139,7 +140,7 @@ func TestMultipleHandlersArePossibleInServer(t *testing.T) {
 func TestMultipleHandlersArePossibleInClient(t *testing.T) {
 	s := PrepareServer(t)
 	defer s.Shutdown(defaultCtx)
-	arbiter := NewArbiter(t)
+	arbiter := test.NewArbiter(t)
 	c := PrepareClient(t)
 	defer c.Close(defaultCtx)
 	m := &testMessages.GreetV1{Message: "Hi !"}

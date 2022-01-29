@@ -11,11 +11,12 @@ import (
 	"go.eloylp.dev/goomerang/client"
 	"go.eloylp.dev/goomerang/internal/message"
 	testMessages "go.eloylp.dev/goomerang/internal/message/test"
+	"go.eloylp.dev/goomerang/internal/test"
 	"go.eloylp.dev/goomerang/server"
 )
 
 func TestServerErrorHook(t *testing.T) {
-	arbiter := NewArbiter(t)
+	arbiter := test.NewArbiter(t)
 	s := PrepareServer(t, server.WithOnErrorHook(func(err error) {
 		if err != nil {
 			arbiter.ItsAFactThat("ERROR_HANDLER_WORKS")
@@ -35,7 +36,7 @@ func TestServerErrorHook(t *testing.T) {
 }
 
 func TestClientMessageProcessedHook(t *testing.T) {
-	arbiter := NewArbiter(t)
+	arbiter := test.NewArbiter(t)
 	s := PrepareServer(t)
 	defer s.Shutdown(defaultCtx)
 	msg := &testMessages.PingPong{}
@@ -60,7 +61,7 @@ func TestClientMessageProcessedHook(t *testing.T) {
 }
 
 func TestServerMessageProcessedHook(t *testing.T) {
-	arbiter := NewArbiter(t)
+	arbiter := test.NewArbiter(t)
 	msg := &testMessages.PingPong{}
 	s := PrepareServer(t, server.WithOnMessageProcessedHook(func(name string, duration time.Duration) {
 		if name == message.FQDN(msg) {
@@ -85,7 +86,7 @@ func TestServerMessageProcessedHook(t *testing.T) {
 }
 
 func TestClientMessageReceivedHook(t *testing.T) {
-	arbiter := NewArbiter(t)
+	arbiter := test.NewArbiter(t)
 	s := PrepareServer(t)
 	defer s.Shutdown(defaultCtx)
 	msg := &testMessages.PingPong{}
@@ -108,7 +109,7 @@ func TestClientMessageReceivedHook(t *testing.T) {
 }
 
 func TestServerMessageReceivedHook(t *testing.T) {
-	arbiter := NewArbiter(t)
+	arbiter := test.NewArbiter(t)
 	msg := &testMessages.PingPong{}
 	s := PrepareServer(t, server.WithOnMessageReceivedHook(func(name string, duration time.Duration) {
 		if name == message.FQDN(msg) {

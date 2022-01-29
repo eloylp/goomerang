@@ -6,14 +6,14 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	testMessages "go.eloylp.dev/goomerang/internal/message/test"
-
 	"go.eloylp.dev/goomerang/client"
+	testMessages "go.eloylp.dev/goomerang/internal/message/test"
+	"go.eloylp.dev/goomerang/internal/test"
 	"go.eloylp.dev/goomerang/server"
 )
 
 func TestShutdownProcedureClientSideInit(t *testing.T) {
-	arbiter := NewArbiter(t)
+	arbiter := test.NewArbiter(t)
 	s := PrepareServer(t, server.WithOnCloseHook(func() {
 		arbiter.ItsAFactThat("SERVER_PROPERLY_CLOSED")
 	}))
@@ -29,7 +29,7 @@ func TestShutdownProcedureClientSideInit(t *testing.T) {
 }
 
 func TestShutdownProcedureServerSideInit(t *testing.T) {
-	arbiter := NewArbiter(t)
+	arbiter := test.NewArbiter(t)
 	s := PrepareServer(t, server.WithOnCloseHook(func() {
 		arbiter.ItsAFactThat("SERVER_PROPERLY_CLOSED")
 	}))

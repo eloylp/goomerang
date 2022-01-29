@@ -11,13 +11,14 @@ import (
 
 	"go.eloylp.dev/goomerang/client"
 	testMessages "go.eloylp.dev/goomerang/internal/message/test"
+	"go.eloylp.dev/goomerang/internal/test"
 	"go.eloylp.dev/goomerang/server"
 )
 
 var defaultCtx = context.Background()
 
 func TestPingPongServer(t *testing.T) {
-	arbiter := NewArbiter(t)
+	arbiter := test.NewArbiter(t)
 	s := PrepareServer(t)
 	defer s.Shutdown(defaultCtx)
 	s.RegisterHandler(&testMessages.PingPong{}, func(s server.Sender, msg proto.Message) *server.HandlerError {
@@ -46,7 +47,7 @@ func TestPingPongServer(t *testing.T) {
 }
 
 func TestSecuredPingPongServer(t *testing.T) {
-	arbiter := NewArbiter(t)
+	arbiter := test.NewArbiter(t)
 	// Get self-signed certificate.
 	certificate := SelfSignedCert(t)
 
