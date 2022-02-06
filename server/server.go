@@ -13,12 +13,8 @@ import (
 	"google.golang.org/protobuf/proto"
 
 	"go.eloylp.dev/goomerang"
-	"go.eloylp.dev/goomerang/internal/engine"
 	"go.eloylp.dev/goomerang/internal/message"
-	"go.eloylp.dev/goomerang/internal/message/protocol"
 )
-
-type Handler func(ops Sender, msg proto.Message) *HandlerError
 
 type connSlot struct {
 	l *sync.Mutex
@@ -33,7 +29,7 @@ type Server struct {
 	ctx                    context.Context
 	cancl                  context.CancelFunc
 	wsUpgrader             *websocket.Upgrader
-	handlerRegistry        engine.AppendableRegistry
+	handlerChainer         *message.HandlerChainer
 	messageRegistry        message.Registry
 	onErrorHook            func(err error)
 	onCloseHook            func()
@@ -70,7 +66,7 @@ func NewServer(opts ...Option) (*Server, error) {
 		onCloseHook:            cfg.OnCloseHook,
 		onMessageProcessedHook: cfg.OnMessageProcessedHook,
 		onMessageReceivedHook:  cfg.OnMessageReceivedHook,
-		handlerRegistry:        engine.AppendableRegistry{},
+		handlerChainer:         message.NewHandlerChainer(),
 		messageRegistry:        message.Registry{},
 		connRegistry:           map[*websocket.Conn]connSlot{},
 		serverL:                &sync.Mutex{},
@@ -193,19 +189,16 @@ func (s *Server) processMessage(cs connSlot, data []byte, sOpts Sender) error {
 	if s.onMessageReceivedHook != nil {
 		s.onMessageReceivedHook(frame.Type, time.Since(frame.Creation.AsTime()))
 	}
-	msg, err := s.messageRegistry.Message(frame.Type)
+	msg, err := message.FromFrame(frame, s.messageRegistry)
 	if err != nil {
 		return err
 	}
-	if err := proto.Unmarshal(frame.Payload, msg); err != nil {
-		return err
-	}
-	handlers, err := s.handlerRegistry.Elems(frame.Type)
+	handler, err := s.handlerChainer.Handler(msg.Metadata.Type)
 	if err != nil {
 		return err
 	}
-	if frame.IsRpc {
-		if err := s.doRPC(handlers, cs, frame.Uuid, msg); err != nil {
+	if msg.Metadata.IsRPC {
+		if err := s.doRPC(handler, cs, msg); err != nil {
 			return err
 		}
 		if s.onMessageProcessedHook != nil {
@@ -213,35 +206,17 @@ func (s *Server) processMessage(cs connSlot, data []byte, sOpts Sender) error {
 		}
 		return nil
 	}
-	s.exec(handlers, sOpts, msg)
+	handler.Handle(sOpts, msg)
 	if s.onMessageProcessedHook != nil {
 		s.onMessageProcessedHook(frame.Type, time.Since(start))
 	}
 	return nil
 }
 
-func (s *Server) doRPC(handlers []interface{}, cs connSlot, frameUUID string, msg proto.Message) error {
+func (s *Server) doRPC(handler message.Handler, cs connSlot, msg *message.Request) error {
 	ops := &bufferedSender{}
-	multiReply := &protocol.MultiReply{}
-	replies := make([]*protocol.MultiReply_Reply, len(handlers))
-	for i := 0; i < len(handlers); i++ {
-		replies[i] = &protocol.MultiReply_Reply{}
-		if err := handlers[i].(Handler)(ops, msg); err != nil {
-			replies[i].Error = &protocol.MultiReply_Error{
-				Message: err.Message,
-				Code:    err.Code,
-			}
-			continue
-		}
-		data, err := proto.Marshal(ops.Index(i))
-		if err != nil {
-			return err
-		}
-		replies[i].Message = data
-		replies[i].MessageType = message.FQDN(msg)
-	}
-	multiReply.Replies = replies
-	responseMsg, err := message.Pack(multiReply, message.FrameWithUUID(frameUUID), message.FrameIsRPC())
+	handler.Handle(ops, msg)
+	responseMsg, err := message.Pack(ops.Reply(), message.FrameWithUUID(msg.Metadata.UUID), message.FrameIsRPC())
 	if err != nil {
 		return err
 	}
@@ -257,22 +232,11 @@ func (s *Server) writeMessage(cs connSlot, responseMsg []byte) error {
 	return cs.c.WriteMessage(websocket.BinaryMessage, responseMsg)
 }
 
-func (s *Server) exec(handlers []interface{}, ops Sender, msg proto.Message) {
-	for _, h := range handlers {
-		if err := h.(Handler)(ops, msg); err != nil {
-			s.onErrorHook(fmt.Errorf("server handler err: %w", err))
-		}
-	}
-}
-
-func (s *Server) RegisterHandler(msg proto.Message, handlers ...Handler) {
-	his := make([]interface{}, len(handlers))
-	for i := 0; i < len(handlers); i++ {
-		his[i] = handlers[i]
-	}
+func (s *Server) RegisterHandler(msg proto.Message, handler message.Handler) {
 	fqdn := message.FQDN(msg)
 	s.messageRegistry.Register(fqdn, msg)
-	s.handlerRegistry.Register(fqdn, his...)
+	s.handlerChainer.AppendHandler(fqdn, handler)
+	s.handlerChainer.PrepareChains()
 }
 
 func (s *Server) Send(ctx context.Context, msg proto.Message) error {

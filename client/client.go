@@ -15,16 +15,12 @@ import (
 
 	"go.eloylp.dev/goomerang"
 	"go.eloylp.dev/goomerang/client/internal/rpc"
-	"go.eloylp.dev/goomerang/internal/engine"
 	"go.eloylp.dev/goomerang/internal/message"
-	"go.eloylp.dev/goomerang/internal/message/protocol"
 )
-
-type Handler func(ops Sender, msg proto.Message) error
 
 type Client struct {
 	ServerURL              url.URL
-	handlerRegistry        engine.AppendableRegistry
+	handlerChainer         *message.HandlerChainer
 	messageRegistry        message.Registry
 	clientOps              *immediateSender
 	writeLock              *sync.Mutex
@@ -61,13 +57,12 @@ func NewClient(opts ...Option) (*Client, error) {
 			HandshakeTimeout: 2 * time.Second,
 		},
 		writeLock:       &sync.Mutex{},
-		handlerRegistry: engine.AppendableRegistry{},
+		handlerChainer:  message.NewHandlerChainer(),
 		messageRegistry: message.Registry{},
 		rpcRegistry:     rpc.NewRegistry(),
 		workerPool:      wp,
 	}
 	c.clientOps = &immediateSender{c: c}
-	c.RegisterMessage(&protocol.MultiReply{})
 	return c, nil
 }
 
@@ -127,28 +122,21 @@ func (c *Client) processMessage(data []byte) error {
 	if c.onMessageReceivedHook != nil {
 		c.onMessageReceivedHook(frame.Type, time.Since(frame.Creation.AsTime()))
 	}
-	msg, err := c.messageRegistry.Message(frame.Type)
+	msg, err := message.FromFrame(frame, c.messageRegistry)
 	if err != nil {
 		return err
 	}
-	if err := proto.Unmarshal(frame.Payload, msg); err != nil {
-		return err
-	}
-	if frame.IsRpc {
-		if err := c.processRPC(frame.Uuid, msg); err != nil {
+	if msg.Metadata.IsRPC {
+		if err := c.processRPC(msg); err != nil {
 			return err
 		}
 		return nil
 	}
-	handlers, err := c.handlerRegistry.Elems(frame.Type)
+	handler, err := c.handlerChainer.Handler(msg.Metadata.Type)
 	if err != nil {
 		return err
 	}
-	for _, h := range handlers {
-		if err := h.(Handler)(c.clientOps, msg); err != nil {
-			return err
-		}
-	}
+	handler.Handle(c.clientOps, msg)
 	if c.onMessageProcessedHook != nil {
 		c.onMessageProcessedHook(frame.Type, time.Since(start))
 	}
@@ -200,17 +188,14 @@ func (c *Client) Close(ctx context.Context) error {
 	}
 }
 
-func (c *Client) RegisterHandler(msg proto.Message, handlers ...Handler) {
-	his := make([]interface{}, len(handlers))
-	for i := 0; i < len(handlers); i++ {
-		his[i] = handlers[i]
-	}
+func (c *Client) RegisterHandler(msg proto.Message, h message.Handler) {
 	fqdn := message.FQDN(msg)
 	c.messageRegistry.Register(fqdn, msg)
-	c.handlerRegistry.Register(fqdn, his...)
+	c.handlerChainer.AppendHandler(fqdn, h)
+	c.handlerChainer.PrepareChains()
 }
 
-func (c *Client) RPC(ctx context.Context, msg proto.Message) (*rpc.MultiReply, error) {
+func (c *Client) RPC(ctx context.Context, msg proto.Message) (*message.Request, error) {
 	UUID := uuid.New().String()
 	data, err := message.Pack(msg, message.FrameWithUUID(UUID), message.FrameIsRPC())
 	if err != nil {
@@ -223,11 +208,11 @@ func (c *Client) RPC(ctx context.Context, msg proto.Message) (*rpc.MultiReply, e
 		}
 		return nil, err
 	}
-	multiReply, err := c.rpcRegistry.ResultFor(ctx, UUID)
+	repliedMsg, err := c.rpcRegistry.ResultFor(ctx, UUID)
 	if err != nil {
 		return nil, err
 	}
-	return multiReply, nil
+	return repliedMsg, nil
 }
 
 func (c *Client) RegisterMessage(msg proto.Message) {
@@ -246,34 +231,8 @@ func (c *Client) sendClosingSignal() error {
 	return c.conn.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, ""))
 }
 
-func (c *Client) processRPC(frameUUID string, msg proto.Message) error {
-	protoMultiReply, ok := msg.(*protocol.MultiReply)
-	if !ok {
-		return errors.New("frame is marked for req/rep tracking, cannot cast to multi-reply message")
-	}
-	repliesCount := len(protoMultiReply.Replies)
-	multiReply := &rpc.MultiReply{}
-	replies := make([]*rpc.Reply, repliesCount)
-	multiReply.Replies = replies
-	for i := 0; i < repliesCount; i++ {
-		replies[i] = &rpc.Reply{}
-		if protoMultiReply.Replies[i].Error != nil {
-			replies[i].Err = rpc.NewHandlerError(
-				protoMultiReply.Replies[i].Error.Message,
-				protoMultiReply.Replies[i].Error.Code,
-			)
-			continue
-		}
-		protoMsg, err := c.messageRegistry.Message(protoMultiReply.Replies[i].MessageType)
-		if err != nil {
-			return errors.New("error parsing message in multi-reply")
-		}
-		if err := proto.Unmarshal(protoMultiReply.Replies[i].Message, protoMsg); err != nil {
-			return errors.New("error parsing message in multi-reply")
-		}
-		replies[i].Message = protoMsg
-	}
-	if err := c.rpcRegistry.SubmitResult(frameUUID, multiReply); err != nil {
+func (c *Client) processRPC(msg *message.Request) error {
+	if err := c.rpcRegistry.SubmitResult(msg.Metadata.UUID, msg); err != nil {
 		return err
 	}
 	return nil

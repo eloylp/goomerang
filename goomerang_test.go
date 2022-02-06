@@ -7,9 +7,9 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
-	"google.golang.org/protobuf/proto"
 
 	"go.eloylp.dev/goomerang/client"
+	"go.eloylp.dev/goomerang/internal/message"
 	testMessages "go.eloylp.dev/goomerang/internal/message/test"
 	"go.eloylp.dev/goomerang/internal/test"
 	"go.eloylp.dev/goomerang/server"
@@ -21,27 +21,27 @@ func TestPingPongServer(t *testing.T) {
 	arbiter := test.NewArbiter(t)
 	s := PrepareServer(t)
 	defer s.Shutdown(defaultCtx)
-	s.RegisterHandler(&testMessages.PingPong{}, func(s server.Sender, msg proto.Message) *server.HandlerError {
-		_ = msg.(*testMessages.PingPong)
+
+	s.RegisterHandler(&testMessages.PingPong{}, message.HandlerFunc(func(s message.Sender, msg *message.Request) {
+		_ = msg.Payload.(*testMessages.PingPong)
 		if err := s.Send(defaultCtx, &testMessages.PingPong{
 			Message: "pong",
 		}); err != nil {
-			return server.NewHandlerError("sd")
+			arbiter.ErrorHappened(err)
 		}
 		arbiter.ItsAFactThat("SERVER_RECEIVED_PING")
-		return nil
-	})
+	}))
 
 	c := PrepareClient(t)
 	defer c.Close(defaultCtx)
 
-	c.RegisterHandler(&testMessages.PingPong{}, func(c client.Sender, msg proto.Message) error {
-		_ = msg.(*testMessages.PingPong)
+	c.RegisterHandler(&testMessages.PingPong{}, message.HandlerFunc(func(c message.Sender, msg *message.Request) {
+		_ = msg.Payload.(*testMessages.PingPong)
 		arbiter.ItsAFactThat("CLIENT_RECEIVED_PONG")
-		return nil
-	})
+	}))
 	err := c.Send(defaultCtx, &testMessages.PingPong{Message: "ping"})
 	require.NoError(t, err)
+	arbiter.RequireNoErrors()
 	arbiter.RequireHappened("SERVER_RECEIVED_PING")
 	arbiter.RequireHappened("CLIENT_RECEIVED_PONG")
 }
@@ -58,16 +58,15 @@ func TestSecuredPingPongServer(t *testing.T) {
 	defer s.Shutdown(defaultCtx)
 	msg := &testMessages.PingPong{}
 
-	s.RegisterHandler(msg, func(s server.Sender, msg proto.Message) *server.HandlerError {
-		_ = msg.(*testMessages.PingPong)
+	s.RegisterHandler(msg, message.HandlerFunc(func(s message.Sender, msg *message.Request) {
+		_ = msg.Payload.(*testMessages.PingPong)
 		if err := s.Send(defaultCtx, &testMessages.PingPong{
 			Message: "pong",
 		}); err != nil {
-			return server.NewHandlerError("handler error")
+			arbiter.ErrorHappened(err)
 		}
 		arbiter.ItsAFactThat("SERVER_RECEIVED_PING")
-		return nil
-	})
+	}))
 
 	certPool := x509.NewCertPool()
 	certPool.AddCert(certificate.Leaf)
@@ -76,13 +75,13 @@ func TestSecuredPingPongServer(t *testing.T) {
 	}))
 	defer c.Close(defaultCtx)
 
-	c.RegisterHandler(msg, func(c client.Sender, msg proto.Message) error {
-		_ = msg.(*testMessages.PingPong)
+	c.RegisterHandler(msg, message.HandlerFunc(func(c message.Sender, msg *message.Request) {
+		_ = msg.Payload.(*testMessages.PingPong)
 		arbiter.ItsAFactThat("CLIENT_RECEIVED_PONG")
-		return nil
-	})
+	}))
 
 	require.NoError(t, c.Send(defaultCtx, &testMessages.PingPong{Message: "ping"}))
+	arbiter.RequireNoErrors()
 	arbiter.RequireHappened("SERVER_RECEIVED_PING")
 	arbiter.RequireHappened("CLIENT_RECEIVED_PONG")
 }

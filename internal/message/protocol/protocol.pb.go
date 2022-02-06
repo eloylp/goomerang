@@ -100,171 +100,6 @@ func (x *Frame) GetPayload() []byte {
 	return nil
 }
 
-type MultiReply struct {
-	state         protoimpl.MessageState
-	sizeCache     protoimpl.SizeCache
-	unknownFields protoimpl.UnknownFields
-
-	Replies []*MultiReply_Reply `protobuf:"bytes,4,rep,name=replies,proto3" json:"replies,omitempty"`
-}
-
-func (x *MultiReply) Reset() {
-	*x = MultiReply{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_internal_message_protocol_proto_msgTypes[1]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
-}
-
-func (x *MultiReply) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*MultiReply) ProtoMessage() {}
-
-func (x *MultiReply) ProtoReflect() protoreflect.Message {
-	mi := &file_internal_message_protocol_proto_msgTypes[1]
-	if protoimpl.UnsafeEnabled && x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use MultiReply.ProtoReflect.Descriptor instead.
-func (*MultiReply) Descriptor() ([]byte, []int) {
-	return file_internal_message_protocol_proto_rawDescGZIP(), []int{1}
-}
-
-func (x *MultiReply) GetReplies() []*MultiReply_Reply {
-	if x != nil {
-		return x.Replies
-	}
-	return nil
-}
-
-type MultiReply_Reply struct {
-	state         protoimpl.MessageState
-	sizeCache     protoimpl.SizeCache
-	unknownFields protoimpl.UnknownFields
-
-	MessageType string            `protobuf:"bytes,1,opt,name=messageType,proto3" json:"messageType,omitempty"`
-	Message     []byte            `protobuf:"bytes,2,opt,name=message,proto3" json:"message,omitempty"`
-	Error       *MultiReply_Error `protobuf:"bytes,3,opt,name=error,proto3" json:"error,omitempty"`
-}
-
-func (x *MultiReply_Reply) Reset() {
-	*x = MultiReply_Reply{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_internal_message_protocol_proto_msgTypes[2]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
-}
-
-func (x *MultiReply_Reply) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*MultiReply_Reply) ProtoMessage() {}
-
-func (x *MultiReply_Reply) ProtoReflect() protoreflect.Message {
-	mi := &file_internal_message_protocol_proto_msgTypes[2]
-	if protoimpl.UnsafeEnabled && x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use MultiReply_Reply.ProtoReflect.Descriptor instead.
-func (*MultiReply_Reply) Descriptor() ([]byte, []int) {
-	return file_internal_message_protocol_proto_rawDescGZIP(), []int{1, 0}
-}
-
-func (x *MultiReply_Reply) GetMessageType() string {
-	if x != nil {
-		return x.MessageType
-	}
-	return ""
-}
-
-func (x *MultiReply_Reply) GetMessage() []byte {
-	if x != nil {
-		return x.Message
-	}
-	return nil
-}
-
-func (x *MultiReply_Reply) GetError() *MultiReply_Error {
-	if x != nil {
-		return x.Error
-	}
-	return nil
-}
-
-type MultiReply_Error struct {
-	state         protoimpl.MessageState
-	sizeCache     protoimpl.SizeCache
-	unknownFields protoimpl.UnknownFields
-
-	Message string `protobuf:"bytes,1,opt,name=message,proto3" json:"message,omitempty"`
-	Code    int32  `protobuf:"varint,2,opt,name=code,proto3" json:"code,omitempty"`
-}
-
-func (x *MultiReply_Error) Reset() {
-	*x = MultiReply_Error{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_internal_message_protocol_proto_msgTypes[3]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
-}
-
-func (x *MultiReply_Error) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*MultiReply_Error) ProtoMessage() {}
-
-func (x *MultiReply_Error) ProtoReflect() protoreflect.Message {
-	mi := &file_internal_message_protocol_proto_msgTypes[3]
-	if protoimpl.UnsafeEnabled && x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use MultiReply_Error.ProtoReflect.Descriptor instead.
-func (*MultiReply_Error) Descriptor() ([]byte, []int) {
-	return file_internal_message_protocol_proto_rawDescGZIP(), []int{1, 1}
-}
-
-func (x *MultiReply_Error) GetMessage() string {
-	if x != nil {
-		return x.Message
-	}
-	return ""
-}
-
-func (x *MultiReply_Error) GetCode() int32 {
-	if x != nil {
-		return x.Code
-	}
-	return 0
-}
-
 var File_internal_message_protocol_proto protoreflect.FileDescriptor
 
 var file_internal_message_protocol_proto_rawDesc = []byte{
@@ -283,26 +118,10 @@ var file_internal_message_protocol_proto_rawDesc = []byte{
 	0x62, 0x75, 0x66, 0x2e, 0x54, 0x69, 0x6d, 0x65, 0x73, 0x74, 0x61, 0x6d, 0x70, 0x52, 0x08, 0x63,
 	0x72, 0x65, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x12, 0x18, 0x0a, 0x07, 0x70, 0x61, 0x79, 0x6c, 0x6f,
 	0x61, 0x64, 0x18, 0x05, 0x20, 0x01, 0x28, 0x0c, 0x52, 0x07, 0x70, 0x61, 0x79, 0x6c, 0x6f, 0x61,
-	0x64, 0x22, 0x84, 0x02, 0x0a, 0x0a, 0x4d, 0x75, 0x6c, 0x74, 0x69, 0x52, 0x65, 0x70, 0x6c, 0x79,
-	0x12, 0x3e, 0x0a, 0x07, 0x72, 0x65, 0x70, 0x6c, 0x69, 0x65, 0x73, 0x18, 0x04, 0x20, 0x03, 0x28,
-	0x0b, 0x32, 0x24, 0x2e, 0x67, 0x6f, 0x6f, 0x6d, 0x65, 0x72, 0x61, 0x6e, 0x67, 0x2e, 0x70, 0x72,
-	0x6f, 0x74, 0x6f, 0x63, 0x6f, 0x6c, 0x2e, 0x4d, 0x75, 0x6c, 0x74, 0x69, 0x52, 0x65, 0x70, 0x6c,
-	0x79, 0x2e, 0x52, 0x65, 0x70, 0x6c, 0x79, 0x52, 0x07, 0x72, 0x65, 0x70, 0x6c, 0x69, 0x65, 0x73,
-	0x1a, 0x7f, 0x0a, 0x05, 0x52, 0x65, 0x70, 0x6c, 0x79, 0x12, 0x20, 0x0a, 0x0b, 0x6d, 0x65, 0x73,
-	0x73, 0x61, 0x67, 0x65, 0x54, 0x79, 0x70, 0x65, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x0b,
-	0x6d, 0x65, 0x73, 0x73, 0x61, 0x67, 0x65, 0x54, 0x79, 0x70, 0x65, 0x12, 0x18, 0x0a, 0x07, 0x6d,
-	0x65, 0x73, 0x73, 0x61, 0x67, 0x65, 0x18, 0x02, 0x20, 0x01, 0x28, 0x0c, 0x52, 0x07, 0x6d, 0x65,
-	0x73, 0x73, 0x61, 0x67, 0x65, 0x12, 0x3a, 0x0a, 0x05, 0x65, 0x72, 0x72, 0x6f, 0x72, 0x18, 0x03,
-	0x20, 0x01, 0x28, 0x0b, 0x32, 0x24, 0x2e, 0x67, 0x6f, 0x6f, 0x6d, 0x65, 0x72, 0x61, 0x6e, 0x67,
-	0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x63, 0x6f, 0x6c, 0x2e, 0x4d, 0x75, 0x6c, 0x74, 0x69, 0x52,
-	0x65, 0x70, 0x6c, 0x79, 0x2e, 0x45, 0x72, 0x72, 0x6f, 0x72, 0x52, 0x05, 0x65, 0x72, 0x72, 0x6f,
-	0x72, 0x1a, 0x35, 0x0a, 0x05, 0x45, 0x72, 0x72, 0x6f, 0x72, 0x12, 0x18, 0x0a, 0x07, 0x6d, 0x65,
-	0x73, 0x73, 0x61, 0x67, 0x65, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x07, 0x6d, 0x65, 0x73,
-	0x73, 0x61, 0x67, 0x65, 0x12, 0x12, 0x0a, 0x04, 0x63, 0x6f, 0x64, 0x65, 0x18, 0x02, 0x20, 0x01,
-	0x28, 0x05, 0x52, 0x04, 0x63, 0x6f, 0x64, 0x65, 0x42, 0x2b, 0x5a, 0x29, 0x67, 0x6f, 0x2e, 0x65,
-	0x6c, 0x6f, 0x79, 0x6c, 0x70, 0x2e, 0x64, 0x65, 0x76, 0x2f, 0x67, 0x6f, 0x6f, 0x6d, 0x65, 0x72,
-	0x61, 0x6e, 0x67, 0x2f, 0x69, 0x6e, 0x74, 0x65, 0x72, 0x6e, 0x61, 0x6c, 0x2f, 0x70, 0x72, 0x6f,
-	0x74, 0x6f, 0x63, 0x6f, 0x6c, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
+	0x64, 0x42, 0x2b, 0x5a, 0x29, 0x67, 0x6f, 0x2e, 0x65, 0x6c, 0x6f, 0x79, 0x6c, 0x70, 0x2e, 0x64,
+	0x65, 0x76, 0x2f, 0x67, 0x6f, 0x6f, 0x6d, 0x65, 0x72, 0x61, 0x6e, 0x67, 0x2f, 0x69, 0x6e, 0x74,
+	0x65, 0x72, 0x6e, 0x61, 0x6c, 0x2f, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x63, 0x6f, 0x6c, 0x62, 0x06,
+	0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
 }
 
 var (
@@ -317,23 +136,18 @@ func file_internal_message_protocol_proto_rawDescGZIP() []byte {
 	return file_internal_message_protocol_proto_rawDescData
 }
 
-var file_internal_message_protocol_proto_msgTypes = make([]protoimpl.MessageInfo, 4)
+var file_internal_message_protocol_proto_msgTypes = make([]protoimpl.MessageInfo, 1)
 var file_internal_message_protocol_proto_goTypes = []interface{}{
 	(*Frame)(nil),                 // 0: goomerang.protocol.Frame
-	(*MultiReply)(nil),            // 1: goomerang.protocol.MultiReply
-	(*MultiReply_Reply)(nil),      // 2: goomerang.protocol.MultiReply.Reply
-	(*MultiReply_Error)(nil),      // 3: goomerang.protocol.MultiReply.Error
-	(*timestamppb.Timestamp)(nil), // 4: google.protobuf.Timestamp
+	(*timestamppb.Timestamp)(nil), // 1: google.protobuf.Timestamp
 }
 var file_internal_message_protocol_proto_depIdxs = []int32{
-	4, // 0: goomerang.protocol.Frame.creation:type_name -> google.protobuf.Timestamp
-	2, // 1: goomerang.protocol.MultiReply.replies:type_name -> goomerang.protocol.MultiReply.Reply
-	3, // 2: goomerang.protocol.MultiReply.Reply.error:type_name -> goomerang.protocol.MultiReply.Error
-	3, // [3:3] is the sub-list for method output_type
-	3, // [3:3] is the sub-list for method input_type
-	3, // [3:3] is the sub-list for extension type_name
-	3, // [3:3] is the sub-list for extension extendee
-	0, // [0:3] is the sub-list for field type_name
+	1, // 0: goomerang.protocol.Frame.creation:type_name -> google.protobuf.Timestamp
+	1, // [1:1] is the sub-list for method output_type
+	1, // [1:1] is the sub-list for method input_type
+	1, // [1:1] is the sub-list for extension type_name
+	1, // [1:1] is the sub-list for extension extendee
+	0, // [0:1] is the sub-list for field type_name
 }
 
 func init() { file_internal_message_protocol_proto_init() }
@@ -354,42 +168,6 @@ func file_internal_message_protocol_proto_init() {
 				return nil
 			}
 		}
-		file_internal_message_protocol_proto_msgTypes[1].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*MultiReply); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_internal_message_protocol_proto_msgTypes[2].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*MultiReply_Reply); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_internal_message_protocol_proto_msgTypes[3].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*MultiReply_Error); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
 	}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
@@ -397,7 +175,7 @@ func file_internal_message_protocol_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: file_internal_message_protocol_proto_rawDesc,
 			NumEnums:      0,
-			NumMessages:   4,
+			NumMessages:   1,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

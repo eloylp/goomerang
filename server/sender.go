@@ -38,14 +38,14 @@ func (so *immediateSender) Send(ctx context.Context, msg proto.Message) error {
 }
 
 type bufferedSender struct {
-	replies []proto.Message
+	reply proto.Message
 }
 
 func (so *bufferedSender) Send(_ context.Context, msg proto.Message) error {
-	so.replies = append(so.replies, msg)
+	so.reply = msg
 	return nil
 }
 
-func (so *bufferedSender) Index(i int) proto.Message {
-	return so.replies[i]
+func (so *bufferedSender) Reply() proto.Message {
+	return so.reply
 }

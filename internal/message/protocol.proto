@@ -12,16 +12,3 @@ message Frame {
   google.protobuf.Timestamp creation = 4;
   bytes payload = 5;
 }
-
-message MultiReply {
-  message Reply {
-    string messageType = 1;
-    bytes message = 2;
-    Error error = 3;
-  }
-  message Error {
-    string message = 1;
-    int32 code = 2;
-  }
-  repeated Reply replies = 4;
-}

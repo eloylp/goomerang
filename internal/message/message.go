@@ -16,6 +16,26 @@ func FQDN(msg proto.Message) string {
 	return string(msg.ProtoReflect().Descriptor().FullName())
 }
 
+func FromFrame(frame *protocol.Frame, msgRegistry Registry) (*Request, error) {
+	meta := &Metadata{
+		Creation: frame.Creation.AsTime(),
+		UUID:     frame.Uuid,
+		Type:     frame.Type,
+		IsRPC:    frame.IsRpc,
+	}
+	msg, err := msgRegistry.Message(frame.Type)
+	if err != nil {
+		return nil, fmt.Errorf("problems locating message: %w", err)
+	}
+	if err := proto.Unmarshal(frame.Payload, msg); err != nil {
+		return nil, fmt.Errorf("parsing from message: %w", msg)
+	}
+	return &Request{
+		Metadata: meta,
+		Payload:  msg,
+	}, nil
+}
+
 func Pack(msg proto.Message, opts ...FrameOption) ([]byte, error) {
 	payload, err := proto.Marshal(msg)
 	if err != nil {
