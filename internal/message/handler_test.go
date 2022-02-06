@@ -1,4 +1,4 @@
-package engine_test
+package message_test
 
 import (
 	"context"
@@ -8,22 +8,22 @@ import (
 	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/proto"
 
-	"go.eloylp.dev/goomerang/internal/engine"
+	"go.eloylp.dev/goomerang/internal/message"
 	testMessages "go.eloylp.dev/goomerang/internal/message/test"
 	"go.eloylp.dev/goomerang/internal/test"
 )
 
 func TestMiddlewareRegistry(t *testing.T) {
 	arbiter := test.NewArbiter(t)
-	mr := engine.NewHandlerChainer()
+	mr := message.NewHandlerChainer()
 
-	handler := engine.HandlerFunc(func(sender engine.Sender, msg *engine.Message) {
+	handler := message.HandlerFunc(func(sender message.Sender, msg *message.Request) {
 		arbiter.ItsAFactThat("HANDLER_EXECUTED")
 		sender.Send(context.Background(), &testMessages.PingPong{})
 	})
 
-	middleware := engine.Middleware(func(h engine.Handler) engine.Handler {
-		return engine.HandlerFunc(func(sender engine.Sender, msg *engine.Message) {
+	middleware := message.Middleware(func(h message.Handler) message.Handler {
+		return message.HandlerFunc(func(sender message.Sender, msg *message.Request) {
 			arbiter.ItsAFactThat("MIDDLEWARE_EXECUTED")
 			h.Handle(sender, msg)
 		})
@@ -36,14 +36,14 @@ func TestMiddlewareRegistry(t *testing.T) {
 	h, err := mr.Handler("chain1")
 	require.NoError(t, err)
 
-	h.Handle(&FakeSender{a: arbiter}, &engine.Message{})
+	h.Handle(&FakeSender{a: arbiter}, &message.Request{})
 
 	arbiter.RequireHappenedInOrder("MIDDLEWARE_EXECUTED", "HANDLER_EXECUTED")
 	arbiter.RequireHappenedInOrder("HANDLER_EXECUTED", "SENDER_CALLED")
 }
 
 func TestMiddlewareRegistryNotFound(t *testing.T) {
-	mr := engine.NewHandlerChainer()
+	mr := message.NewHandlerChainer()
 	mr.PrepareChains()
 	_, err := mr.Handler("NON_EXISTENT")
 	assert.EqualError(t, err, `handler chainer: chain "NON_EXISTENT" not found`)

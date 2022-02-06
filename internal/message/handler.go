@@ -1,4 +1,4 @@
-package engine
+package message
 
 import (
 	"context"
@@ -8,7 +8,7 @@ import (
 	"google.golang.org/protobuf/proto"
 )
 
-type Message struct {
+type Request struct {
 	Metadata *Metadata
 	Payload  proto.Message
 }
@@ -21,14 +21,14 @@ type Metadata struct {
 }
 
 type Handler interface {
-	Handle(sender Sender, msg *Message)
+	Handle(sender Sender, msg *Request)
 }
 
-type HandlerFunc func(sender Sender, msg *Message)
+type HandlerFunc func(sender Sender, msg *Request)
 
 type Middleware func(h Handler) Handler
 
-func (h HandlerFunc) Handle(sender Sender, msg *Message) {
+func (h HandlerFunc) Handle(sender Sender, msg *Request) {
 	h(sender, msg)
 }
 
