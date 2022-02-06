@@ -2,23 +2,18 @@ package client
 
 import (
 	"crypto/tls"
-	"time"
 )
 
 type Option func(cfg *Config)
 
-type timedHook func(name string, duration time.Duration)
-
 type Config struct {
-	TargetServer           string
-	OnCloseHook            func()
-	OnErrorHook            func(err error)
-	OnMessageProcessedHook timedHook
-	OnMessageReceivedHook  timedHook
-	TLSConfig              *tls.Config
-	MaxConcurrency         int
-	ReadBufferSize         int
-	WriteBufferSize        int
+	TargetServer    string
+	OnCloseHook     func()
+	OnErrorHook     func(err error)
+	TLSConfig       *tls.Config
+	MaxConcurrency  int
+	ReadBufferSize  int
+	WriteBufferSize int
 }
 
 func defaultConfig() *Config {
@@ -45,18 +40,6 @@ func WithOnCloseHook(h func()) Option {
 func WithOnErrorHook(h func(err error)) Option {
 	return func(cfg *Config) {
 		cfg.OnErrorHook = h
-	}
-}
-
-func WithOnMessageReceivedHook(h timedHook) Option {
-	return func(cfg *Config) {
-		cfg.OnMessageReceivedHook = h
-	}
-}
-
-func WithOnMessageProcessedHook(h timedHook) Option {
-	return func(cfg *Config) {
-		cfg.OnMessageProcessedHook = h
 	}
 }
 

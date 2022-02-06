@@ -22,21 +22,19 @@ type connSlot struct {
 }
 
 type Server struct {
-	intServer              *http.Server
-	connRegistry           map[*websocket.Conn]connSlot
-	serverL                *sync.Mutex
-	wg                     *sync.WaitGroup
-	ctx                    context.Context
-	cancl                  context.CancelFunc
-	wsUpgrader             *websocket.Upgrader
-	handlerChainer         *message.HandlerChainer
-	messageRegistry        message.Registry
-	onErrorHook            func(err error)
-	onCloseHook            func()
-	onMessageProcessedHook timedHook
-	onMessageReceivedHook  timedHook
-	cfg                    *Config
-	workerPool             *goomerang.WorkerPool
+	intServer       *http.Server
+	connRegistry    map[*websocket.Conn]connSlot
+	serverL         *sync.Mutex
+	wg              *sync.WaitGroup
+	ctx             context.Context
+	cancl           context.CancelFunc
+	wsUpgrader      *websocket.Upgrader
+	handlerChainer  *message.HandlerChainer
+	messageRegistry message.Registry
+	onErrorHook     func(err error)
+	onCloseHook     func()
+	cfg             *Config
+	workerPool      *goomerang.WorkerPool
 }
 
 func NewServer(opts ...Option) (*Server, error) {
@@ -62,19 +60,17 @@ func NewServer(opts ...Option) (*Server, error) {
 			ReadTimeout:       cfg.HTTPReadTimeout,
 			WriteTimeout:      cfg.HTTPWriteTimeout,
 		},
-		onErrorHook:            cfg.OnErrorHook,
-		onCloseHook:            cfg.OnCloseHook,
-		onMessageProcessedHook: cfg.OnMessageProcessedHook,
-		onMessageReceivedHook:  cfg.OnMessageReceivedHook,
-		handlerChainer:         message.NewHandlerChainer(),
-		messageRegistry:        message.Registry{},
-		connRegistry:           map[*websocket.Conn]connSlot{},
-		serverL:                &sync.Mutex{},
-		cancl:                  cancl,
-		wg:                     &sync.WaitGroup{},
-		ctx:                    ctx,
-		cfg:                    cfg,
-		workerPool:             wp,
+		onErrorHook:     cfg.OnErrorHook,
+		onCloseHook:     cfg.OnCloseHook,
+		handlerChainer:  message.NewHandlerChainer(),
+		messageRegistry: message.Registry{},
+		connRegistry:    map[*websocket.Conn]connSlot{},
+		serverL:         &sync.Mutex{},
+		cancl:           cancl,
+		wg:              &sync.WaitGroup{},
+		ctx:             ctx,
+		cfg:             cfg,
+		workerPool:      wp,
 	}
 	mux := http.NewServeMux()
 	mux.Handle(endpoint(cfg), mainHandler(s))
@@ -181,14 +177,11 @@ type receivedMessage struct {
 }
 
 func (s *Server) processMessage(cs connSlot, data []byte, sOpts Sender) error {
-	start := time.Now()
 	frame, err := message.UnPack(data)
 	if err != nil {
 		return err
 	}
-	if s.onMessageReceivedHook != nil {
-		s.onMessageReceivedHook(frame.Type, time.Since(frame.Creation.AsTime()))
-	}
+
 	msg, err := message.FromFrame(frame, s.messageRegistry)
 	if err != nil {
 		return err
@@ -201,15 +194,9 @@ func (s *Server) processMessage(cs connSlot, data []byte, sOpts Sender) error {
 		if err := s.doRPC(handler, cs, msg); err != nil {
 			return err
 		}
-		if s.onMessageProcessedHook != nil {
-			s.onMessageProcessedHook(frame.Type, time.Since(start))
-		}
 		return nil
 	}
 	handler.Handle(sOpts, msg)
-	if s.onMessageProcessedHook != nil {
-		s.onMessageProcessedHook(frame.Type, time.Since(start))
-	}
 	return nil
 }
 

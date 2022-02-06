@@ -19,19 +19,17 @@ import (
 )
 
 type Client struct {
-	ServerURL              url.URL
-	handlerChainer         *message.HandlerChainer
-	messageRegistry        message.Registry
-	clientOps              *immediateSender
-	writeLock              *sync.Mutex
-	conn                   *websocket.Conn
-	dialer                 *websocket.Dialer
-	onCloseHook            func()
-	onErrorHook            func(err error)
-	onMessageProcessedHook timedHook
-	onMessageReceivedHook  timedHook
-	rpcRegistry            *rpc.Registry
-	workerPool             *goomerang.WorkerPool
+	ServerURL       url.URL
+	handlerChainer  *message.HandlerChainer
+	messageRegistry message.Registry
+	clientOps       *immediateSender
+	writeLock       *sync.Mutex
+	conn            *websocket.Conn
+	dialer          *websocket.Dialer
+	onCloseHook     func()
+	onErrorHook     func(err error)
+	rpcRegistry     *rpc.Registry
+	workerPool      *goomerang.WorkerPool
 }
 
 func NewClient(opts ...Option) (*Client, error) {
@@ -44,11 +42,9 @@ func NewClient(opts ...Option) (*Client, error) {
 		return nil, fmt.Errorf("goomerang client: %w", err)
 	}
 	c := &Client{
-		ServerURL:              serverURL(cfg),
-		onCloseHook:            cfg.OnCloseHook,
-		onErrorHook:            cfg.OnErrorHook,
-		onMessageProcessedHook: cfg.OnMessageProcessedHook,
-		onMessageReceivedHook:  cfg.OnMessageReceivedHook,
+		ServerURL:   serverURL(cfg),
+		onCloseHook: cfg.OnCloseHook,
+		onErrorHook: cfg.OnErrorHook,
 		dialer: &websocket.Dialer{
 			Proxy:            http.ProxyFromEnvironment,
 			TLSClientConfig:  cfg.TLSConfig,
@@ -114,13 +110,9 @@ func (c *Client) receiver() {
 }
 
 func (c *Client) processMessage(data []byte) error {
-	start := time.Now()
 	frame, err := message.UnPack(data)
 	if err != nil {
 		return err
-	}
-	if c.onMessageReceivedHook != nil {
-		c.onMessageReceivedHook(frame.Type, time.Since(frame.Creation.AsTime()))
 	}
 	msg, err := message.FromFrame(frame, c.messageRegistry)
 	if err != nil {
@@ -137,9 +129,6 @@ func (c *Client) processMessage(data []byte) error {
 		return err
 	}
 	handler.Handle(c.clientOps, msg)
-	if c.onMessageProcessedHook != nil {
-		c.onMessageProcessedHook(frame.Type, time.Since(start))
-	}
 	return nil
 }
 
