@@ -7,6 +7,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"go.eloylp.dev/goomerang/client"
+	"go.eloylp.dev/goomerang/internal/message"
 	testMessages "go.eloylp.dev/goomerang/internal/message/test"
 	"go.eloylp.dev/goomerang/internal/test"
 	"go.eloylp.dev/goomerang/server"
@@ -69,6 +70,6 @@ func TestServerSendWhenClientClosed(t *testing.T) {
 
 	require.NoError(t, c.Close(defaultCtx))
 
-	msg := &testMessages.GreetV1{Message: "Hi!"}
+	msg := &message.Message{Payload: &testMessages.GreetV1{Message: "Hi!"}}
 	require.ErrorIs(t, s.Send(defaultCtx, msg), server.ErrClientDisconnected)
 }

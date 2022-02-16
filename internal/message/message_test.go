@@ -20,8 +20,11 @@ func TestFQDN(t *testing.T) {
 }
 
 func TestPackTimestamp(t *testing.T) {
-	m := &test.GreetV1{}
-	pack, err := message.Pack(m)
+	payload := &test.GreetV1{}
+	msg := &message.Message{
+		Payload: payload,
+	}
+	pack, err := message.Pack(msg)
 	require.NoError(t, err)
 	unpack, err := message.UnPack(pack)
 	require.NoError(t, err)
@@ -38,12 +41,16 @@ func TestFromFrame(t *testing.T) {
 	require.NoError(t, err)
 
 	now := timestamppb.Now()
+	header := message.Header{}
+	header.Add("my-key", "my-value")
+
 	frame := &protocol.Frame{
 		Uuid:     "09AF",
 		Type:     msgFQDN,
 		IsRpc:    true,
 		Creation: now,
 		Payload:  inputMsgData,
+		Headers:  header,
 	}
 
 	msgRegistry := message.Registry{}
@@ -52,11 +59,11 @@ func TestFromFrame(t *testing.T) {
 	msg, err := message.FromFrame(frame, msgRegistry)
 	require.NoError(t, err)
 
-	assert.Equal(t, "09AF", msg.Metadata.UUID)
-	assert.Equal(t, msgFQDN, msg.Metadata.Type)
-	assert.Equal(t, now.AsTime(), msg.Metadata.Creation)
-	assert.Equal(t, true, msg.Metadata.IsRPC)
+	assert.Equal(t, "09AF", msg.Metadata().UUID)
+	assert.Equal(t, msgFQDN, msg.Metadata().Type)
+	assert.Equal(t, now.AsTime(), msg.Metadata().Creation)
+	assert.Equal(t, true, msg.Metadata().IsRPC)
+	assert.Equal(t, "my-value", msg.Header.Get("my-key"))
 
 	assert.Equal(t, inputMsg, msg.Payload)
-
 }

@@ -17,7 +17,7 @@ func TestRPCRegistry(t *testing.T) {
 	id := "09AF"
 
 	reg.CreateListener(id)
-	m := &message.Request{}
+	m := &message.Message{}
 
 	err := reg.SubmitResult(id, m)
 	require.NoError(t, err)
@@ -33,7 +33,7 @@ func TestRPCRegistry(t *testing.T) {
 
 func TestRPCRegistry_SubmitResult(t *testing.T) {
 	reg := rpc.NewRegistry()
-	err := reg.SubmitResult("NON_EXISTENT", &message.Request{})
+	err := reg.SubmitResult("NON_EXISTENT", &message.Message{})
 	assert.Errorf(t, err, "rpc-registry: cannot find key for NON_EXISTENT")
 }
 
@@ -47,7 +47,7 @@ func TestRegistry_ResultFor_WaitsUntilResultArrives(t *testing.T) {
 	reg := rpc.NewRegistry()
 	reg.CreateListener("09AF")
 
-	reply := &message.Request{}
+	reply := &message.Message{}
 
 	time.AfterFunc(time.Millisecond*500, func() {
 		_ = reg.SubmitResult("09AF", reply)
@@ -61,7 +61,7 @@ func TestRegistry_ResultFor_cancelOncontext(t *testing.T) {
 	reg := rpc.NewRegistry()
 	reg.CreateListener("09AF")
 
-	reply := &message.Request{}
+	reply := &message.Message{}
 
 	time.AfterFunc(time.Millisecond*500, func() {
 		_ = reg.SubmitResult("09AF", reply)

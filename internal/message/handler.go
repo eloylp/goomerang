@@ -8,9 +8,24 @@ import (
 	"google.golang.org/protobuf/proto"
 )
 
-type Request struct {
-	Metadata *Metadata
+type Message struct {
+	metadata *Metadata
 	Payload  proto.Message
+	Header   Header
+}
+
+func (r *Message) Metadata() *Metadata {
+	return r.metadata
+}
+
+type Header map[string]string
+
+func (h Header) Get(key string) string {
+	return h[key]
+}
+
+func (h Header) Add(key, value string) {
+	h[key] = value
 }
 
 type Metadata struct {
@@ -21,19 +36,19 @@ type Metadata struct {
 }
 
 type Handler interface {
-	Handle(sender Sender, msg *Request)
+	Handle(sender Sender, msg *Message)
 }
 
-type HandlerFunc func(sender Sender, msg *Request)
+type HandlerFunc func(sender Sender, msg *Message)
 
 type Middleware func(h Handler) Handler
 
-func (h HandlerFunc) Handle(sender Sender, msg *Request) {
+func (h HandlerFunc) Handle(sender Sender, msg *Message) {
 	h(sender, msg)
 }
 
 type Sender interface {
-	Send(ctx context.Context, msg proto.Message) error
+	Send(ctx context.Context, msg *Message) error
 }
 
 type HandlerChainer struct {

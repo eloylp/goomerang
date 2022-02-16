@@ -16,7 +16,7 @@ func FQDN(msg proto.Message) string {
 	return string(msg.ProtoReflect().Descriptor().FullName())
 }
 
-func FromFrame(frame *protocol.Frame, msgRegistry Registry) (*Request, error) {
+func FromFrame(frame *protocol.Frame, msgRegistry Registry) (*Message, error) {
 	meta := &Metadata{
 		Creation: frame.Creation.AsTime(),
 		UUID:     frame.Uuid,
@@ -30,21 +30,23 @@ func FromFrame(frame *protocol.Frame, msgRegistry Registry) (*Request, error) {
 	if err := proto.Unmarshal(frame.Payload, msg); err != nil {
 		return nil, fmt.Errorf("parsing from message: %w", msg)
 	}
-	return &Request{
-		Metadata: meta,
+	return &Message{
+		metadata: meta,
 		Payload:  msg,
+		Header:   Header(frame.Headers),
 	}, nil
 }
 
-func Pack(msg proto.Message, opts ...FrameOption) ([]byte, error) {
-	payload, err := proto.Marshal(msg)
+func Pack(msg *Message, opts ...FrameOption) ([]byte, error) {
+	payload, err := proto.Marshal(msg.Payload)
 	if err != nil {
 		return nil, err
 	}
 	frame := &protocol.Frame{
-		Type:     FQDN(msg),
+		Type:     FQDN(msg.Payload),
 		Payload:  payload,
 		Creation: timestamppb.New(time.Now()),
+		Headers:  msg.Header,
 	}
 	for _, opt := range opts {
 		opt(frame)

@@ -6,8 +6,6 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"google.golang.org/protobuf/proto"
-
 	"go.eloylp.dev/goomerang/internal/message"
 	testMessages "go.eloylp.dev/goomerang/internal/message/test"
 	"go.eloylp.dev/goomerang/internal/test"
@@ -17,13 +15,16 @@ func TestMiddlewareRegistry(t *testing.T) {
 	arbiter := test.NewArbiter(t)
 	mr := message.NewHandlerChainer()
 
-	handler := message.HandlerFunc(func(sender message.Sender, msg *message.Request) {
+	handler := message.HandlerFunc(func(sender message.Sender, msg *message.Message) {
 		arbiter.ItsAFactThat("HANDLER_EXECUTED")
-		sender.Send(context.Background(), &testMessages.PingPong{})
+		resp := &message.Message{
+			Payload: &testMessages.PingPong{},
+		}
+		sender.Send(context.Background(), resp)
 	})
 
 	middleware := message.Middleware(func(h message.Handler) message.Handler {
-		return message.HandlerFunc(func(sender message.Sender, msg *message.Request) {
+		return message.HandlerFunc(func(sender message.Sender, msg *message.Message) {
 			arbiter.ItsAFactThat("MIDDLEWARE_EXECUTED")
 			h.Handle(sender, msg)
 		})
@@ -36,7 +37,7 @@ func TestMiddlewareRegistry(t *testing.T) {
 	h, err := mr.Handler("chain1")
 	require.NoError(t, err)
 
-	h.Handle(&FakeSender{a: arbiter}, &message.Request{})
+	h.Handle(&FakeSender{a: arbiter}, &message.Message{})
 
 	arbiter.RequireHappenedInOrder("MIDDLEWARE_EXECUTED", "HANDLER_EXECUTED")
 	arbiter.RequireHappenedInOrder("HANDLER_EXECUTED", "SENDER_CALLED")
@@ -53,7 +54,7 @@ type FakeSender struct {
 	a *test.Arbiter
 }
 
-func (f *FakeSender) Send(ctx context.Context, msg proto.Message) error {
+func (f *FakeSender) Send(ctx context.Context, msg *message.Message) error {
 	f.a.ItsAFactThat("SENDER_CALLED")
 	return nil
 }

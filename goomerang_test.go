@@ -22,11 +22,9 @@ func TestPingPongServer(t *testing.T) {
 	s := PrepareServer(t)
 	defer s.Shutdown(defaultCtx)
 
-	s.RegisterHandler(&testMessages.PingPong{}, message.HandlerFunc(func(s message.Sender, msg *message.Request) {
+	s.RegisterHandler(&testMessages.PingPong{}, message.HandlerFunc(func(s message.Sender, msg *message.Message) {
 		_ = msg.Payload.(*testMessages.PingPong)
-		if err := s.Send(defaultCtx, &testMessages.PingPong{
-			Message: "pong",
-		}); err != nil {
+		if err := s.Send(defaultCtx, &message.Message{Payload: &testMessages.PingPong{Message: "pong"}}); err != nil {
 			arbiter.ErrorHappened(err)
 		}
 		arbiter.ItsAFactThat("SERVER_RECEIVED_PING")
@@ -35,11 +33,11 @@ func TestPingPongServer(t *testing.T) {
 	c := PrepareClient(t)
 	defer c.Close(defaultCtx)
 
-	c.RegisterHandler(&testMessages.PingPong{}, message.HandlerFunc(func(c message.Sender, msg *message.Request) {
+	c.RegisterHandler(&testMessages.PingPong{}, message.HandlerFunc(func(c message.Sender, msg *message.Message) {
 		_ = msg.Payload.(*testMessages.PingPong)
 		arbiter.ItsAFactThat("CLIENT_RECEIVED_PONG")
 	}))
-	err := c.Send(defaultCtx, &testMessages.PingPong{Message: "ping"})
+	err := c.Send(defaultCtx, &message.Message{Payload: &testMessages.PingPong{Message: "ping"}})
 	require.NoError(t, err)
 	arbiter.RequireNoErrors()
 	arbiter.RequireHappened("SERVER_RECEIVED_PING")
@@ -58,11 +56,9 @@ func TestSecuredPingPongServer(t *testing.T) {
 	defer s.Shutdown(defaultCtx)
 	msg := &testMessages.PingPong{}
 
-	s.RegisterHandler(msg, message.HandlerFunc(func(s message.Sender, msg *message.Request) {
+	s.RegisterHandler(msg, message.HandlerFunc(func(s message.Sender, msg *message.Message) {
 		_ = msg.Payload.(*testMessages.PingPong)
-		if err := s.Send(defaultCtx, &testMessages.PingPong{
-			Message: "pong",
-		}); err != nil {
+		if err := s.Send(defaultCtx, &message.Message{Payload: &testMessages.PingPong{Message: "pong"}}); err != nil {
 			arbiter.ErrorHappened(err)
 		}
 		arbiter.ItsAFactThat("SERVER_RECEIVED_PING")
@@ -75,12 +71,12 @@ func TestSecuredPingPongServer(t *testing.T) {
 	}))
 	defer c.Close(defaultCtx)
 
-	c.RegisterHandler(msg, message.HandlerFunc(func(c message.Sender, msg *message.Request) {
+	c.RegisterHandler(msg, message.HandlerFunc(func(c message.Sender, msg *message.Message) {
 		_ = msg.Payload.(*testMessages.PingPong)
 		arbiter.ItsAFactThat("CLIENT_RECEIVED_PONG")
 	}))
 
-	require.NoError(t, c.Send(defaultCtx, &testMessages.PingPong{Message: "ping"}))
+	require.NoError(t, c.Send(defaultCtx, &message.Message{Payload: &testMessages.PingPong{Message: "ping"}}))
 	arbiter.RequireNoErrors()
 	arbiter.RequireHappened("SERVER_RECEIVED_PING")
 	arbiter.RequireHappened("CLIENT_RECEIVED_PONG")

@@ -15,8 +15,8 @@ func TestRPC(t *testing.T) {
 	s := PrepareServer(t)
 	defer s.Shutdown(defaultCtx)
 
-	s.RegisterHandler(&testMessages.PingPong{}, message.HandlerFunc(func(ops message.Sender, msg *message.Request) {
-		if err := ops.Send(defaultCtx, &testMessages.PingPong{Message: "pong !"}); err != nil {
+	s.RegisterHandler(&testMessages.PingPong{}, message.HandlerFunc(func(ops message.Sender, msg *message.Message) {
+		if err := ops.Send(defaultCtx, &message.Message{Payload: &testMessages.PingPong{Message: "pong !"}}); err != nil {
 			arbiter.ErrorHappened(err)
 		}
 	}))
@@ -26,7 +26,9 @@ func TestRPC(t *testing.T) {
 
 	c.RegisterMessage(&testMessages.PingPong{})
 
-	msg := &testMessages.PingPong{Message: "ping"}
+	msg := &message.Message{
+		Payload: &testMessages.PingPong{Message: "ping"},
+	}
 
 	reply, err := c.RPC(defaultCtx, msg)
 	require.NoError(t, err)

@@ -18,7 +18,7 @@ type immediateSender struct {
 	connSlot connSlot
 }
 
-func (so *immediateSender) Send(ctx context.Context, msg proto.Message) error {
+func (so *immediateSender) Send(ctx context.Context, msg *message.Message) error {
 	m, err := message.Pack(msg)
 	if err != nil {
 		return err
@@ -38,14 +38,14 @@ func (so *immediateSender) Send(ctx context.Context, msg proto.Message) error {
 }
 
 type bufferedSender struct {
-	reply proto.Message
+	reply *message.Message
 }
 
-func (so *bufferedSender) Send(_ context.Context, msg proto.Message) error {
+func (so *bufferedSender) Send(_ context.Context, msg *message.Message) error {
 	so.reply = msg
 	return nil
 }
 
-func (so *bufferedSender) Reply() proto.Message {
+func (so *bufferedSender) Reply() *message.Message {
 	return so.reply
 }
