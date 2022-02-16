@@ -4,14 +4,8 @@ import (
 	"context"
 
 	"github.com/gorilla/websocket"
-	"google.golang.org/protobuf/proto"
-
 	"go.eloylp.dev/goomerang/internal/message"
 )
-
-type Sender interface {
-	Send(ctx context.Context, msg proto.Message) error
-}
 
 type immediateSender struct {
 	s        *Server
