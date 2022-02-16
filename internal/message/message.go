@@ -10,6 +10,23 @@ import (
 	"go.eloylp.dev/goomerang/internal/message/protocol"
 )
 
+type Message struct {
+	metadata *Metadata
+	Payload  proto.Message
+	Header   Header
+}
+
+func (r *Message) Metadata() *Metadata {
+	return r.metadata
+}
+
+type Metadata struct {
+	Creation time.Time
+	UUID     string
+	Type     string
+	IsRPC    bool
+}
+
 type FrameOption func(f *protocol.Frame)
 
 func FQDN(msg proto.Message) string {

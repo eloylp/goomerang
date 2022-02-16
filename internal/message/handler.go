@@ -3,37 +3,7 @@ package message
 import (
 	"context"
 	"fmt"
-	"time"
-
-	"google.golang.org/protobuf/proto"
 )
-
-type Message struct {
-	metadata *Metadata
-	Payload  proto.Message
-	Header   Header
-}
-
-func (r *Message) Metadata() *Metadata {
-	return r.metadata
-}
-
-type Header map[string]string
-
-func (h Header) Get(key string) string {
-	return h[key]
-}
-
-func (h Header) Add(key, value string) {
-	h[key] = value
-}
-
-type Metadata struct {
-	Creation time.Time
-	UUID     string
-	Type     string
-	IsRPC    bool
-}
 
 type Handler interface {
 	Handle(sender Sender, msg *Message)
