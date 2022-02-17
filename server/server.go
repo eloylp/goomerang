@@ -219,6 +219,10 @@ func (s *Server) writeMessage(cs connSlot, responseMsg []byte) error {
 	return cs.c.WriteMessage(websocket.BinaryMessage, responseMsg)
 }
 
+func (s *Server) RegisterMiddleware(m message.Middleware) {
+	s.handlerChainer.AppendMiddleware(m)
+}
+
 func (s *Server) RegisterHandler(msg proto.Message, handler message.Handler) {
 	fqdn := message.FQDN(msg)
 	s.messageRegistry.Register(fqdn, msg)

@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/gorilla/websocket"
+
 	"go.eloylp.dev/goomerang/internal/message"
 )
 

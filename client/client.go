@@ -177,6 +177,10 @@ func (c *Client) Close(ctx context.Context) error {
 	}
 }
 
+func (c *Client) RegisterMiddleware(m message.Middleware) {
+	c.handlerChainer.AppendMiddleware(m)
+}
+
 func (c *Client) RegisterHandler(msg proto.Message, h message.Handler) {
 	fqdn := message.FQDN(msg)
 	c.messageRegistry.Register(fqdn, msg)

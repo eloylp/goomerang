@@ -81,3 +81,43 @@ func TestSecuredPingPongServer(t *testing.T) {
 	arbiter.RequireHappened("SERVER_RECEIVED_PING")
 	arbiter.RequireHappened("CLIENT_RECEIVED_PONG")
 }
+
+func TestMiddlewares(t *testing.T) {
+	arbiter := test.NewArbiter(t)
+	s := PrepareServer(t)
+	defer s.Shutdown(defaultCtx)
+	s.RegisterMiddleware(func(h message.Handler) message.Handler {
+		return message.HandlerFunc(func(s message.Sender, msg *message.Message) {
+			arbiter.ItsAFactThat("SERVER_MIDDLEWARE_EXECUTED")
+			h.Handle(s, msg)
+		})
+	})
+	s.RegisterHandler(&testMessages.PingPong{}, message.HandlerFunc(func(s message.Sender, msg *message.Message) {
+		arbiter.ItsAFactThat("SERVER_HANDLER_EXECUTED")
+		if err := s.Send(context.Background(), &message.Message{
+			Payload: msg.Payload,
+		}); err != nil {
+			arbiter.ErrorHappened(err)
+		}
+	}))
+
+	c := PrepareClient(t)
+	defer c.Close(defaultCtx)
+
+	c.RegisterMiddleware(func(h message.Handler) message.Handler {
+		return message.HandlerFunc(func(s message.Sender, msg *message.Message) {
+			arbiter.ItsAFactThat("CLIENT_MIDDLEWARE_EXECUTED")
+			h.Handle(s, msg)
+		})
+	})
+
+	c.RegisterHandler(&testMessages.PingPong{}, message.HandlerFunc(func(c message.Sender, msg *message.Message) {
+		arbiter.ItsAFactThat("CLIENT_RECEIVED_PONG")
+	}))
+	err := c.Send(defaultCtx, &message.Message{Payload: &testMessages.PingPong{Message: "ping"}})
+	require.NoError(t, err)
+	arbiter.RequireNoErrors()
+	arbiter.RequireHappenedInOrder("SERVER_MIDDLEWARE_EXECUTED", "SERVER_HANDLER_EXECUTED")
+	arbiter.RequireHappenedInOrder("SERVER_HANDLER_EXECUTED", "CLIENT_MIDDLEWARE_EXECUTED")
+	arbiter.RequireHappenedInOrder("CLIENT_MIDDLEWARE_EXECUTED", "CLIENT_RECEIVED_PONG")
+}
