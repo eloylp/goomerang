@@ -121,3 +121,37 @@ func TestMiddlewares(t *testing.T) {
 	arbiter.RequireHappenedInOrder("SERVER_HANDLER_EXECUTED", "CLIENT_MIDDLEWARE_EXECUTED")
 	arbiter.RequireHappenedInOrder("CLIENT_MIDDLEWARE_EXECUTED", "CLIENT_RECEIVED_PONG")
 }
+
+func TestHeadersAreSent(t *testing.T) {
+	arbiter := test.NewArbiter(t)
+	s := PrepareServer(t)
+	defer s.Shutdown(defaultCtx)
+
+	m := &testMessages.PingPong{}
+	s.RegisterHandler(m, message.HandlerFunc(func(s message.Sender, msg *message.Message) {
+		if msg.Header.Get("h1") == "v1" {
+			arbiter.ItsAFactThat("SERVER_RECEIVED_MSG_HEADERS")
+		}
+		if err := s.Send(defaultCtx, msg); err != nil {
+			arbiter.ErrorHappened(err)
+		}
+	}))
+
+	c := PrepareClient(t)
+	defer c.Close(defaultCtx)
+
+	c.RegisterHandler(m, message.HandlerFunc(func(sender message.Sender, msg *message.Message) {
+		if msg.Header.Get("h1") == "v1" {
+			arbiter.ItsAFactThat("CLIENT_RECEIVED_MSG_HEADERS")
+		}
+	}))
+	msg := &message.Message{
+		Payload: &testMessages.PingPong{Message: "ping"},
+		Header:  map[string]string{"h1": "v1"},
+	}
+	err := c.Send(defaultCtx, msg)
+	require.NoError(t, err)
+	arbiter.RequireNoErrors()
+	arbiter.RequireHappened("SERVER_RECEIVED_MSG_HEADERS")
+	arbiter.RequireHappened("CLIENT_RECEIVED_MSG_HEADERS")
+}
