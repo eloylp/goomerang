@@ -129,7 +129,7 @@ func TestHeadersAreSent(t *testing.T) {
 
 	m := &testMessages.PingPong{}
 	s.RegisterHandler(m, message.HandlerFunc(func(s message.Sender, msg *message.Message) {
-		if msg.Header.Get("h1") == "v1" {
+		if msg.Header.Get("h1") == "v1" { //nolint: goconst
 			arbiter.ItsAFactThat("SERVER_RECEIVED_MSG_HEADERS")
 		}
 		if err := s.Send(defaultCtx, msg); err != nil {

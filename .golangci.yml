@@ -105,3 +105,15 @@ issues:
         - errcheck
         - dupl
         - forbidigo
+    - path: cmd
+      linters:
+        - gomnd
+        - gochecknoinits
+        - gosec
+        - bodyclose
+        - errcheck
+        - dupl
+        - forbidigo
+        - gocritic
+        - goimports
+        - goconst
