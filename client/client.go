@@ -70,6 +70,7 @@ func serverURL(cfg *Config) url.URL {
 }
 
 func (c *Client) Connect(ctx context.Context) error {
+	c.handlerChainer.PrepareChains()
 	conn, resp, err := c.dialer.DialContext(ctx, c.ServerURL.String(), nil)
 	if err != nil {
 		return err
@@ -185,7 +186,6 @@ func (c *Client) RegisterHandler(msg proto.Message, h message.Handler) {
 	fqdn := message.FQDN(msg)
 	c.messageRegistry.Register(fqdn, msg)
 	c.handlerChainer.AppendHandler(fqdn, h)
-	c.handlerChainer.PrepareChains()
 }
 
 func (c *Client) RPC(ctx context.Context, msg *message.Message) (*message.Message, error) {

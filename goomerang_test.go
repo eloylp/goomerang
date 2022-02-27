@@ -19,7 +19,7 @@ var defaultCtx = context.Background()
 
 func TestPingPongServer(t *testing.T) {
 	arbiter := test.NewArbiter(t)
-	s := PrepareServer(t)
+	s, run := PrepareServer(t)
 	defer s.Shutdown(defaultCtx)
 
 	s.RegisterHandler(&testMessages.PingPong{}, message.HandlerFunc(func(s message.Sender, msg *message.Message) {
@@ -29,14 +29,15 @@ func TestPingPongServer(t *testing.T) {
 		}
 		arbiter.ItsAFactThat("SERVER_RECEIVED_PING")
 	}))
-
-	c := PrepareClient(t)
+	run()
+	c, connect := PrepareClient(t)
 	defer c.Close(defaultCtx)
 
 	c.RegisterHandler(&testMessages.PingPong{}, message.HandlerFunc(func(c message.Sender, msg *message.Message) {
 		_ = msg.Payload.(*testMessages.PingPong)
 		arbiter.ItsAFactThat("CLIENT_RECEIVED_PONG")
 	}))
+	connect()
 	err := c.Send(defaultCtx, &message.Message{Payload: &testMessages.PingPong{Message: "ping"}})
 	require.NoError(t, err)
 	arbiter.RequireNoErrors()
@@ -49,7 +50,7 @@ func TestSecuredPingPongServer(t *testing.T) {
 	// Get self-signed certificate.
 	certificate := SelfSignedCert(t)
 
-	s := PrepareTLSServer(t, server.WithTLSConfig(&tls.Config{
+	s, run := PrepareTLSServer(t, server.WithTLSConfig(&tls.Config{
 		Certificates: []tls.Certificate{certificate},
 	}))
 
@@ -63,10 +64,10 @@ func TestSecuredPingPongServer(t *testing.T) {
 		}
 		arbiter.ItsAFactThat("SERVER_RECEIVED_PING")
 	}))
-
+	run()
 	certPool := x509.NewCertPool()
 	certPool.AddCert(certificate.Leaf)
-	c := PrepareClient(t, client.WithWithTLSConfig(&tls.Config{
+	c, connect := PrepareClient(t, client.WithWithTLSConfig(&tls.Config{
 		RootCAs: certPool,
 	}))
 	defer c.Close(defaultCtx)
@@ -75,7 +76,7 @@ func TestSecuredPingPongServer(t *testing.T) {
 		_ = msg.Payload.(*testMessages.PingPong)
 		arbiter.ItsAFactThat("CLIENT_RECEIVED_PONG")
 	}))
-
+	connect()
 	require.NoError(t, c.Send(defaultCtx, &message.Message{Payload: &testMessages.PingPong{Message: "ping"}}))
 	arbiter.RequireNoErrors()
 	arbiter.RequireHappened("SERVER_RECEIVED_PING")
@@ -84,7 +85,7 @@ func TestSecuredPingPongServer(t *testing.T) {
 
 func TestMiddlewares(t *testing.T) {
 	arbiter := test.NewArbiter(t)
-	s := PrepareServer(t)
+	s, run := PrepareServer(t)
 	defer s.Shutdown(defaultCtx)
 	s.RegisterMiddleware(func(h message.Handler) message.Handler {
 		return message.HandlerFunc(func(s message.Sender, msg *message.Message) {
@@ -100,8 +101,8 @@ func TestMiddlewares(t *testing.T) {
 			arbiter.ErrorHappened(err)
 		}
 	}))
-
-	c := PrepareClient(t)
+	run()
+	c, connect := PrepareClient(t)
 	defer c.Close(defaultCtx)
 
 	c.RegisterMiddleware(func(h message.Handler) message.Handler {
@@ -114,6 +115,7 @@ func TestMiddlewares(t *testing.T) {
 	c.RegisterHandler(&testMessages.PingPong{}, message.HandlerFunc(func(c message.Sender, msg *message.Message) {
 		arbiter.ItsAFactThat("CLIENT_RECEIVED_PONG")
 	}))
+	connect()
 	err := c.Send(defaultCtx, &message.Message{Payload: &testMessages.PingPong{Message: "ping"}})
 	require.NoError(t, err)
 	arbiter.RequireNoErrors()
@@ -124,7 +126,7 @@ func TestMiddlewares(t *testing.T) {
 
 func TestHeadersAreSent(t *testing.T) {
 	arbiter := test.NewArbiter(t)
-	s := PrepareServer(t)
+	s, run := PrepareServer(t)
 	defer s.Shutdown(defaultCtx)
 
 	m := &testMessages.PingPong{}
@@ -136,8 +138,9 @@ func TestHeadersAreSent(t *testing.T) {
 			arbiter.ErrorHappened(err)
 		}
 	}))
+	run()
 
-	c := PrepareClient(t)
+	c, connect := PrepareClient(t)
 	defer c.Close(defaultCtx)
 
 	c.RegisterHandler(m, message.HandlerFunc(func(sender message.Sender, msg *message.Message) {
@@ -145,6 +148,7 @@ func TestHeadersAreSent(t *testing.T) {
 			arbiter.ItsAFactThat("CLIENT_RECEIVED_MSG_HEADERS")
 		}
 	}))
+	connect()
 	msg := &message.Message{
 		Payload: &testMessages.PingPong{Message: "ping"},
 		Header:  map[string]string{"h1": "v1"},

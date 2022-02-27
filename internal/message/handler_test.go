@@ -59,3 +59,22 @@ func (f *FakeSender) Send(ctx context.Context, msg *message.Message) error {
 	f.a.ItsAFactThat("SENDER_CALLED")
 	return nil
 }
+
+func TestHandlerChainer_PanicsAfterPrepareChains(t *testing.T) {
+	hc := message.NewHandlerChainer()
+	hc.PrepareChains()
+	expectedError := "handler chainer: handlers and middlewares can only be added before starting serving"
+	require.PanicsWithError(t, expectedError, func() {
+		hc.AppendHandler("chain", message.HandlerFunc(func(sender message.Sender, msg *message.Message) {
+
+		}))
+	}, "should be panicked when registering a handler after PrepareChains()")
+
+	require.PanicsWithError(t, expectedError, func() {
+		hc.AppendMiddleware(func(h message.Handler) message.Handler {
+			return message.HandlerFunc(func(sender message.Sender, msg *message.Message) {})
+		})
+	}, func() {
+
+	}, "should be panicked when registering a middleware after PrepareChains()")
+}

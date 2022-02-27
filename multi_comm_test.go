@@ -15,21 +15,22 @@ import (
 
 func TestServerCanBroadCastMessages(t *testing.T) {
 	arbiter := test.NewArbiter(t)
-	s := PrepareServer(t)
+	s, waitAndRun := PrepareServer(t)
+	waitAndRun()
 	defer s.Shutdown(defaultCtx)
 
-	c1 := PrepareClient(t)
+	c1, connect1 := PrepareClient(t)
 	defer c1.Close(defaultCtx)
 	c1.RegisterHandler(&testMessages.GreetV1{}, message.HandlerFunc(func(ops message.Sender, msg *message.Message) {
 		arbiter.ItsAFactThat("CLIENT1_RECEIVED_SERVER_GREET")
 	}))
-
-	c2 := PrepareClient(t)
+	connect1()
+	c2, connect2 := PrepareClient(t)
 	defer c2.Close(defaultCtx)
 	c2.RegisterHandler(&testMessages.GreetV1{}, message.HandlerFunc(func(ops message.Sender, msg *message.Message) {
 		arbiter.ItsAFactThat("CLIENT2_RECEIVED_SERVER_GREET")
 	}))
-
+	connect2()
 	err := s.Send(defaultCtx, &message.Message{Payload: &testMessages.GreetV1{Message: "Hi!"}})
 	require.NoError(t, err)
 
@@ -38,13 +39,14 @@ func TestServerCanBroadCastMessages(t *testing.T) {
 }
 
 func TestServerShutdownIsPropagatedToAllClients(t *testing.T) {
-	s := PrepareServer(t)
-
-	c1 := PrepareClient(t)
+	s, run := PrepareServer(t)
+	run()
+	c1, connect1 := PrepareClient(t)
 	defer c1.Close(defaultCtx)
-	c2 := PrepareClient(t)
+	connect1()
+	c2, connect2 := PrepareClient(t)
 	defer c2.Close(defaultCtx)
-
+	connect2()
 	s.Shutdown(defaultCtx)
 
 	msg := &message.Message{Payload: &testMessages.GreetV1{Message: "Hi!"}}
@@ -55,7 +57,7 @@ func TestServerShutdownIsPropagatedToAllClients(t *testing.T) {
 
 func TestServerSupportMultipleClients(t *testing.T) {
 	arbiter := test.NewArbiter(t)
-	s := PrepareServer(t, server.WithOnErrorHook(func(err error) {
+	s, run := PrepareServer(t, server.WithOnErrorHook(func(err error) {
 		arbiter.ErrorHappened(err)
 	}))
 	s.RegisterHandler(&testMessages.PingPong{}, message.HandlerFunc(func(ops message.Sender, msg *message.Message) {
@@ -71,9 +73,10 @@ func TestServerSupportMultipleClients(t *testing.T) {
 			return
 		}
 	}))
+	run()
 	defer s.Shutdown(defaultCtx)
 
-	c1 := PrepareClient(t)
+	c1, connect1 := PrepareClient(t)
 	c1.RegisterHandler(&testMessages.PingPong{}, message.HandlerFunc(func(ops message.Sender, msg *message.Message) {
 		pongMsg, ok := msg.Payload.(*testMessages.PingPong)
 		if !ok {
@@ -82,8 +85,9 @@ func TestServerSupportMultipleClients(t *testing.T) {
 		}
 		arbiter.ItsAFactThat("CLIENT1_RECEIVED_FROM_SERVER_" + pongMsg.Message)
 	}))
+	connect1()
 	defer c1.Close(defaultCtx)
-	c2 := PrepareClient(t)
+	c2, connect2 := PrepareClient(t)
 	c2.RegisterHandler(&testMessages.PingPong{}, message.HandlerFunc(func(ops message.Sender, msg *message.Message) {
 		pongMsg, ok := msg.Payload.(*testMessages.PingPong)
 		if !ok {
@@ -92,6 +96,7 @@ func TestServerSupportMultipleClients(t *testing.T) {
 		}
 		arbiter.ItsAFactThat("CLIENT2_RECEIVED_FROM_SERVER_" + pongMsg.Message)
 	}))
+	connect2()
 	defer c2.Close(defaultCtx)
 
 	err := c1.Send(defaultCtx, &message.Message{Payload: &testMessages.PingPong{Message: "1"}})

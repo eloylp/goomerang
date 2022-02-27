@@ -15,12 +15,14 @@ import (
 
 func TestShutdownProcedureClientSideInit(t *testing.T) {
 	arbiter := test.NewArbiter(t)
-	s := PrepareServer(t, server.WithOnCloseHook(func() {
+	s, run := PrepareServer(t, server.WithOnCloseHook(func() {
 		arbiter.ItsAFactThat("SERVER_PROPERLY_CLOSED")
 	}))
-	c := PrepareClient(t, client.WithOnCloseHook(func() {
+	run()
+	c, connect := PrepareClient(t, client.WithOnCloseHook(func() {
 		arbiter.ItsAFactThat("CLIENT_PROPERLY_CLOSED")
 	}))
+	connect()
 	err := c.Close(defaultCtx)
 	require.NoError(t, err)
 	err = s.Shutdown(context.Background())
@@ -31,12 +33,14 @@ func TestShutdownProcedureClientSideInit(t *testing.T) {
 
 func TestShutdownProcedureServerSideInit(t *testing.T) {
 	arbiter := test.NewArbiter(t)
-	s := PrepareServer(t, server.WithOnCloseHook(func() {
+	s, run := PrepareServer(t, server.WithOnCloseHook(func() {
 		arbiter.ItsAFactThat("SERVER_PROPERLY_CLOSED")
 	}))
-	c := PrepareClient(t, client.WithOnCloseHook(func() {
+	run()
+	c, connect := PrepareClient(t, client.WithOnCloseHook(func() {
 		arbiter.ItsAFactThat("CLIENT_PROPERLY_CLOSED")
 	}))
+	connect()
 	defer c.Close(defaultCtx)
 	err := s.Shutdown(context.Background())
 	require.NoError(t, err)
@@ -45,18 +49,19 @@ func TestShutdownProcedureServerSideInit(t *testing.T) {
 }
 
 func TestClientNormalClose(t *testing.T) {
-	s := PrepareServer(t)
+	s, run := PrepareServer(t)
 	defer s.Shutdown(defaultCtx)
-
-	c := PrepareClient(t)
-
+	run()
+	c, connect := PrepareClient(t)
+	connect()
 	require.NoError(t, c.Close(defaultCtx))
 }
 
 func TestClientCloseWhenServerClosed(t *testing.T) {
-	s := PrepareServer(t)
-	c := PrepareClient(t)
-
+	s, run := PrepareServer(t)
+	run()
+	c, connect := PrepareClient(t)
+	connect()
 	err := s.Shutdown(defaultCtx)
 	require.NoError(t, err)
 
@@ -64,10 +69,11 @@ func TestClientCloseWhenServerClosed(t *testing.T) {
 }
 
 func TestServerSendWhenClientClosed(t *testing.T) {
-	s := PrepareServer(t)
+	s, run := PrepareServer(t)
 	defer s.Shutdown(defaultCtx)
-	c := PrepareClient(t)
-
+	run()
+	c, connect := PrepareClient(t)
+	connect()
 	require.NoError(t, c.Close(defaultCtx))
 
 	msg := &message.Message{Payload: &testMessages.GreetV1{Message: "Hi!"}}

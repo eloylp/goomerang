@@ -17,12 +17,13 @@ const (
 	serverAddr = "0.0.0.0:3000"
 )
 
-func PrepareServer(t *testing.T, opts ...server.Option) *server.Server {
+func PrepareServer(t *testing.T, opts ...server.Option) (s *server.Server, run func()) {
 	t.Helper()
-	s := configureServer(t, opts)
-	go s.Run()
-	test.WaitTCPService(t, serverAddr, 50*time.Millisecond, 2*time.Second)
-	return s
+	is := configureServer(t, opts)
+	return is, func() {
+		go is.Run()
+		test.WaitTCPService(t, serverAddr, 50*time.Millisecond, 2*time.Second)
+	}
 }
 
 func configureServer(t *testing.T, opts []server.Option) *server.Server {
@@ -34,26 +35,28 @@ func configureServer(t *testing.T, opts []server.Option) *server.Server {
 	return s
 }
 
-func PrepareTLSServer(t *testing.T, opts ...server.Option) *server.Server {
+func PrepareTLSServer(t *testing.T, opts ...server.Option) (s *server.Server, run func()) {
 	t.Helper()
-	s := configureServer(t, opts)
-	go s.Run()
-	test.WaitTLSService(t, serverAddr, 50*time.Millisecond, 2*time.Second)
-	return s
+	is := configureServer(t, opts)
+	return is, func() {
+		go is.Run()
+		test.WaitTLSService(t, serverAddr, 50*time.Millisecond, 2*time.Second)
+	}
 }
 
-func PrepareClient(t *testing.T, opts ...client.Option) *client.Client {
+func PrepareClient(t *testing.T, opts ...client.Option) (c *client.Client, connect func()) {
 	opts = append(opts, client.WithTargetServer(serverAddr))
 	c, err := client.NewClient(opts...)
 	if err != nil {
 		t.Fatal(err)
 	}
 	ctx := context.Background()
-	err = c.Connect(ctx)
-	if err != nil {
-		t.Fatal(err)
+	return c, func() {
+		err = c.Connect(ctx)
+		if err != nil {
+			t.Fatal(err)
+		}
 	}
-	return c
 }
 
 func SelfSignedCert(t *testing.T) tls.Certificate {

@@ -12,7 +12,7 @@ import (
 
 func TestRPC(t *testing.T) {
 	arbiter := test.NewArbiter(t)
-	s := PrepareServer(t)
+	s, run := PrepareServer(t)
 	defer s.Shutdown(defaultCtx)
 
 	s.RegisterHandler(&testMessages.PingPong{}, message.HandlerFunc(func(ops message.Sender, msg *message.Message) {
@@ -20,8 +20,9 @@ func TestRPC(t *testing.T) {
 			arbiter.ErrorHappened(err)
 		}
 	}))
-
-	c := PrepareClient(t)
+	run()
+	c, connect := PrepareClient(t)
+	connect()
 	defer c.Close(defaultCtx)
 
 	c.RegisterMessage(&testMessages.PingPong{})

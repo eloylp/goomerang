@@ -227,7 +227,6 @@ func (s *Server) RegisterHandler(msg proto.Message, handler message.Handler) {
 	fqdn := message.FQDN(msg)
 	s.messageRegistry.Register(fqdn, msg)
 	s.handlerChainer.AppendHandler(fqdn, handler)
-	s.handlerChainer.PrepareChains()
 }
 
 func (s *Server) Send(ctx context.Context, msg *message.Message) error {
@@ -264,6 +263,7 @@ func (s *Server) Send(ctx context.Context, msg *message.Message) error {
 }
 
 func (s *Server) Run() error {
+	s.handlerChainer.PrepareChains()
 	if s.cfg.TLSConfig != nil {
 		// The "certFile" and "keyFile" params are with "" values, since the server has the certificates already configured.
 		if err := s.intServer.ListenAndServeTLS("", ""); err != http.ErrServerClosed {
