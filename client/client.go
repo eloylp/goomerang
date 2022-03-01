@@ -4,14 +4,12 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"net/http"
-	"net/url"
-	"sync"
-	"time"
-
 	"github.com/google/uuid"
 	"github.com/gorilla/websocket"
 	"google.golang.org/protobuf/proto"
+	"net/http"
+	"net/url"
+	"sync"
 
 	"go.eloylp.dev/goomerang"
 	"go.eloylp.dev/goomerang/client/internal/rpc"
@@ -49,10 +47,10 @@ func NewClient(opts ...Option) (*Client, error) {
 		dialer: &websocket.Dialer{
 			Proxy:             http.ProxyFromEnvironment,
 			TLSClientConfig:   cfg.TLSConfig,
-			HandshakeTimeout:  2 * time.Second,
+			HandshakeTimeout:  cfg.HandshakeTimeout,
 			ReadBufferSize:    cfg.ReadBufferSize,
 			WriteBufferSize:   cfg.WriteBufferSize,
-			EnableCompression: false,
+			EnableCompression: cfg.EnableCompression,
 		},
 		writeLock:       &sync.Mutex{},
 		handlerChainer:  message.NewHandlerChainer(),

@@ -2,16 +2,19 @@ package client
 
 import (
 	"crypto/tls"
+	"time"
 )
 
 type Config struct {
-	TargetServer    string
-	OnCloseHook     func()
-	OnErrorHook     func(err error)
-	TLSConfig       *tls.Config
-	MaxConcurrency  int
-	ReadBufferSize  int
-	WriteBufferSize int
+	TargetServer      string
+	OnCloseHook       func()
+	OnErrorHook       func(err error)
+	TLSConfig         *tls.Config
+	MaxConcurrency    int
+	ReadBufferSize    int
+	WriteBufferSize   int
+	HandshakeTimeout  time.Duration
+	EnableCompression bool
 }
 
 func defaultConfig() *Config {
