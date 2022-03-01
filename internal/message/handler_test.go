@@ -24,15 +24,23 @@ func TestMiddlewareRegistry(t *testing.T) {
 		sender.Send(context.Background(), resp)
 	})
 
-	middleware := message.Middleware(func(h message.Handler) message.Handler {
+	middleware1 := message.Middleware(func(h message.Handler) message.Handler {
 		return message.HandlerFunc(func(sender message.Sender, msg *message.Message) {
-			arbiter.ItsAFactThat("MIDDLEWARE_EXECUTED")
+			arbiter.ItsAFactThat("MIDDLEWARE_1_EXECUTED")
+			h.Handle(sender, msg)
+		})
+	})
+
+	middleware2 := message.Middleware(func(h message.Handler) message.Handler {
+		return message.HandlerFunc(func(sender message.Sender, msg *message.Message) {
+			arbiter.ItsAFactThat("MIDDLEWARE_2_EXECUTED")
 			h.Handle(sender, msg)
 		})
 	})
 
 	mr.AppendHandler("chain1", handler)
-	mr.AppendMiddleware(middleware)
+	mr.AppendMiddleware(middleware1)
+	mr.AppendMiddleware(middleware2)
 	mr.PrepareChains()
 
 	h, err := mr.Handler("chain1")
@@ -40,7 +48,8 @@ func TestMiddlewareRegistry(t *testing.T) {
 
 	h.Handle(&FakeSender{a: arbiter}, &message.Message{})
 
-	arbiter.RequireHappenedInOrder("MIDDLEWARE_EXECUTED", "HANDLER_EXECUTED")
+	arbiter.RequireHappenedInOrder("MIDDLEWARE_1_EXECUTED", "MIDDLEWARE_2_EXECUTED")
+	arbiter.RequireHappenedInOrder("MIDDLEWARE_2_EXECUTED", "HANDLER_EXECUTED")
 	arbiter.RequireHappenedInOrder("HANDLER_EXECUTED", "SENDER_CALLED")
 }
 
