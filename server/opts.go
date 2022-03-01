@@ -66,3 +66,15 @@ func WithHTTPReadHeaderTimeout(t time.Duration) Option {
 		cfg.HTTPReadHeaderTimeout = t
 	}
 }
+
+func WithHandShakeTimeout(d time.Duration) Option {
+	return func(cfg *Config) {
+		cfg.HandshakeTimeout = d
+	}
+}
+
+func WithCompressionEnabled(b bool) Option {
+	return func(cfg *Config) {
+		cfg.EnableCompression = b
+	}
+}

@@ -4,13 +4,11 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"net/http"
-	"sync"
-	"time"
-
 	"github.com/gorilla/websocket"
 	"github.com/hashicorp/go-multierror"
 	"google.golang.org/protobuf/proto"
+	"net/http"
+	"sync"
 
 	"go.eloylp.dev/goomerang"
 	"go.eloylp.dev/goomerang/internal/message"
@@ -49,9 +47,10 @@ func NewServer(opts ...Option) (*Server, error) {
 	ctx, cancl := context.WithCancel(context.Background())
 	s := &Server{
 		wsUpgrader: &websocket.Upgrader{
-			HandshakeTimeout: 2 * time.Second,
-			ReadBufferSize:   cfg.ReadBufferSize,
-			WriteBufferSize:  cfg.WriteBufferSize,
+			HandshakeTimeout:  cfg.HandshakeTimeout,
+			ReadBufferSize:    cfg.ReadBufferSize,
+			WriteBufferSize:   cfg.WriteBufferSize,
+			EnableCompression: cfg.EnableCompression,
 		},
 		intServer: &http.Server{
 			Addr:              cfg.ListenURL,

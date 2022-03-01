@@ -17,6 +17,8 @@ type Config struct {
 	HTTPWriteTimeout      time.Duration
 	HTTPReadTimeout       time.Duration
 	HTTPReadHeaderTimeout time.Duration
+	HandshakeTimeout      time.Duration
+	EnableCompression     bool
 }
 
 func defaultConfig() *Config {
