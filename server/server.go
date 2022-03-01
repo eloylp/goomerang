@@ -186,11 +186,11 @@ func (s *Server) processMessage(cs connSlot, data []byte, sOpts message.Sender) 
 	if err != nil {
 		return err
 	}
-	handler, err := s.handlerChainer.Handler(msg.Metadata().Type)
+	handler, err := s.handlerChainer.Handler(msg.Metadata.Type)
 	if err != nil {
 		return err
 	}
-	if msg.Metadata().IsRPC {
+	if msg.Metadata.IsRPC {
 		if err := s.doRPC(handler, cs, msg); err != nil {
 			return err
 		}
@@ -200,10 +200,10 @@ func (s *Server) processMessage(cs connSlot, data []byte, sOpts message.Sender) 
 	return nil
 }
 
-func (s *Server) doRPC(handler message.Handler, cs connSlot, msg *message.Message) error {
+func (s *Server) doRPC(handler message.Handler, cs connSlot, msg *goomerang.Message) error {
 	ops := &bufferedSender{}
 	handler.Handle(ops, msg)
-	responseMsg, err := message.Pack(ops.Reply(), message.FrameWithUUID(msg.Metadata().UUID), message.FrameIsRPC())
+	responseMsg, err := message.Pack(ops.Reply(), message.FrameWithUUID(msg.Metadata.UUID), message.FrameIsRPC())
 	if err != nil {
 		return err
 	}
@@ -229,7 +229,7 @@ func (s *Server) RegisterHandler(msg proto.Message, handler message.Handler) {
 	s.handlerChainer.AppendHandler(fqdn, handler)
 }
 
-func (s *Server) Send(ctx context.Context, msg *message.Message) error {
+func (s *Server) Send(ctx context.Context, msg *goomerang.Message) error {
 	ch := make(chan error, 1)
 	go func() {
 		bytes, err := message.Pack(msg)

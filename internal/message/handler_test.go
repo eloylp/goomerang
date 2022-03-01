@@ -7,6 +7,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"go.eloylp.dev/goomerang"
 	"go.eloylp.dev/goomerang/internal/message"
 	testMessages "go.eloylp.dev/goomerang/internal/message/test"
 	"go.eloylp.dev/goomerang/internal/test"
@@ -16,23 +17,23 @@ func TestMiddlewareRegistry(t *testing.T) {
 	arbiter := test.NewArbiter(t)
 	mr := message.NewHandlerChainer()
 
-	handler := message.HandlerFunc(func(sender message.Sender, msg *message.Message) {
+	handler := message.HandlerFunc(func(sender message.Sender, msg *goomerang.Message) {
 		arbiter.ItsAFactThat("HANDLER_EXECUTED")
-		resp := &message.Message{
+		resp := &goomerang.Message{
 			Payload: &testMessages.PingPong{},
 		}
 		sender.Send(context.Background(), resp)
 	})
 
 	middleware1 := message.Middleware(func(h message.Handler) message.Handler {
-		return message.HandlerFunc(func(sender message.Sender, msg *message.Message) {
+		return message.HandlerFunc(func(sender message.Sender, msg *goomerang.Message) {
 			arbiter.ItsAFactThat("MIDDLEWARE_1_EXECUTED")
 			h.Handle(sender, msg)
 		})
 	})
 
 	middleware2 := message.Middleware(func(h message.Handler) message.Handler {
-		return message.HandlerFunc(func(sender message.Sender, msg *message.Message) {
+		return message.HandlerFunc(func(sender message.Sender, msg *goomerang.Message) {
 			arbiter.ItsAFactThat("MIDDLEWARE_2_EXECUTED")
 			h.Handle(sender, msg)
 		})
@@ -46,7 +47,7 @@ func TestMiddlewareRegistry(t *testing.T) {
 	h, err := mr.Handler("chain1")
 	require.NoError(t, err)
 
-	h.Handle(&FakeSender{a: arbiter}, &message.Message{})
+	h.Handle(&FakeSender{a: arbiter}, &goomerang.Message{})
 
 	arbiter.RequireHappenedInOrder("MIDDLEWARE_1_EXECUTED", "MIDDLEWARE_2_EXECUTED")
 	arbiter.RequireHappenedInOrder("MIDDLEWARE_2_EXECUTED", "HANDLER_EXECUTED")
@@ -64,7 +65,7 @@ type FakeSender struct {
 	a *test.Arbiter
 }
 
-func (f *FakeSender) Send(ctx context.Context, msg *message.Message) error {
+func (f *FakeSender) Send(ctx context.Context, msg *goomerang.Message) error {
 	f.a.ItsAFactThat("SENDER_CALLED")
 	return nil
 }
@@ -74,14 +75,14 @@ func TestHandlerChainer_PanicsAfterPrepareChains(t *testing.T) {
 	hc.PrepareChains()
 	expectedError := "handler chainer: handlers and middlewares can only be added before starting serving"
 	require.PanicsWithError(t, expectedError, func() {
-		hc.AppendHandler("chain", message.HandlerFunc(func(sender message.Sender, msg *message.Message) {
+		hc.AppendHandler("chain", message.HandlerFunc(func(sender message.Sender, msg *goomerang.Message) {
 
 		}))
 	}, "should be panicked when registering a handler after PrepareChains()")
 
 	require.PanicsWithError(t, expectedError, func() {
 		hc.AppendMiddleware(func(h message.Handler) message.Handler {
-			return message.HandlerFunc(func(sender message.Sender, msg *message.Message) {})
+			return message.HandlerFunc(func(sender message.Sender, msg *goomerang.Message) {})
 		})
 	}, func() {
 

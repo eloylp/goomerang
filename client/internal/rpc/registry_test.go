@@ -9,7 +9,8 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"go.eloylp.dev/goomerang/client/internal/rpc"
-	"go.eloylp.dev/goomerang/internal/message"
+
+	"go.eloylp.dev/goomerang"
 )
 
 func TestRPCRegistry(t *testing.T) {
@@ -17,7 +18,7 @@ func TestRPCRegistry(t *testing.T) {
 	id := "09AF"
 
 	reg.CreateListener(id)
-	m := &message.Message{}
+	m := &goomerang.Message{}
 
 	err := reg.SubmitResult(id, m)
 	require.NoError(t, err)
@@ -33,7 +34,7 @@ func TestRPCRegistry(t *testing.T) {
 
 func TestRPCRegistry_SubmitResult(t *testing.T) {
 	reg := rpc.NewRegistry()
-	err := reg.SubmitResult("NON_EXISTENT", &message.Message{})
+	err := reg.SubmitResult("NON_EXISTENT", &goomerang.Message{})
 	assert.Errorf(t, err, "rpc-registry: cannot find key for NON_EXISTENT")
 }
 
@@ -47,7 +48,7 @@ func TestRegistry_ResultFor_WaitsUntilResultArrives(t *testing.T) {
 	reg := rpc.NewRegistry()
 	reg.CreateListener("09AF")
 
-	reply := &message.Message{}
+	reply := &goomerang.Message{}
 
 	time.AfterFunc(time.Millisecond*500, func() {
 		_ = reg.SubmitResult("09AF", reply)
@@ -61,7 +62,7 @@ func TestRegistry_ResultFor_cancelOncontext(t *testing.T) {
 	reg := rpc.NewRegistry()
 	reg.CreateListener("09AF")
 
-	reply := &message.Message{}
+	reply := &goomerang.Message{}
 
 	time.AfterFunc(time.Millisecond*500, func() {
 		_ = reg.SubmitResult("09AF", reply)

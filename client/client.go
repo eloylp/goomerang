@@ -126,13 +126,13 @@ func (c *Client) processMessage(data []byte) error {
 	if err != nil {
 		return err
 	}
-	if msg.Metadata().IsRPC {
+	if msg.Metadata.IsRPC {
 		if err := c.processRPC(msg); err != nil {
 			return err
 		}
 		return nil
 	}
-	handler, err := c.handlerChainer.Handler(msg.Metadata().Type)
+	handler, err := c.handlerChainer.Handler(msg.Metadata.Type)
 	if err != nil {
 		return err
 	}
@@ -140,7 +140,7 @@ func (c *Client) processMessage(data []byte) error {
 	return nil
 }
 
-func (c *Client) Send(ctx context.Context, msg *message.Message) error {
+func (c *Client) Send(ctx context.Context, msg *goomerang.Message) error {
 	data, err := message.Pack(msg)
 	if err != nil {
 		return err
@@ -197,7 +197,7 @@ func (c *Client) RegisterHandler(msg proto.Message, h message.Handler) {
 	c.handlerChainer.AppendHandler(fqdn, h)
 }
 
-func (c *Client) RPC(ctx context.Context, msg *message.Message) (*message.Message, error) {
+func (c *Client) RPC(ctx context.Context, msg *goomerang.Message) (*goomerang.Message, error) {
 	UUID := uuid.New().String()
 	data, err := message.Pack(msg, message.FrameWithUUID(UUID), message.FrameIsRPC())
 	if err != nil {
@@ -233,8 +233,8 @@ func (c *Client) sendClosingSignal() error {
 	return c.conn.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, ""))
 }
 
-func (c *Client) processRPC(msg *message.Message) error {
-	if err := c.rpcRegistry.SubmitResult(msg.Metadata().UUID, msg); err != nil {
+func (c *Client) processRPC(msg *goomerang.Message) error {
+	if err := c.rpcRegistry.SubmitResult(msg.Metadata.UUID, msg); err != nil {
 		return err
 	}
 	return nil

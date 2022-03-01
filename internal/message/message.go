@@ -7,32 +7,16 @@ import (
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
+	"go.eloylp.dev/goomerang"
 	"go.eloylp.dev/goomerang/internal/message/protocol"
 )
-
-type Message struct {
-	metadata *Metadata
-	Payload  proto.Message
-	Header   Header
-}
-
-func (r *Message) Metadata() *Metadata {
-	return r.metadata
-}
-
-type Metadata struct {
-	Creation time.Time
-	UUID     string
-	Type     string
-	IsRPC    bool
-}
 
 func FQDN(msg proto.Message) string {
 	return string(msg.ProtoReflect().Descriptor().FullName())
 }
 
-func FromFrame(frame *protocol.Frame, msgRegistry Registry) (*Message, error) {
-	meta := &Metadata{
+func FromFrame(frame *protocol.Frame, msgRegistry Registry) (*goomerang.Message, error) {
+	meta := &goomerang.Metadata{
 		Creation: frame.Creation.AsTime(),
 		UUID:     frame.Uuid,
 		Type:     frame.Type,
@@ -45,14 +29,14 @@ func FromFrame(frame *protocol.Frame, msgRegistry Registry) (*Message, error) {
 	if err := proto.Unmarshal(frame.Payload, msg); err != nil {
 		return nil, fmt.Errorf("parsing from message: %s", FQDN(msg))
 	}
-	return &Message{
-		metadata: meta,
+	return &goomerang.Message{
+		Metadata: meta,
 		Payload:  msg,
-		Header:   Header(frame.Headers),
+		Header:   goomerang.Header(frame.Headers),
 	}, nil
 }
 
-func Pack(msg *Message, opts ...FrameOption) ([]byte, error) {
+func Pack(msg *goomerang.Message, opts ...FrameOption) ([]byte, error) {
 	payload, err := proto.Marshal(msg.Payload)
 	if err != nil {
 		return nil, err

@@ -6,6 +6,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"go.eloylp.dev/goomerang"
 	"go.eloylp.dev/goomerang/client"
 	"go.eloylp.dev/goomerang/internal/message"
 	"go.eloylp.dev/goomerang/internal/message/test"
@@ -84,21 +85,21 @@ func TestHandlerRegistrationMoment(t *testing.T) {
 }
 
 func registerClientDumbHandler(c *client.Client) {
-	c.RegisterHandler(&test.PingPong{}, message.HandlerFunc(func(s message.Sender, w *message.Message) {}))
+	c.RegisterHandler(&test.PingPong{}, message.HandlerFunc(func(s message.Sender, w *goomerang.Message) {}))
 }
 
 func registerClientDumbMiddleware(c *client.Client) {
 	c.RegisterMiddleware(func(h message.Handler) message.Handler {
-		return message.HandlerFunc(func(s message.Sender, w *message.Message) {})
+		return message.HandlerFunc(func(s message.Sender, w *goomerang.Message) {})
 	})
 }
 
 func registerServerDumbHandler(s *server.Server) {
-	s.RegisterHandler(&test.PingPong{}, message.HandlerFunc(func(s message.Sender, w *message.Message) {}))
+	s.RegisterHandler(&test.PingPong{}, message.HandlerFunc(func(s message.Sender, w *goomerang.Message) {}))
 }
 
 func registerServerDumbMiddleware(s *server.Server) {
 	s.RegisterMiddleware(func(h message.Handler) message.Handler {
-		return message.HandlerFunc(func(s message.Sender, w *message.Message) {})
+		return message.HandlerFunc(func(s message.Sender, w *goomerang.Message) {})
 	})
 }

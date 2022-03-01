@@ -8,6 +8,8 @@ import (
 	"go.eloylp.dev/goomerang/internal/message"
 	testMessages "go.eloylp.dev/goomerang/internal/message/test"
 	"go.eloylp.dev/goomerang/internal/test"
+
+	"go.eloylp.dev/goomerang"
 )
 
 func TestRPC(t *testing.T) {
@@ -15,8 +17,8 @@ func TestRPC(t *testing.T) {
 	s, run := PrepareServer(t)
 	defer s.Shutdown(defaultCtx)
 
-	s.RegisterHandler(&testMessages.PingPong{}, message.HandlerFunc(func(ops message.Sender, msg *message.Message) {
-		if err := ops.Send(defaultCtx, &message.Message{Payload: &testMessages.PingPong{Message: "pong !"}}); err != nil {
+	s.RegisterHandler(&testMessages.PingPong{}, message.HandlerFunc(func(ops message.Sender, msg *goomerang.Message) {
+		if err := ops.Send(defaultCtx, &goomerang.Message{Payload: &testMessages.PingPong{Message: "pong !"}}); err != nil {
 			arbiter.ErrorHappened(err)
 		}
 	}))
@@ -27,7 +29,7 @@ func TestRPC(t *testing.T) {
 
 	c.RegisterMessage(&testMessages.PingPong{})
 
-	msg := &message.Message{
+	msg := &goomerang.Message{
 		Payload: &testMessages.PingPong{Message: "ping"},
 	}
 
