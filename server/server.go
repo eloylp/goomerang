@@ -4,11 +4,12 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"net/http"
+	"sync"
+
 	"github.com/gorilla/websocket"
 	"github.com/hashicorp/go-multierror"
 	"google.golang.org/protobuf/proto"
-	"net/http"
-	"sync"
 
 	"go.eloylp.dev/goomerang"
 	"go.eloylp.dev/goomerang/internal/message"
