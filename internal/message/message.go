@@ -45,7 +45,7 @@ func FromFrame(frame *protocol.Frame, msgRegistry Registry) (*Message, error) {
 		return nil, fmt.Errorf("problems locating message: %w", err)
 	}
 	if err := proto.Unmarshal(frame.Payload, msg); err != nil {
-		return nil, fmt.Errorf("parsing from message: %w", msg)
+		return nil, fmt.Errorf("parsing from message: %s", FQDN(msg))
 	}
 	return &Message{
 		metadata: meta,
