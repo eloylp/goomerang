@@ -4,12 +4,13 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/google/uuid"
-	"github.com/gorilla/websocket"
-	"google.golang.org/protobuf/proto"
 	"net/http"
 	"net/url"
 	"sync"
+
+	"github.com/google/uuid"
+	"github.com/gorilla/websocket"
+	"google.golang.org/protobuf/proto"
 
 	"go.eloylp.dev/goomerang"
 	"go.eloylp.dev/goomerang/client/internal/rpc"
