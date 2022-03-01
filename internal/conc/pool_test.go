@@ -1,4 +1,4 @@
-package goomerang_test
+package conc_test
 
 import (
 	"fmt"
@@ -6,16 +6,15 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/stretchr/testify/assert"
-
-	"go.eloylp.dev/goomerang"
+	"go.eloylp.dev/goomerang/internal/conc"
 )
 
 func TestWorkerPool(t *testing.T) {
 	var concurrent int32
-	c, err := goomerang.NewWorkerPool(10)
+	c, err := conc.NewWorkerPool(10)
 	require.NoError(t, err)
 	for i := 0; i < 20; i++ {
 		c.Add()
@@ -34,6 +33,6 @@ func TestWorkerPool(t *testing.T) {
 }
 
 func TestNewWorkerPool(t *testing.T) {
-	_, err := goomerang.NewWorkerPool(0)
+	_, err := conc.NewWorkerPool(0)
 	assert.EqualError(t, err, "workerPool: min concurrency should be 1")
 }

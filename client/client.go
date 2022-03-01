@@ -14,6 +14,7 @@ import (
 
 	"go.eloylp.dev/goomerang"
 	"go.eloylp.dev/goomerang/client/internal/rpc"
+	"go.eloylp.dev/goomerang/internal/conc"
 	"go.eloylp.dev/goomerang/internal/message"
 )
 
@@ -28,7 +29,7 @@ type Client struct {
 	onCloseHook     func()
 	onErrorHook     func(err error)
 	rpcRegistry     *rpc.Registry
-	workerPool      *goomerang.WorkerPool
+	workerPool      *conc.WorkerPool
 	closeCh         chan struct{}
 }
 
@@ -37,7 +38,7 @@ func NewClient(opts ...Option) (*Client, error) {
 	for _, o := range opts {
 		o(cfg)
 	}
-	wp, err := goomerang.NewWorkerPool(cfg.MaxConcurrency)
+	wp, err := conc.NewWorkerPool(cfg.MaxConcurrency)
 	if err != nil {
 		return nil, fmt.Errorf("goomerang client: %w", err)
 	}

@@ -1,4 +1,4 @@
-package goomerang
+package conc
 
 import (
 	"errors"

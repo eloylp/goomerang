@@ -12,6 +12,7 @@ import (
 	"google.golang.org/protobuf/proto"
 
 	"go.eloylp.dev/goomerang"
+	"go.eloylp.dev/goomerang/internal/conc"
 	"go.eloylp.dev/goomerang/internal/message"
 )
 
@@ -33,7 +34,7 @@ type Server struct {
 	onErrorHook     func(err error)
 	onCloseHook     func()
 	cfg             *Config
-	workerPool      *goomerang.WorkerPool
+	workerPool      *conc.WorkerPool
 }
 
 func NewServer(opts ...Option) (*Server, error) {
@@ -41,7 +42,7 @@ func NewServer(opts ...Option) (*Server, error) {
 	for _, o := range opts {
 		o(cfg)
 	}
-	wp, err := goomerang.NewWorkerPool(cfg.MaxConcurrency)
+	wp, err := conc.NewWorkerPool(cfg.MaxConcurrency)
 	if err != nil {
 		return nil, fmt.Errorf("goomerang server: %w", err)
 	}
