@@ -27,8 +27,6 @@ type Metadata struct {
 	IsRPC    bool
 }
 
-type FrameOption func(f *protocol.Frame)
-
 func FQDN(msg proto.Message) string {
 	return string(msg.ProtoReflect().Descriptor().FullName())
 }
@@ -81,16 +79,4 @@ func UnPack(data []byte) (*protocol.Frame, error) {
 		return nil, fmt.Errorf("protocol decoding err: %w", err)
 	}
 	return frame, nil
-}
-
-func FrameWithUUID(uuid string) FrameOption {
-	return func(f *protocol.Frame) {
-		f.Uuid = uuid
-	}
-}
-
-func FrameIsRPC() FrameOption {
-	return func(f *protocol.Frame) {
-		f.IsRpc = true
-	}
 }
