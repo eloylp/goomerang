@@ -30,6 +30,7 @@ type Client struct {
 	onErrorHook     func(err error)
 	rpcRegistry     *rpc.Registry
 	workerPool      *goomerang.WorkerPool
+	closeCh         chan struct{}
 }
 
 func NewClient(opts ...Option) (*Client, error) {
@@ -57,6 +58,7 @@ func NewClient(opts ...Option) (*Client, error) {
 		messageRegistry: message.Registry{},
 		rpcRegistry:     rpc.NewRegistry(),
 		workerPool:      wp,
+		closeCh:         make(chan struct{}),
 	}
 	c.clientOps = &immediateSender{c: c}
 	return c, nil
@@ -83,30 +85,35 @@ func (c *Client) Connect(ctx context.Context) error {
 
 func (c *Client) receiver() {
 	for {
-		messageType, data, err := c.conn.ReadMessage()
-		if err != nil {
-			var closeErr *websocket.CloseError
-			if errors.As(err, &closeErr) {
-				if closeErr.Code == websocket.CloseNormalClosure {
-					_ = c.sendClosingSignal()
-					c.onCloseHook()
-					return
+		select {
+		case <-c.closeCh:
+			return
+		default:
+			messageType, data, err := c.conn.ReadMessage()
+			if err != nil {
+				var closeErr *websocket.CloseError
+				if errors.As(err, &closeErr) {
+					if closeErr.Code == websocket.CloseNormalClosure {
+						_ = c.sendClosingSignal()
+						c.onCloseHook()
+						return
+					}
 				}
-			}
-			c.onErrorHook(err)
-			return
-		}
-		if messageType != websocket.BinaryMessage {
-			c.onErrorHook(fmt.Errorf("protocol: unexpected message type %v", messageType))
-			return
-		}
-		c.workerPool.Add()
-		go func() {
-			if err := c.processMessage(data); err != nil {
 				c.onErrorHook(err)
+				return
 			}
-			c.workerPool.Done()
-		}()
+			if messageType != websocket.BinaryMessage {
+				c.onErrorHook(fmt.Errorf("protocol: unexpected message type %v", messageType))
+				return
+			}
+			c.workerPool.Add()
+			go func() {
+				if err := c.processMessage(data); err != nil {
+					c.onErrorHook(err)
+				}
+				c.workerPool.Done()
+			}()
+		}
 	}
 }
 
@@ -168,6 +175,8 @@ func (c *Client) Close(ctx context.Context) error {
 				ch <- err
 			}
 		}
+		close(c.closeCh)
+		c.workerPool.Wait()
 		close(ch)
 	}()
 	select {
