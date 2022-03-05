@@ -105,15 +105,14 @@ func mainHandler(s *Server) http.HandlerFunc {
 		for {
 			select {
 			case <-s.ctx.Done():
-				s.onErrorHook(s.ctx.Err())
 				return
 			case msg, ok := <-messageReader:
-				if !ok {
+				if !ok { // Channel closed in the receiver, we abort this handler and start defer calling.
 					return
 				}
 				if msg.mType != websocket.BinaryMessage {
 					s.onErrorHook(fmt.Errorf("server: cannot process websocket frame type %v", msg.mType))
-					return
+					continue
 				}
 				s.workerPool.Add() // Will block till more processing slots are available.
 				go func() {
@@ -150,22 +149,28 @@ func (s *Server) readMessages(cs connSlot) chan *receivedMessage {
 	go func() {
 		defer s.wg.Done()
 		for {
-			messageType, data, err := cs.c.ReadMessage()
-			if err != nil {
-				var closeErr *websocket.CloseError
-				if errors.As(err, &closeErr) {
-					if closeErr.Code == websocket.CloseNormalClosure {
-						_ = s.sendClosingSignal(cs)
-					}
-					return
-				}
-				s.onErrorHook(err)
+			select {
+			case <-s.ctx.Done():
 				close(ch)
 				return
-			}
-			ch <- &receivedMessage{
-				mType: messageType,
-				data:  data,
+			default:
+				messageType, data, err := cs.c.ReadMessage()
+				if err != nil {
+					var closeErr *websocket.CloseError
+					if errors.As(err, &closeErr) {
+						if closeErr.Code == websocket.CloseNormalClosure {
+							_ = s.sendClosingSignal(cs)
+						}
+						return
+					}
+					s.onErrorHook(err)
+					close(ch)
+					return
+				}
+				ch <- &receivedMessage{
+					mType: messageType,
+					data:  data,
+				}
 			}
 		}
 	}()
