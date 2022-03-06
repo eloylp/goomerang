@@ -133,10 +133,11 @@ func (s *Server) Run() error {
 }
 
 func (s *Server) Shutdown(ctx context.Context) error {
-	var multiErr error
 	ch := make(chan error, 1)
 	go func() {
+		defer close(ch)
 		s.cancl()
+		var multiErr error
 		if err := s.intServer.Shutdown(ctx); err != nil {
 			multiErr = multierror.Append(multiErr, err)
 		}
@@ -150,9 +151,9 @@ func (s *Server) Shutdown(ctx context.Context) error {
 	select {
 	case <-ctx.Done():
 		return ctx.Err()
-	case <-ch:
+	case err := <-ch:
+		return err
 	}
-	return multiErr
 }
 
 func (s *Server) processMessage(cs connSlot, data []byte, sOpts message.Sender) error {
