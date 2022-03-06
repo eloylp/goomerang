@@ -287,22 +287,23 @@ func (s *Server) Run() error {
 
 func (s *Server) Shutdown(ctx context.Context) error {
 	var multiErr error
-	if err := s.intServer.Shutdown(ctx); err != nil {
-		multiErr = multierror.Append(multiErr, err)
-	}
-	s.cancl()
-	ch := make(chan struct{})
+	ch := make(chan error, 1)
 	go func() {
-		s.wg.Wait()
-		ch <- struct{}{}
+		s.cancl()
+		if err := s.intServer.Shutdown(ctx); err != nil {
+			multiErr = multierror.Append(multiErr, err)
+		}
+		s.workerPool.Wait() // Wait for in flight user handlers
+		s.wg.Wait()         // Wait for in flight server handlers
+		if s.onCloseHook != nil {
+			s.onCloseHook()
+		}
+		ch <- multiErr
 	}()
 	select {
 	case <-ctx.Done():
-		multiErr = multierror.Append(multiErr, ctx.Err())
+		return ctx.Err()
 	case <-ch:
-	}
-	if s.onCloseHook != nil {
-		s.onCloseHook()
 	}
 	return multiErr
 }
