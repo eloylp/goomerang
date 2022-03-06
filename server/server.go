@@ -164,10 +164,10 @@ func (s *Server) readMessages(cs connSlot) chan *receivedMessage {
 	s.wg.Add(1)
 	go func() {
 		defer s.wg.Done()
+		defer close(ch)
 		for {
 			select {
 			case <-s.ctx.Done():
-				close(ch)
 				return
 			default:
 				messageType, data, err := cs.c.ReadMessage()
@@ -180,7 +180,6 @@ func (s *Server) readMessages(cs connSlot) chan *receivedMessage {
 						return
 					}
 					s.onErrorHook(err)
-					close(ch)
 					return
 				}
 				ch <- &receivedMessage{
