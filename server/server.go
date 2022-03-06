@@ -74,139 +74,6 @@ func NewServer(opts ...Option) (*Server, error) {
 	return s, nil
 }
 
-func mainHandler(s *Server) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		s.wg.Add(1)
-		defer s.wg.Done()
-		c, err := s.wsUpgrader.Upgrade(w, r, nil)
-		if err != nil {
-			s.onErrorHook(err)
-			return
-		}
-		cs := s.addConnection(c)
-		sOpts := &immediateSender{s: s, connSlot: cs}
-		defer s.removeConnection(cs)
-		defer func() {
-			if err := cs.sendCloseSignal(); err != nil {
-				s.onErrorHook(err)
-			}
-			if err := cs.close(); err != nil {
-				s.onErrorHook(err)
-			}
-		}()
-
-		messageReader := s.readMessages(cs)
-
-		for {
-			select {
-			case <-s.ctx.Done():
-				return
-			case msg, ok := <-messageReader:
-				if !ok { // Channel closed in the receiver, we abort this handler and start defer calling.
-					return
-				}
-				if msg.mType != websocket.BinaryMessage {
-					s.onErrorHook(fmt.Errorf("server: cannot process websocket frame type %v", msg.mType))
-					continue
-				}
-				s.workerPool.Add() // Will block till more processing slots are available.
-				go func() {
-					if err := s.processMessage(cs, msg.data, sOpts); err != nil {
-						s.onErrorHook(err)
-					}
-					s.workerPool.Done()
-				}()
-			}
-		}
-	}
-}
-
-func (s *Server) addConnection(c *websocket.Conn) connSlot {
-	s.serverL.Lock()
-	defer s.serverL.Unlock()
-	slot := connSlot{
-		l: &sync.Mutex{},
-		c: c,
-	}
-	s.connRegistry[c] = slot
-	return slot
-}
-
-func (s *Server) removeConnection(c connSlot) {
-	s.serverL.Lock()
-	defer s.serverL.Unlock()
-	delete(s.connRegistry, c.c)
-}
-
-func (s *Server) readMessages(cs connSlot) chan *receivedMessage {
-	ch := make(chan *receivedMessage)
-	s.wg.Add(1)
-	go func() {
-		defer s.wg.Done()
-		defer close(ch)
-		for {
-			select {
-			case <-s.ctx.Done():
-				return
-			default:
-				messageType, data, err := cs.c.ReadMessage()
-				if err != nil {
-					var closeErr *websocket.CloseError
-					if errors.As(err, &closeErr) {
-						if closeErr.Code == websocket.CloseNormalClosure {
-							return // will trigger normal connection close at handler
-						}
-					}
-					s.onErrorHook(err)
-					return
-				}
-				ch <- &receivedMessage{
-					mType: messageType,
-					data:  data,
-				}
-			}
-		}
-	}()
-	return ch
-}
-
-func (s *Server) processMessage(cs connSlot, data []byte, sOpts message.Sender) error {
-	frame, err := message.UnPack(data)
-	if err != nil {
-		return err
-	}
-
-	msg, err := message.FromFrame(frame, s.messageRegistry)
-	if err != nil {
-		return err
-	}
-	handler, err := s.handlerChainer.Handler(msg.Metadata.Type)
-	if err != nil {
-		return err
-	}
-	if msg.Metadata.IsRPC {
-		if err := s.doRPC(handler, cs, msg); err != nil {
-			return err
-		}
-		return nil
-	}
-	handler.Handle(sOpts, msg)
-	return nil
-}
-
-func (s *Server) doRPC(handler message.Handler, cs connSlot, msg *goomerang.Message) error {
-	ops := &bufferedSender{}
-	handler.Handle(ops, msg)
-	responseMsg, err := message.Pack(ops.Reply(), message.FrameWithUUID(msg.Metadata.UUID), message.FrameIsRPC())
-	if err != nil {
-		return err
-	}
-	if err := cs.write(responseMsg); err != nil {
-		return err
-	}
-	return nil
-}
-
 func (s *Server) RegisterMiddleware(m message.Middleware) {
 	s.handlerChainer.AppendMiddleware(m)
 }
@@ -289,4 +156,28 @@ func (s *Server) Shutdown(ctx context.Context) error {
 	case <-ch:
 	}
 	return multiErr
+}
+
+func (s *Server) processMessage(cs connSlot, data []byte, sOpts message.Sender) error {
+	frame, err := message.UnPack(data)
+	if err != nil {
+		return err
+	}
+
+	msg, err := message.FromFrame(frame, s.messageRegistry)
+	if err != nil {
+		return err
+	}
+	handler, err := s.handlerChainer.Handler(msg.Metadata.Type)
+	if err != nil {
+		return err
+	}
+	if msg.Metadata.IsRPC {
+		if err := doRPC(handler, cs, msg); err != nil {
+			return err
+		}
+		return nil
+	}
+	handler.Handle(sOpts, msg)
+	return nil
 }
