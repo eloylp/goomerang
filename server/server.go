@@ -27,10 +27,16 @@ func (cs *connSlot) write(msg []byte) error {
 	return cs.c.WriteMessage(websocket.BinaryMessage, msg)
 }
 
-func (cs *connSlot) close() error {
+func (cs *connSlot) sendCloseSignal() error {
 	cs.l.Lock()
 	defer cs.l.Unlock()
 	return cs.c.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, ""))
+}
+
+func (cs *connSlot) close() error {
+	cs.l.Lock()
+	defer cs.l.Unlock()
+	return cs.c.Close()
 }
 
 type Server struct {
@@ -111,6 +117,9 @@ func mainHandler(s *Server) http.HandlerFunc {
 		sOpts := &immediateSender{s: s, connSlot: cs}
 		defer s.removeConnection(cs)
 		defer func() {
+			if err := cs.sendCloseSignal(); err != nil {
+				s.onErrorHook(err)
+			}
 			if err := cs.close(); err != nil {
 				s.onErrorHook(err)
 			}
@@ -175,9 +184,8 @@ func (s *Server) readMessages(cs connSlot) chan *receivedMessage {
 					var closeErr *websocket.CloseError
 					if errors.As(err, &closeErr) {
 						if closeErr.Code == websocket.CloseNormalClosure {
-							_ = cs.close()
+							return // will trigger normal connection close at handler
 						}
-						return
 					}
 					s.onErrorHook(err)
 					return
