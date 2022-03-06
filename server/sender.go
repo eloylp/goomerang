@@ -3,8 +3,6 @@ package server
 import (
 	"context"
 
-	"github.com/gorilla/websocket"
-
 	"go.eloylp.dev/goomerang/internal/messaging"
 	"go.eloylp.dev/goomerang/message"
 )
@@ -21,9 +19,7 @@ func (so *immediateSender) Send(ctx context.Context, msg *message.Message) error
 	}
 	ch := make(chan error, 1)
 	go func() {
-		so.connSlot.l.Lock()
-		defer so.connSlot.l.Unlock()
-		ch <- so.connSlot.c.WriteMessage(websocket.BinaryMessage, m)
+		ch <- so.connSlot.write(m)
 	}()
 	select {
 	case <-ctx.Done():
