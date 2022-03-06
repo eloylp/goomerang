@@ -21,6 +21,18 @@ type connSlot struct {
 	c *websocket.Conn
 }
 
+func (cs *connSlot) write(msg []byte) error {
+	cs.l.Lock()
+	defer cs.l.Unlock()
+	return cs.c.WriteMessage(websocket.BinaryMessage, msg)
+}
+
+func (cs *connSlot) close() error {
+	cs.l.Lock()
+	defer cs.l.Unlock()
+	return cs.c.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, ""))
+}
+
 type Server struct {
 	intServer       *http.Server
 	connRegistry    map[*websocket.Conn]connSlot
@@ -98,7 +110,11 @@ func mainHandler(s *Server) http.HandlerFunc {
 		cs := s.addConnection(c)
 		sOpts := &immediateSender{s: s, connSlot: cs}
 		defer s.removeConnection(cs)
-		defer s.closeConnection(cs)
+		defer func() {
+			if err := cs.close(); err != nil {
+				s.onErrorHook(err)
+			}
+		}()
 
 		messageReader := s.readMessages(cs)
 
@@ -159,7 +175,7 @@ func (s *Server) readMessages(cs connSlot) chan *receivedMessage {
 					var closeErr *websocket.CloseError
 					if errors.As(err, &closeErr) {
 						if closeErr.Code == websocket.CloseNormalClosure {
-							_ = s.sendClosingSignal(cs)
+							_ = cs.close()
 						}
 						return
 					}
@@ -213,16 +229,10 @@ func (s *Server) doRPC(handler message.Handler, cs connSlot, msg *goomerang.Mess
 	if err != nil {
 		return err
 	}
-	if err := s.writeMessage(cs, responseMsg); err != nil {
+	if err := cs.write(responseMsg); err != nil {
 		return err
 	}
 	return nil
-}
-
-func (s *Server) writeMessage(cs connSlot, responseMsg []byte) error {
-	cs.l.Lock()
-	defer cs.l.Unlock()
-	return cs.c.WriteMessage(websocket.BinaryMessage, responseMsg)
 }
 
 func (s *Server) RegisterMiddleware(m message.Middleware) {
@@ -247,7 +257,8 @@ func (s *Server) Send(ctx context.Context, msg *goomerang.Message) error {
 		var errList error
 		var count int
 		for conn := range s.connRegistry {
-			if err := s.writeMessage(s.connRegistry[conn], bytes); err != nil && count < 100 {
+			cs := s.connRegistry[conn]
+			if err := cs.write(bytes); err != nil && count < 100 {
 				if errors.Is(err, websocket.ErrCloseSent) {
 					err = ErrClientDisconnected
 				}
@@ -306,16 +317,4 @@ func (s *Server) Shutdown(ctx context.Context) error {
 	case <-ch:
 	}
 	return multiErr
-}
-
-func (s *Server) closeConnection(cs connSlot) {
-	if err := s.sendClosingSignal(cs); err != nil {
-		s.onErrorHook(err)
-	}
-}
-
-func (s *Server) sendClosingSignal(cs connSlot) error {
-	cs.l.Lock()
-	defer cs.l.Unlock()
-	return cs.c.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, ""))
 }
