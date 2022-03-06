@@ -87,10 +87,10 @@ func (s *Server) RegisterHandler(msg proto.Message, handler message.Handler) {
 func (s *Server) Send(ctx context.Context, msg *goomerang.Message) error {
 	ch := make(chan error, 1)
 	go func() {
+		defer close(ch)
 		bytes, err := message.Pack(msg)
 		if err != nil {
 			ch <- err
-			close(ch)
 			return
 		}
 		var errList error
@@ -105,10 +105,7 @@ func (s *Server) Send(ctx context.Context, msg *goomerang.Message) error {
 				count++
 			}
 		}
-		if errList != nil {
-			ch <- errList
-		}
-		close(ch)
+		ch <- errList
 	}()
 	select {
 	case <-ctx.Done():
