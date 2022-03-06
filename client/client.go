@@ -12,16 +12,16 @@ import (
 	"github.com/gorilla/websocket"
 	"google.golang.org/protobuf/proto"
 
-	"go.eloylp.dev/goomerang"
 	"go.eloylp.dev/goomerang/client/internal/rpc"
 	"go.eloylp.dev/goomerang/internal/conc"
-	"go.eloylp.dev/goomerang/internal/message"
+	"go.eloylp.dev/goomerang/internal/messaging"
+	"go.eloylp.dev/goomerang/message"
 )
 
 type Client struct {
 	ServerURL       url.URL
-	handlerChainer  *message.HandlerChainer
-	messageRegistry message.Registry
+	handlerChainer  *messaging.HandlerChainer
+	messageRegistry messaging.Registry
 	clientOps       *immediateSender
 	writeLock       *sync.Mutex
 	conn            *websocket.Conn
@@ -55,8 +55,8 @@ func NewClient(opts ...Option) (*Client, error) {
 			EnableCompression: cfg.EnableCompression,
 		},
 		writeLock:       &sync.Mutex{},
-		handlerChainer:  message.NewHandlerChainer(),
-		messageRegistry: message.Registry{},
+		handlerChainer:  messaging.NewHandlerChainer(),
+		messageRegistry: messaging.Registry{},
 		rpcRegistry:     rpc.NewRegistry(),
 		workerPool:      wp,
 		closeCh:         make(chan struct{}),
@@ -119,11 +119,11 @@ func (c *Client) receiver() {
 }
 
 func (c *Client) processMessage(data []byte) error {
-	frame, err := message.UnPack(data)
+	frame, err := messaging.UnPack(data)
 	if err != nil {
 		return err
 	}
-	msg, err := message.FromFrame(frame, c.messageRegistry)
+	msg, err := messaging.FromFrame(frame, c.messageRegistry)
 	if err != nil {
 		return err
 	}
@@ -141,8 +141,8 @@ func (c *Client) processMessage(data []byte) error {
 	return nil
 }
 
-func (c *Client) Send(ctx context.Context, msg *goomerang.Message) error {
-	data, err := message.Pack(msg)
+func (c *Client) Send(ctx context.Context, msg *message.Message) error {
+	data, err := messaging.Pack(msg)
 	if err != nil {
 		return err
 	}
@@ -193,14 +193,14 @@ func (c *Client) RegisterMiddleware(m message.Middleware) {
 }
 
 func (c *Client) RegisterHandler(msg proto.Message, h message.Handler) {
-	fqdn := message.FQDN(msg)
+	fqdn := messaging.FQDN(msg)
 	c.messageRegistry.Register(fqdn, msg)
 	c.handlerChainer.AppendHandler(fqdn, h)
 }
 
-func (c *Client) RPC(ctx context.Context, msg *goomerang.Message) (*goomerang.Message, error) {
+func (c *Client) RPC(ctx context.Context, msg *message.Message) (*message.Message, error) {
 	UUID := uuid.New().String()
-	data, err := message.Pack(msg, message.FrameWithUUID(UUID), message.FrameIsRPC())
+	data, err := messaging.Pack(msg, messaging.FrameWithUUID(UUID), messaging.FrameIsRPC())
 	if err != nil {
 		return nil, err
 	}
@@ -219,7 +219,7 @@ func (c *Client) RPC(ctx context.Context, msg *goomerang.Message) (*goomerang.Me
 }
 
 func (c *Client) RegisterMessage(msg proto.Message) {
-	c.messageRegistry.Register(message.FQDN(msg), msg)
+	c.messageRegistry.Register(messaging.FQDN(msg), msg)
 }
 
 func (c *Client) writeMessage(data []byte) error {
@@ -234,7 +234,7 @@ func (c *Client) sendClosingSignal() error {
 	return c.conn.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, ""))
 }
 
-func (c *Client) processRPC(msg *goomerang.Message) error {
+func (c *Client) processRPC(msg *message.Message) error {
 	if err := c.rpcRegistry.SubmitResult(msg.Metadata.UUID, msg); err != nil {
 		return err
 	}

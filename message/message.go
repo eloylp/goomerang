@@ -1,4 +1,4 @@
-package goomerang
+package message
 
 import (
 	"time"

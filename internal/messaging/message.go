@@ -1,4 +1,4 @@
-package message
+package messaging
 
 import (
 	"fmt"
@@ -7,16 +7,16 @@ import (
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	"go.eloylp.dev/goomerang"
-	"go.eloylp.dev/goomerang/internal/message/protocol"
+	"go.eloylp.dev/goomerang/internal/messaging/protocol"
+	"go.eloylp.dev/goomerang/message"
 )
 
 func FQDN(msg proto.Message) string {
 	return string(msg.ProtoReflect().Descriptor().FullName())
 }
 
-func FromFrame(frame *protocol.Frame, msgRegistry Registry) (*goomerang.Message, error) {
-	meta := &goomerang.Metadata{
+func FromFrame(frame *protocol.Frame, msgRegistry Registry) (*message.Message, error) {
+	meta := &message.Metadata{
 		Creation: frame.Creation.AsTime(),
 		UUID:     frame.Uuid,
 		Type:     frame.Type,
@@ -29,14 +29,14 @@ func FromFrame(frame *protocol.Frame, msgRegistry Registry) (*goomerang.Message,
 	if err := proto.Unmarshal(frame.Payload, msg); err != nil {
 		return nil, fmt.Errorf("parsing from message: %s", FQDN(msg))
 	}
-	return &goomerang.Message{
+	return &message.Message{
 		Metadata: meta,
 		Payload:  msg,
-		Header:   goomerang.Header(frame.Headers),
+		Header:   message.Header(frame.Headers),
 	}, nil
 }
 
-func Pack(msg *goomerang.Message, opts ...FrameOption) ([]byte, error) {
+func Pack(msg *message.Message, opts ...FrameOption) ([]byte, error) {
 	payload, err := proto.Marshal(msg.Payload)
 	if err != nil {
 		return nil, err

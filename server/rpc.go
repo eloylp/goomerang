@@ -1,14 +1,15 @@
 package server
 
 import (
-	"go.eloylp.dev/goomerang"
-	"go.eloylp.dev/goomerang/internal/message"
+	"go.eloylp.dev/goomerang/message"
+
+	"go.eloylp.dev/goomerang/internal/messaging"
 )
 
-func doRPC(handler message.Handler, cs connSlot, msg *goomerang.Message) error {
+func doRPC(handler message.Handler, cs connSlot, msg *message.Message) error {
 	ops := &bufferedSender{}
 	handler.Handle(ops, msg)
-	responseMsg, err := message.Pack(ops.Reply(), message.FrameWithUUID(msg.Metadata.UUID), message.FrameIsRPC())
+	responseMsg, err := messaging.Pack(ops.Reply(), messaging.FrameWithUUID(msg.Metadata.UUID), messaging.FrameIsRPC())
 	if err != nil {
 		return err
 	}

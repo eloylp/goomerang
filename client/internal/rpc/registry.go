@@ -5,17 +5,17 @@ import (
 	"fmt"
 	"sync"
 
-	"go.eloylp.dev/goomerang"
+	"go.eloylp.dev/goomerang/message"
 )
 
 type Registry struct {
-	r map[string]chan *goomerang.Message
+	r map[string]chan *message.Message
 	l *sync.Mutex
 }
 
 func NewRegistry() *Registry {
 	return &Registry{
-		r: map[string]chan *goomerang.Message{},
+		r: map[string]chan *message.Message{},
 		l: &sync.Mutex{},
 	}
 }
@@ -23,10 +23,10 @@ func NewRegistry() *Registry {
 func (r *Registry) CreateListener(id string) {
 	r.l.Lock()
 	defer r.l.Unlock()
-	r.r[id] = make(chan *goomerang.Message, 1)
+	r.r[id] = make(chan *message.Message, 1)
 }
 
-func (r *Registry) SubmitResult(id string, m *goomerang.Message) error {
+func (r *Registry) SubmitResult(id string, m *message.Message) error {
 	r.l.Lock()
 	defer r.l.Unlock()
 	ch, ok := r.r[id]
@@ -37,7 +37,7 @@ func (r *Registry) SubmitResult(id string, m *goomerang.Message) error {
 	return nil
 }
 
-func (r *Registry) ResultFor(ctx context.Context, id string) (*goomerang.Message, error) {
+func (r *Registry) ResultFor(ctx context.Context, id string) (*message.Message, error) {
 	r.l.Lock()
 	ch, ok := r.r[id]
 	r.l.Unlock()

@@ -1,4 +1,4 @@
-package message_test
+package messaging_test
 
 import (
 	"testing"
@@ -9,25 +9,25 @@ import (
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	"go.eloylp.dev/goomerang"
-	"go.eloylp.dev/goomerang/internal/message"
-	"go.eloylp.dev/goomerang/internal/message/protocol"
-	"go.eloylp.dev/goomerang/internal/message/test"
+	"go.eloylp.dev/goomerang/internal/messaging"
+	"go.eloylp.dev/goomerang/internal/messaging/protocol"
+	"go.eloylp.dev/goomerang/internal/messaging/test"
+	"go.eloylp.dev/goomerang/message"
 )
 
 func TestFQDN(t *testing.T) {
 	m := &test.GreetV1{}
-	assert.Equal(t, "goomerang.test.GreetV1", message.FQDN(m))
+	assert.Equal(t, "goomerang.test.GreetV1", messaging.FQDN(m))
 }
 
 func TestPackTimestamp(t *testing.T) {
 	payload := &test.GreetV1{}
-	msg := &goomerang.Message{
+	msg := &message.Message{
 		Payload: payload,
 	}
-	pack, err := message.Pack(msg)
+	pack, err := messaging.Pack(msg)
 	require.NoError(t, err)
-	unpack, err := message.UnPack(pack)
+	unpack, err := messaging.UnPack(pack)
 	require.NoError(t, err)
 	now := time.Now().UnixMicro()
 	packTime := unpack.Creation.AsTime().UnixMicro()
@@ -42,7 +42,7 @@ func TestFromFrame(t *testing.T) {
 	require.NoError(t, err)
 
 	now := timestamppb.Now()
-	header := goomerang.Header{}
+	header := message.Header{}
 	header.Add("my-key", "my-value")
 
 	frame := &protocol.Frame{
@@ -54,10 +54,10 @@ func TestFromFrame(t *testing.T) {
 		Headers:  header,
 	}
 
-	msgRegistry := message.Registry{}
+	msgRegistry := messaging.Registry{}
 	msgRegistry.Register(msgFQDN, inputMsg)
 
-	msg, err := message.FromFrame(frame, msgRegistry)
+	msg, err := messaging.FromFrame(frame, msgRegistry)
 	require.NoError(t, err)
 
 	assert.Equal(t, "09AF", msg.Metadata.UUID)

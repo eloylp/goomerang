@@ -5,8 +5,8 @@ import (
 
 	"github.com/gorilla/websocket"
 
-	"go.eloylp.dev/goomerang"
-	"go.eloylp.dev/goomerang/internal/message"
+	"go.eloylp.dev/goomerang/internal/messaging"
+	"go.eloylp.dev/goomerang/message"
 )
 
 type immediateSender struct {
@@ -14,8 +14,8 @@ type immediateSender struct {
 	connSlot connSlot
 }
 
-func (so *immediateSender) Send(ctx context.Context, msg *goomerang.Message) error {
-	m, err := message.Pack(msg)
+func (so *immediateSender) Send(ctx context.Context, msg *message.Message) error {
+	m, err := messaging.Pack(msg)
 	if err != nil {
 		return err
 	}
@@ -34,14 +34,14 @@ func (so *immediateSender) Send(ctx context.Context, msg *goomerang.Message) err
 }
 
 type bufferedSender struct {
-	reply *goomerang.Message
+	reply *message.Message
 }
 
-func (so *bufferedSender) Send(_ context.Context, msg *goomerang.Message) error {
+func (so *bufferedSender) Send(_ context.Context, msg *message.Message) error {
 	so.reply = msg
 	return nil
 }
 
-func (so *bufferedSender) Reply() *goomerang.Message {
+func (so *bufferedSender) Reply() *message.Message {
 	return so.reply
 }

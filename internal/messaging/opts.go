@@ -1,7 +1,7 @@
-package message
+package messaging
 
 import (
-	"go.eloylp.dev/goomerang/internal/message/protocol"
+	"go.eloylp.dev/goomerang/internal/messaging/protocol"
 )
 
 type FrameOption func(f *protocol.Frame)

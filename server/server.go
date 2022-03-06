@@ -11,9 +11,9 @@ import (
 	"github.com/hashicorp/go-multierror"
 	"google.golang.org/protobuf/proto"
 
-	"go.eloylp.dev/goomerang"
 	"go.eloylp.dev/goomerang/internal/conc"
-	"go.eloylp.dev/goomerang/internal/message"
+	"go.eloylp.dev/goomerang/internal/messaging"
+	"go.eloylp.dev/goomerang/message"
 )
 
 type Server struct {
@@ -24,8 +24,8 @@ type Server struct {
 	ctx             context.Context
 	cancl           context.CancelFunc
 	wsUpgrader      *websocket.Upgrader
-	handlerChainer  *message.HandlerChainer
-	messageRegistry message.Registry
+	handlerChainer  *messaging.HandlerChainer
+	messageRegistry messaging.Registry
 	onErrorHook     func(err error)
 	onCloseHook     func()
 	cfg             *Config
@@ -58,8 +58,8 @@ func NewServer(opts ...Option) (*Server, error) {
 		},
 		onErrorHook:     cfg.OnErrorHook,
 		onCloseHook:     cfg.OnCloseHook,
-		handlerChainer:  message.NewHandlerChainer(),
-		messageRegistry: message.Registry{},
+		handlerChainer:  messaging.NewHandlerChainer(),
+		messageRegistry: messaging.Registry{},
 		connRegistry:    map[*websocket.Conn]connSlot{},
 		serverL:         &sync.Mutex{},
 		cancl:           cancl,
@@ -79,16 +79,16 @@ func (s *Server) RegisterMiddleware(m message.Middleware) {
 }
 
 func (s *Server) RegisterHandler(msg proto.Message, handler message.Handler) {
-	fqdn := message.FQDN(msg)
+	fqdn := messaging.FQDN(msg)
 	s.messageRegistry.Register(fqdn, msg)
 	s.handlerChainer.AppendHandler(fqdn, handler)
 }
 
-func (s *Server) Send(ctx context.Context, msg *goomerang.Message) error {
+func (s *Server) Send(ctx context.Context, msg *message.Message) error {
 	ch := make(chan error, 1)
 	go func() {
 		defer close(ch)
-		bytes, err := message.Pack(msg)
+		bytes, err := messaging.Pack(msg)
 		if err != nil {
 			ch <- err
 			return
@@ -157,12 +157,12 @@ func (s *Server) Shutdown(ctx context.Context) error {
 }
 
 func (s *Server) processMessage(cs connSlot, data []byte, sOpts message.Sender) error {
-	frame, err := message.UnPack(data)
+	frame, err := messaging.UnPack(data)
 	if err != nil {
 		return err
 	}
 
-	msg, err := message.FromFrame(frame, s.messageRegistry)
+	msg, err := messaging.FromFrame(frame, s.messageRegistry)
 	if err != nil {
 		return err
 	}
