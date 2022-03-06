@@ -19,7 +19,7 @@ import (
 type Server struct {
 	intServer       *http.Server
 	connRegistry    map[*websocket.Conn]connSlot
-	serverL         *sync.Mutex
+	serverL         *sync.RWMutex
 	wg              *sync.WaitGroup
 	ctx             context.Context
 	cancl           context.CancelFunc
@@ -61,7 +61,7 @@ func NewServer(opts ...Option) (*Server, error) {
 		handlerChainer:  messaging.NewHandlerChainer(),
 		messageRegistry: messaging.Registry{},
 		connRegistry:    map[*websocket.Conn]connSlot{},
-		serverL:         &sync.Mutex{},
+		serverL:         &sync.RWMutex{},
 		cancl:           cancl,
 		wg:              &sync.WaitGroup{},
 		ctx:             ctx,
@@ -95,6 +95,8 @@ func (s *Server) Send(ctx context.Context, msg *message.Message) error {
 		}
 		var errList error
 		var count int
+		s.serverL.RLock()
+		defer s.serverL.RUnlock()
 		for conn := range s.connRegistry {
 			cs := s.connRegistry[conn]
 			if err := cs.write(bytes); err != nil && count < 100 {
