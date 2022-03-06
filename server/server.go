@@ -16,29 +16,6 @@ import (
 	"go.eloylp.dev/goomerang/internal/message"
 )
 
-type connSlot struct {
-	l *sync.Mutex
-	c *websocket.Conn
-}
-
-func (cs *connSlot) write(msg []byte) error {
-	cs.l.Lock()
-	defer cs.l.Unlock()
-	return cs.c.WriteMessage(websocket.BinaryMessage, msg)
-}
-
-func (cs *connSlot) sendCloseSignal() error {
-	cs.l.Lock()
-	defer cs.l.Unlock()
-	return cs.c.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, ""))
-}
-
-func (cs *connSlot) close() error {
-	cs.l.Lock()
-	defer cs.l.Unlock()
-	return cs.c.Close()
-}
-
 type Server struct {
 	intServer       *http.Server
 	connRegistry    map[*websocket.Conn]connSlot
@@ -95,13 +72,6 @@ func NewServer(opts ...Option) (*Server, error) {
 	mux.Handle(endpoint(cfg), mainHandler(s))
 	s.intServer.Handler = mux
 	return s, nil
-}
-
-func endpoint(cfg *Config) string {
-	if cfg.TLSConfig != nil {
-		return "/wss"
-	}
-	return "/ws"
 }
 
 func mainHandler(s *Server) http.HandlerFunc {
@@ -198,11 +168,6 @@ func (s *Server) readMessages(cs connSlot) chan *receivedMessage {
 		}
 	}()
 	return ch
-}
-
-type receivedMessage struct {
-	mType int
-	data  []byte
 }
 
 func (s *Server) processMessage(cs connSlot, data []byte, sOpts message.Sender) error {

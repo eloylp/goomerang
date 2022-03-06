@@ -30,3 +30,10 @@ func defaultConfig() *Config {
 	}
 	return cfg
 }
+
+func endpoint(cfg *Config) string {
+	if cfg.TLSConfig != nil {
+		return "/wss"
+	}
+	return "/ws"
+}
