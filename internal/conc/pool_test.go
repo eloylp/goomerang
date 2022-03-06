@@ -1,7 +1,6 @@
 package conc_test
 
 import (
-	"fmt"
 	"sync/atomic"
 	"testing"
 	"time"
@@ -27,7 +26,6 @@ func TestWorkerPool(t *testing.T) {
 	}
 	assert.Eventually(t, func() bool {
 		MaxConcurrent := atomic.LoadInt32(&concurrent)
-		fmt.Println(MaxConcurrent)
 		return int32(10) == MaxConcurrent
 	}, time.Second, time.Millisecond)
 }
