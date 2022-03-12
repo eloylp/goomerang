@@ -108,10 +108,10 @@ func (c *Client) receiver() {
 			}
 			c.workerPool.Add()
 			go func() {
+				defer c.workerPool.Done()
 				if err := c.processMessage(data); err != nil {
 					c.onErrorHook(err)
 				}
-				c.workerPool.Done()
 			}()
 		}
 	}
