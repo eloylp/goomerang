@@ -95,8 +95,7 @@ func (c *Client) receiver() {
 				var closeErr *websocket.CloseError
 				if errors.As(err, &closeErr) {
 					if closeErr.Code == websocket.CloseNormalClosure {
-						_ = c.sendClosingSignal()
-						c.onCloseHook()
+						c.onErrorHook(c.Close(context.Background()))
 						return
 					}
 				}
@@ -168,16 +167,20 @@ func (c *Client) Send(ctx context.Context, msg *message.Message) error {
 func (c *Client) Close(ctx context.Context) error {
 	ch := make(chan error, 1)
 	go func() {
+		defer close(ch)
+		defer c.workerPool.Wait()
 		if err := c.sendClosingSignal(); err != nil {
 			if errors.Is(err, websocket.ErrCloseSent) {
 				ch <- ErrServerDisconnected
 			} else {
 				ch <- err
 			}
+			return
 		}
-		close(c.closeCh)
-		c.workerPool.Wait()
-		close(ch)
+		if err := c.conn.Close(); err != nil {
+			ch <- err
+		}
+		c.onCloseHook()
 	}()
 	select {
 	case <-ctx.Done():
