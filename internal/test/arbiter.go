@@ -94,3 +94,18 @@ func (a *Arbiter) RequireNoErrors() {
 	}
 	require.Len(a.t, a.errors, 0, msg)
 }
+
+func (a *Arbiter) RequireError(errMsg string) {
+	require.Eventuallyf(a.t, func() bool {
+		a.L.RLock()
+		defer a.L.RUnlock()
+		for _, err := range a.errors {
+			if strings.Contains(err.Error(), errMsg) {
+				return true
+			}
+		}
+		return false
+	}, time.Second, time.Millisecond, "expected error %q not happened in expected time.", errMsg)
+	a.L.RLock()
+	defer a.L.RUnlock()
+}
