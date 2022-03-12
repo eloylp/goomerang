@@ -141,12 +141,14 @@ func (c *Client) processMessage(data []byte) error {
 }
 
 func (c *Client) Send(ctx context.Context, msg *message.Message) error {
-	data, err := messaging.Pack(msg)
-	if err != nil {
-		return err
-	}
 	ch := make(chan error, 1)
 	go func() {
+		defer close(ch)
+		data, err := messaging.Pack(msg)
+		if err != nil {
+			ch <- err
+			return
+		}
 		if err := c.writeMessage(data); err != nil {
 			if errors.Is(err, websocket.ErrCloseSent) {
 				ch <- ErrServerDisconnected
@@ -154,7 +156,6 @@ func (c *Client) Send(ctx context.Context, msg *message.Message) error {
 				ch <- err
 			}
 		}
-		close(ch)
 	}()
 	select {
 	case <-ctx.Done():
