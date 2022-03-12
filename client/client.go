@@ -168,8 +168,7 @@ func (c *Client) Send(ctx context.Context, msg *message.Message) error {
 func (c *Client) Close(ctx context.Context) error {
 	ch := make(chan error, 1)
 	go func() {
-		err := c.sendClosingSignal()
-		if err != nil {
+		if err := c.sendClosingSignal(); err != nil {
 			if errors.Is(err, websocket.ErrCloseSent) {
 				ch <- ErrServerDisconnected
 			} else {
