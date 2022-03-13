@@ -118,11 +118,6 @@ func (c *Client) receiver() {
 }
 
 func (c *Client) processMessage(data []byte) (err error) {
-	defer func() {
-		if p := recover(); p != nil {
-			err = fmt.Errorf("goomerang: client: panic: %v", p)
-		}
-	}()
 	frame, err := messaging.UnPack(data)
 	if err != nil {
 		return err
