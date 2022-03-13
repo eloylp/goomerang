@@ -1,4 +1,4 @@
-package rpc_test
+package client
 
 import (
 	"context"
@@ -8,68 +8,66 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"go.eloylp.dev/goomerang/client/internal/rpc"
-
 	"go.eloylp.dev/goomerang/message"
 )
 
 func TestRPCRegistry(t *testing.T) {
-	reg := rpc.NewRegistry()
+	reg := newRegistry()
 	id := "09AF"
 
-	reg.CreateListener(id)
+	reg.createListener(id)
 	m := &message.Message{}
 
-	err := reg.SubmitResult(id, m)
+	err := reg.submitResult(id, m)
 	require.NoError(t, err)
 
-	result, err := reg.ResultFor(context.Background(), id)
+	result, err := reg.resultFor(context.Background(), id)
 	require.NoError(t, err)
 
 	assert.Same(t, m, result)
 
-	err = reg.SubmitResult(id, m)
+	err = reg.submitResult(id, m)
 	assert.Errorf(t, err, "rpc-registry: cannot find key for 09AF", "Last r.ResultFor key should remove key entry")
 }
 
 func TestRPCRegistry_SubmitResult(t *testing.T) {
-	reg := rpc.NewRegistry()
-	err := reg.SubmitResult("NON_EXISTENT", &message.Message{})
+	reg := newRegistry()
+	err := reg.submitResult("NON_EXISTENT", &message.Message{})
 	assert.Errorf(t, err, "rpc-registry: cannot find key for NON_EXISTENT")
 }
 
 func TestRPCRegistry_ResultFor(t *testing.T) {
-	reg := rpc.NewRegistry()
-	_, err := reg.ResultFor(context.Background(), "NON_EXISTENT")
+	reg := newRegistry()
+	_, err := reg.resultFor(context.Background(), "NON_EXISTENT")
 	assert.Errorf(t, err, "rpc-registry: cannot find result for key for NON_EXISTENT")
 }
 
 func TestRegistry_ResultFor_WaitsUntilResultArrives(t *testing.T) {
-	reg := rpc.NewRegistry()
-	reg.CreateListener("09AF")
+	reg := newRegistry()
+	reg.createListener("09AF")
 
 	reply := &message.Message{}
 
 	time.AfterFunc(time.Millisecond*500, func() {
-		_ = reg.SubmitResult("09AF", reply)
+		_ = reg.submitResult("09AF", reply)
 	})
-	result, err := reg.ResultFor(context.Background(), "09AF")
+	result, err := reg.resultFor(context.Background(), "09AF")
 	require.NoError(t, err)
 	assert.Same(t, reply, result)
 }
 
 func TestRegistry_ResultFor_cancelOncontext(t *testing.T) {
-	reg := rpc.NewRegistry()
-	reg.CreateListener("09AF")
+	reg := newRegistry()
+	reg.createListener("09AF")
 
 	reply := &message.Message{}
 
 	time.AfterFunc(time.Millisecond*500, func() {
-		_ = reg.SubmitResult("09AF", reply)
+		_ = reg.submitResult("09AF", reply)
 	})
 	ctx, cancl := context.WithTimeout(context.Background(), 10*time.Millisecond)
 	defer cancl()
 
-	_, err := reg.ResultFor(ctx, "09AF")
+	_, err := reg.resultFor(ctx, "09AF")
 	require.EqualError(t, err, "rpcregistry: context deadline exceeded")
 }

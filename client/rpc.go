@@ -1,4 +1,4 @@
-package rpc
+package client
 
 import (
 	"context"
@@ -8,25 +8,25 @@ import (
 	"go.eloylp.dev/goomerang/message"
 )
 
-type Registry struct {
+type registry struct {
 	r map[string]chan *message.Message
 	l *sync.Mutex
 }
 
-func NewRegistry() *Registry {
-	return &Registry{
+func newRegistry() *registry {
+	return &registry{
 		r: map[string]chan *message.Message{},
 		l: &sync.Mutex{},
 	}
 }
 
-func (r *Registry) CreateListener(id string) {
+func (r *registry) createListener(id string) {
 	r.l.Lock()
 	defer r.l.Unlock()
 	r.r[id] = make(chan *message.Message, 1)
 }
 
-func (r *Registry) SubmitResult(id string, m *message.Message) error {
+func (r *registry) submitResult(id string, m *message.Message) error {
 	r.l.Lock()
 	defer r.l.Unlock()
 	ch, ok := r.r[id]
@@ -37,7 +37,7 @@ func (r *Registry) SubmitResult(id string, m *message.Message) error {
 	return nil
 }
 
-func (r *Registry) ResultFor(ctx context.Context, id string) (*message.Message, error) {
+func (r *registry) resultFor(ctx context.Context, id string) (*message.Message, error) {
 	r.l.Lock()
 	ch, ok := r.r[id]
 	r.l.Unlock()

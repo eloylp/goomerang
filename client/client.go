@@ -12,7 +12,6 @@ import (
 	"github.com/gorilla/websocket"
 	"google.golang.org/protobuf/proto"
 
-	"go.eloylp.dev/goomerang/client/internal/rpc"
 	"go.eloylp.dev/goomerang/internal/conc"
 	"go.eloylp.dev/goomerang/internal/messaging"
 	"go.eloylp.dev/goomerang/message"
@@ -28,7 +27,7 @@ type Client struct {
 	dialer          *websocket.Dialer
 	onCloseHook     func()
 	onErrorHook     func(err error)
-	rpcRegistry     *rpc.Registry
+	rpcRegistry     *registry
 	workerPool      *conc.WorkerPool
 	closeCh         chan struct{}
 }
@@ -57,7 +56,7 @@ func NewClient(opts ...Option) (*Client, error) {
 		writeLock:       &sync.Mutex{},
 		handlerChainer:  messaging.NewHandlerChainer(),
 		messageRegistry: messaging.Registry{},
-		rpcRegistry:     rpc.NewRegistry(),
+		rpcRegistry:     newRegistry(),
 		workerPool:      wp,
 		closeCh:         make(chan struct{}),
 	}
@@ -207,14 +206,14 @@ func (c *Client) RPC(ctx context.Context, msg *message.Message) (*message.Messag
 	if err != nil {
 		return nil, err
 	}
-	c.rpcRegistry.CreateListener(UUID)
+	c.rpcRegistry.createListener(UUID)
 	if err := c.writeMessage(data); err != nil {
 		if errors.Is(err, websocket.ErrCloseSent) {
 			return nil, ErrServerDisconnected
 		}
 		return nil, err
 	}
-	repliedMsg, err := c.rpcRegistry.ResultFor(ctx, UUID)
+	repliedMsg, err := c.rpcRegistry.resultFor(ctx, UUID)
 	if err != nil {
 		return nil, err
 	}
@@ -238,7 +237,7 @@ func (c *Client) sendClosingSignal() error {
 }
 
 func (c *Client) processRPC(msg *message.Message) error {
-	if err := c.rpcRegistry.SubmitResult(msg.Metadata.UUID, msg); err != nil {
+	if err := c.rpcRegistry.submitResult(msg.Metadata.UUID, msg); err != nil {
 		return err
 	}
 	return nil
