@@ -158,7 +158,12 @@ func (s *Server) Shutdown(ctx context.Context) error {
 	}
 }
 
-func (s *Server) processMessage(cs connSlot, data []byte, sOpts message.Sender) error {
+func (s *Server) processMessage(cs connSlot, data []byte, sOpts message.Sender) (err error) {
+	defer func() {
+		if p := recover(); p != nil {
+			err = fmt.Errorf("goomerang: server: panic: %v", p)
+		}
+	}()
 	frame, err := messaging.UnPack(data)
 	if err != nil {
 		return err
