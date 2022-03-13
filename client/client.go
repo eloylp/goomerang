@@ -64,13 +64,6 @@ func NewClient(opts ...Option) (*Client, error) {
 	return c, nil
 }
 
-func serverURL(cfg *Config) url.URL {
-	if cfg.TLSConfig != nil {
-		return url.URL{Scheme: "wss", Host: cfg.TargetServer, Path: "/wss"}
-	}
-	return url.URL{Scheme: "ws", Host: cfg.TargetServer, Path: "/ws"}
-}
-
 func (c *Client) Connect(ctx context.Context) error {
 	c.handlerChainer.PrepareChains()
 	conn, resp, err := c.dialer.DialContext(ctx, c.ServerURL.String(), nil)
