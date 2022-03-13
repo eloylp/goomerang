@@ -40,8 +40,8 @@ func TestShutdownProcedureServerSideInit(t *testing.T) {
 	}))
 	connect()
 	defer c.Close(defaultCtx)
-	err := s.Shutdown(context.Background())
-	require.NoError(t, err)
+
+	require.NoError(t, s.Shutdown(defaultCtx))
 	arbiter.RequireHappened("SERVER_PROPERLY_CLOSED")
 	arbiter.RequireHappened("CLIENT_PROPERLY_CLOSED")
 }

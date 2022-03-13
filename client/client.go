@@ -170,6 +170,7 @@ func (c *Client) Close(ctx context.Context) error {
 	go func() {
 		defer close(ch)
 		defer c.workerPool.Wait()
+		defer c.onCloseHook()
 		if err := c.sendClosingSignal(); err != nil {
 			if errors.Is(err, websocket.ErrCloseSent) {
 				ch <- ErrServerDisconnected
@@ -181,7 +182,6 @@ func (c *Client) Close(ctx context.Context) error {
 		if err := c.conn.Close(); err != nil {
 			ch <- err
 		}
-		c.onCloseHook()
 	}()
 	select {
 	case <-ctx.Done():
