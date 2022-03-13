@@ -26,6 +26,7 @@ func defaultConfig() *Config {
 		OnErrorHook: func(err error) {
 			log.Printf("goomerang error: %v", err) //nolint:forbidigo
 		},
+		OnCloseHook:    func() {},
 		MaxConcurrency: 10,
 	}
 	return cfg

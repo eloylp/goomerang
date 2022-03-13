@@ -138,6 +138,7 @@ func (s *Server) Shutdown(ctx context.Context) error {
 	ch := make(chan error, 1)
 	go func() {
 		defer close(ch)
+		defer s.onCloseHook()
 		s.cancl()
 		var multiErr error
 		if err := s.intServer.Shutdown(ctx); err != nil {
@@ -145,9 +146,6 @@ func (s *Server) Shutdown(ctx context.Context) error {
 		}
 		s.workerPool.Wait() // Wait for in flight user handlers
 		s.wg.Wait()         // Wait for in flight server handlers
-		if s.onCloseHook != nil {
-			s.onCloseHook()
-		}
 		ch <- multiErr
 	}()
 	select {
