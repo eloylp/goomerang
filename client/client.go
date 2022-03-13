@@ -27,7 +27,7 @@ type Client struct {
 	dialer          *websocket.Dialer
 	onCloseHook     func()
 	onErrorHook     func(err error)
-	rpcRegistry     *registry
+	requestRegistry *requestRegistry
 	workerPool      *conc.WorkerPool
 	closeCh         chan struct{}
 }
@@ -56,7 +56,7 @@ func NewClient(opts ...Option) (*Client, error) {
 		writeLock:       &sync.Mutex{},
 		handlerChainer:  messaging.NewHandlerChainer(),
 		messageRegistry: messaging.Registry{},
-		rpcRegistry:     newRegistry(),
+		requestRegistry: newRegistry(),
 		workerPool:      wp,
 		closeCh:         make(chan struct{}),
 	}
@@ -125,7 +125,7 @@ func (c *Client) processMessage(data []byte) (err error) {
 	if err != nil {
 		return err
 	}
-	if msg.Metadata.IsRPC {
+	if msg.Metadata.IsSync {
 		if err := c.processRPC(msg); err != nil {
 			return err
 		}
@@ -200,20 +200,20 @@ func (c *Client) RegisterHandler(msg proto.Message, h message.Handler) {
 	c.handlerChainer.AppendHandler(fqdn, h)
 }
 
-func (c *Client) RPC(ctx context.Context, msg *message.Message) (*message.Message, error) {
+func (c *Client) SendSync(ctx context.Context, msg *message.Message) (*message.Message, error) {
 	UUID := uuid.New().String()
 	data, err := messaging.Pack(msg, messaging.FrameWithUUID(UUID), messaging.FrameIsRPC())
 	if err != nil {
 		return nil, err
 	}
-	c.rpcRegistry.createListener(UUID)
+	c.requestRegistry.createListener(UUID)
 	if err := c.writeMessage(data); err != nil {
 		if errors.Is(err, websocket.ErrCloseSent) {
 			return nil, ErrServerDisconnected
 		}
 		return nil, err
 	}
-	repliedMsg, err := c.rpcRegistry.resultFor(ctx, UUID)
+	repliedMsg, err := c.requestRegistry.resultFor(ctx, UUID)
 	if err != nil {
 		return nil, err
 	}
@@ -237,7 +237,7 @@ func (c *Client) sendClosingSignal() error {
 }
 
 func (c *Client) processRPC(msg *message.Message) error {
-	if err := c.rpcRegistry.submitResult(msg.Metadata.UUID, msg); err != nil {
+	if err := c.requestRegistry.submitResult(msg.Metadata.UUID, msg); err != nil {
 		return err
 	}
 	return nil

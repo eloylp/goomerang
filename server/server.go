@@ -172,8 +172,8 @@ func (s *Server) processMessage(cs connSlot, data []byte, sOpts message.Sender) 
 	if err != nil {
 		return err
 	}
-	if msg.Metadata.IsRPC {
-		if err := doRPC(handler, cs, msg); err != nil {
+	if msg.Metadata.IsSync {
+		if err := processSync(handler, cs, msg); err != nil {
 			return err
 		}
 		return nil

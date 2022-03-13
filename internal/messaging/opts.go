@@ -14,6 +14,6 @@ func FrameWithUUID(uuid string) FrameOption {
 
 func FrameIsRPC() FrameOption {
 	return func(f *protocol.Frame) {
-		f.IsRpc = true
+		f.IsSync = true
 	}
 }

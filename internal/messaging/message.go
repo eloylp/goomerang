@@ -20,7 +20,7 @@ func FromFrame(frame *protocol.Frame, msgRegistry Registry) (*message.Message, e
 		Creation: frame.Creation.AsTime(),
 		UUID:     frame.Uuid,
 		Type:     frame.Type,
-		IsRPC:    frame.IsRpc,
+		IsSync:   frame.IsSync,
 	}
 	msg, err := msgRegistry.Message(frame.Type)
 	if err != nil {

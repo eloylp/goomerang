@@ -10,7 +10,7 @@ import (
 	"go.eloylp.dev/goomerang/message"
 )
 
-func TestRPC(t *testing.T) {
+func TestSync(t *testing.T) {
 	arbiter := test.NewArbiter(t)
 	s, run := PrepareServer(t)
 	defer s.Shutdown(defaultCtx)
@@ -31,7 +31,7 @@ func TestRPC(t *testing.T) {
 		Payload: &testMessages.PingPong{Message: "ping"},
 	}
 
-	reply, err := c.RPC(defaultCtx, msg)
+	reply, err := c.SendSync(defaultCtx, msg)
 	require.NoError(t, err)
 	require.Equal(t, "pong !", reply.Payload.(*testMessages.PingPong).Message)
 }

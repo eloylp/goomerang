@@ -27,19 +27,19 @@ func TestRPCRegistry(t *testing.T) {
 	assert.Same(t, m, result)
 
 	err = reg.submitResult(id, m)
-	assert.Errorf(t, err, "rpc-registry: cannot find key for 09AF", "Last r.ResultFor key should remove key entry")
+	assert.Errorf(t, err, "request registry: cannot find key for 09AF", "Last r.ResultFor key should remove key entry")
 }
 
 func TestRPCRegistry_SubmitResult(t *testing.T) {
 	reg := newRegistry()
 	err := reg.submitResult("NON_EXISTENT", &message.Message{})
-	assert.Errorf(t, err, "rpc-registry: cannot find key for NON_EXISTENT")
+	assert.Errorf(t, err, "request registry: cannot find key for NON_EXISTENT")
 }
 
 func TestRPCRegistry_ResultFor(t *testing.T) {
 	reg := newRegistry()
 	_, err := reg.resultFor(context.Background(), "NON_EXISTENT")
-	assert.Errorf(t, err, "rpc-registry: cannot find result for key for NON_EXISTENT")
+	assert.Errorf(t, err, "request registry: cannot find result for key for NON_EXISTENT")
 }
 
 func TestRegistry_ResultFor_WaitsUntilResultArrives(t *testing.T) {
@@ -69,5 +69,5 @@ func TestRegistry_ResultFor_cancelOncontext(t *testing.T) {
 	defer cancl()
 
 	_, err := reg.resultFor(ctx, "09AF")
-	require.EqualError(t, err, "rpcregistry: context deadline exceeded")
+	require.EqualError(t, err, "request registry: context deadline exceeded")
 }

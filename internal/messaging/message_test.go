@@ -48,7 +48,7 @@ func TestFromFrame(t *testing.T) {
 	frame := &protocol.Frame{
 		Uuid:     "09AF",
 		Type:     msgFQDN,
-		IsRpc:    true,
+		IsSync:   true,
 		Creation: now,
 		Payload:  inputMsgData,
 		Headers:  header,
@@ -63,7 +63,7 @@ func TestFromFrame(t *testing.T) {
 	assert.Equal(t, "09AF", msg.Metadata.UUID)
 	assert.Equal(t, msgFQDN, msg.Metadata.Type)
 	assert.Equal(t, now.AsTime(), msg.Metadata.Creation)
-	assert.Equal(t, true, msg.Metadata.IsRPC)
+	assert.Equal(t, true, msg.Metadata.IsSync)
 	assert.Equal(t, "my-value", msg.Header.Get("my-key"))
 
 	assert.Equal(t, inputMsg, msg.Payload)

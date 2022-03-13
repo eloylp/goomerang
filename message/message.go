@@ -16,7 +16,7 @@ type Metadata struct {
 	Creation time.Time
 	UUID     string
 	Type     string
-	IsRPC    bool
+	IsSync   bool
 }
 
 type Header map[string]string
