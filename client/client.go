@@ -21,7 +21,6 @@ type Client struct {
 	ServerURL       url.URL
 	handlerChainer  *messaging.HandlerChainer
 	messageRegistry messaging.Registry
-	clientOps       *immediateSender
 	writeLock       *sync.Mutex
 	conn            *websocket.Conn
 	dialer          *websocket.Dialer
@@ -60,7 +59,6 @@ func NewClient(opts ...Option) (*Client, error) {
 		workerPool:      wp,
 		closeCh:         make(chan struct{}),
 	}
-	c.clientOps = &immediateSender{c: c}
 	return c, nil
 }
 
@@ -128,7 +126,7 @@ func (c *Client) processMessage(data []byte) (err error) {
 	if err != nil {
 		return err
 	}
-	handler.Handle(c.clientOps, msg)
+	handler.Handle(c, msg)
 	return nil
 }
 
