@@ -84,37 +84,45 @@ func (s *Server) RegisterHandler(msg proto.Message, handler message.Handler) {
 	s.handlerChainer.AppendHandler(fqdn, handler)
 }
 
-func (s *Server) Send(ctx context.Context, msg *message.Message) error {
-	ch := make(chan error, 1)
+func (s *Server) BroadCast(ctx context.Context, msg *message.Message) (int, int, error) {
+	ch := make(chan broadcastResponse, 1)
 	go func() {
 		defer close(ch)
-		bytes, err := messaging.Pack(msg)
+		payloadSize, bytes, err := messaging.Pack(msg)
 		if err != nil {
-			ch <- err
+			ch <- broadcastResponse{payloadSize, 0, err}
 			return
 		}
 		var errList error
+		var errCount int
 		var count int
 		s.serverL.RLock()
 		defer s.serverL.RUnlock()
 		for conn := range s.connRegistry {
 			cs := s.connRegistry[conn]
-			if err := cs.write(bytes); err != nil && count < 100 {
+			if err := cs.write(bytes); err != nil && errCount < 100 {
 				if errors.Is(err, websocket.ErrCloseSent) {
 					err = ErrClientDisconnected
 				}
 				errList = multierror.Append(err, errList)
-				count++
+				errCount++
 			}
+			count++
 		}
-		ch <- errList
+		ch <- broadcastResponse{payloadSize, count, nil}
 	}()
 	select {
 	case <-ctx.Done():
-		return ctx.Err()
-	case err := <-ch:
-		return err
+		return 0, 0, ctx.Err()
+	case resp := <-ch:
+		return resp.payloadSize, resp.count, resp.err
 	}
+}
+
+type broadcastResponse struct {
+	payloadSize int
+	count       int
+	err         error
 }
 
 func (s *Server) Run() error {

@@ -8,8 +8,9 @@ option go_package = "go.eloylp.dev/goomerang/internal/protocol";
 message Frame {
   string uuid = 1;
   string type = 2;
-  bool is_sync = 3;
-  google.protobuf.Timestamp creation = 4;
-  map<string, string> headers = 5;
-  bytes payload = 6;
+  int64 payloadSize = 3;
+  bool is_sync = 4;
+  google.protobuf.Timestamp creation = 5;
+  map<string, string> headers = 6;
+  bytes payload = 7;
 }

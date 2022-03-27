@@ -65,9 +65,9 @@ type FakeSender struct {
 	a *test.Arbiter
 }
 
-func (f *FakeSender) Send(ctx context.Context, msg *message.Message) error {
+func (f *FakeSender) Send(ctx context.Context, msg *message.Message) (int, error) {
 	f.a.ItsAFactThat("SENDER_CALLED")
-	return nil
+	return 0, nil
 }
 
 func TestHandlerChainer_PanicsAfterPrepareChains(t *testing.T) {

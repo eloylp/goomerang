@@ -132,29 +132,80 @@ func (c *Client) processMessage(data []byte) (err error) {
 	return nil
 }
 
-func (c *Client) Send(ctx context.Context, msg *message.Message) error {
-	ch := make(chan error, 1)
+func (c *Client) Send(ctx context.Context, msg *message.Message) (payloadSize int, err error) {
+	ch := make(chan sendResponse, 1)
 	go func() {
 		defer close(ch)
-		data, err := messaging.Pack(msg)
+		payloadSize, data, err := messaging.Pack(msg)
 		if err != nil {
-			ch <- err
+			ch <- sendResponse{payloadSize, ErrServerDisconnected}
 			return
 		}
 		if err := c.writeMessage(data); err != nil {
 			if errors.Is(err, websocket.ErrCloseSent) {
-				ch <- ErrServerDisconnected
+				ch <- sendResponse{payloadSize, ErrServerDisconnected}
 			} else {
-				ch <- err
+				ch <- sendResponse{payloadSize, err}
 			}
+			return
 		}
+		ch <- sendResponse{payloadSize, nil}
 	}()
 	select {
 	case <-ctx.Done():
-		return ctx.Err()
-	case err := <-ch:
-		return err
+		return 0, ctx.Err()
+	case resp := <-ch:
+		if resp.err != nil {
+			return 0, resp.err
+		}
+		return resp.payloadSize, resp.err
 	}
+}
+
+type sendResponse struct {
+	payloadSize int
+	err         error
+}
+
+func (c *Client) SendSync(ctx context.Context, msg *message.Message) (payloadSize int, response *message.Message, err error) {
+	ch := make(chan sendSyncResponse, 1)
+	go func() {
+		UUID := uuid.New().String()
+		payloadSize, data, err := messaging.Pack(msg, messaging.FrameWithUUID(UUID), messaging.FrameIsRPC())
+		if err != nil {
+			ch <- sendSyncResponse{payloadSize, nil, err}
+			return
+		}
+		c.requestRegistry.createListener(UUID)
+		if err := c.writeMessage(data); err != nil {
+			if errors.Is(err, websocket.ErrCloseSent) {
+				ch <- sendSyncResponse{payloadSize, nil, ErrServerDisconnected}
+			}
+			ch <- sendSyncResponse{payloadSize, nil, err}
+			return
+		}
+		repliedMsg, err := c.requestRegistry.resultFor(ctx, UUID)
+		if err != nil {
+			ch <- sendSyncResponse{payloadSize, nil, err}
+			return
+		}
+		ch <- sendSyncResponse{payloadSize, repliedMsg, nil}
+	}()
+	select {
+	case <-ctx.Done():
+		return 0, nil, ctx.Err()
+	case resp := <-ch:
+		if resp.err != nil {
+			return 0, nil, resp.err
+		}
+		return resp.payloadSize, resp.respMsg, resp.err
+	}
+}
+
+type sendSyncResponse struct {
+	payloadSize int
+	respMsg     *message.Message
+	err         error
 }
 
 func (c *Client) Close(ctx context.Context) error {
@@ -191,26 +242,6 @@ func (c *Client) RegisterHandler(msg proto.Message, h message.Handler) {
 	fqdn := messaging.FQDN(msg)
 	c.messageRegistry.Register(fqdn, msg)
 	c.handlerChainer.AppendHandler(fqdn, h)
-}
-
-func (c *Client) SendSync(ctx context.Context, msg *message.Message) (*message.Message, error) {
-	UUID := uuid.New().String()
-	data, err := messaging.Pack(msg, messaging.FrameWithUUID(UUID), messaging.FrameIsRPC())
-	if err != nil {
-		return nil, err
-	}
-	c.requestRegistry.createListener(UUID)
-	if err := c.writeMessage(data); err != nil {
-		if errors.Is(err, websocket.ErrCloseSent) {
-			return nil, ErrServerDisconnected
-		}
-		return nil, err
-	}
-	repliedMsg, err := c.requestRegistry.resultFor(ctx, UUID)
-	if err != nil {
-		return nil, err
-	}
-	return repliedMsg, nil
 }
 
 func (c *Client) RegisterMessage(msg proto.Message) {

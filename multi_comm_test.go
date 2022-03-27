@@ -31,9 +31,10 @@ func TestServerCanBroadCastMessages(t *testing.T) {
 		arbiter.ItsAFactThat("CLIENT2_RECEIVED_SERVER_GREET")
 	}))
 	connect2()
-	err := s.Send(defaultCtx, &message.Message{Payload: &testMessages.GreetV1{Message: "Hi!"}})
+	payloadSize, sentCount, err := s.BroadCast(defaultCtx, &message.Message{Payload: &testMessages.GreetV1{Message: "Hi!"}})
 	require.NoError(t, err)
-
+	require.NotEmpty(t, payloadSize)
+	require.Equal(t, 2, sentCount)
 	arbiter.RequireHappened("CLIENT1_RECEIVED_SERVER_GREET")
 	arbiter.RequireHappened("CLIENT2_RECEIVED_SERVER_GREET")
 }
@@ -51,8 +52,10 @@ func TestServerShutdownIsPropagatedToAllClients(t *testing.T) {
 
 	msg := &message.Message{Payload: &testMessages.GreetV1{Message: "Hi!"}}
 
-	require.ErrorIs(t, c1.Send(defaultCtx, msg), client.ErrServerDisconnected)
-	require.ErrorIs(t, c2.Send(defaultCtx, msg), client.ErrServerDisconnected)
+	_, err := c1.Send(defaultCtx, msg)
+	require.ErrorIs(t, err, client.ErrServerDisconnected)
+	_, err = c2.Send(defaultCtx, msg)
+	require.ErrorIs(t, err, client.ErrServerDisconnected)
 }
 
 func TestServerSupportMultipleClients(t *testing.T) {
@@ -67,7 +70,7 @@ func TestServerSupportMultipleClients(t *testing.T) {
 			return
 		}
 		arbiter.ItsAFactThat("SERVER_RECEIVED_FROM_CLIENT_" + pingMsg.Message)
-		err := ops.Send(defaultCtx, &message.Message{Payload: &testMessages.PingPong{Message: pingMsg.Message}})
+		_, err := ops.Send(defaultCtx, &message.Message{Payload: &testMessages.PingPong{Message: pingMsg.Message}})
 		if err != nil {
 			arbiter.ErrorHappened(err)
 			return
@@ -99,9 +102,9 @@ func TestServerSupportMultipleClients(t *testing.T) {
 	connect2()
 	defer c2.Close(defaultCtx)
 
-	err := c1.Send(defaultCtx, &message.Message{Payload: &testMessages.PingPong{Message: "1"}})
+	_, err := c1.Send(defaultCtx, &message.Message{Payload: &testMessages.PingPong{Message: "1"}})
 	require.NoError(t, err)
-	err = c2.Send(defaultCtx, &message.Message{Payload: &testMessages.PingPong{Message: "2"}})
+	_, err = c2.Send(defaultCtx, &message.Message{Payload: &testMessages.PingPong{Message: "2"}})
 	require.NoError(t, err)
 
 	arbiter.RequireNoErrors()

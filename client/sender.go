@@ -10,6 +10,6 @@ type immediateSender struct {
 	c *Client
 }
 
-func (co *immediateSender) Send(ctx context.Context, msg *message.Message) error {
+func (co *immediateSender) Send(ctx context.Context, msg *message.Message) (int, error) {
 	return co.c.Send(ctx, msg)
 }

@@ -9,7 +9,7 @@ import (
 func processSync(handler message.Handler, cs connSlot, msg *message.Message) error {
 	ops := &bufferedSender{}
 	handler.Handle(ops, msg)
-	responseMsg, err := messaging.Pack(ops.Reply(), messaging.FrameWithUUID(msg.Metadata.UUID), messaging.FrameIsRPC())
+	_, responseMsg, err := messaging.Pack(ops.Reply(), messaging.FrameWithUUID(msg.Metadata.UUID), messaging.FrameIsRPC())
 	if err != nil {
 		return err
 	}

@@ -13,10 +13,11 @@ type Message struct {
 }
 
 type Metadata struct {
-	Creation time.Time
-	UUID     string
-	Type     string
-	IsSync   bool
+	Creation    time.Time
+	UUID        string
+	Type        string
+	PayloadSize int
+	IsSync      bool
 }
 
 type Header map[string]string

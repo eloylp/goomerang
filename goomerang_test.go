@@ -6,6 +6,7 @@ import (
 	"crypto/x509"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"go.eloylp.dev/goomerang/client"
@@ -24,7 +25,7 @@ func TestPingPongServer(t *testing.T) {
 
 	s.RegisterHandler(&testMessages.PingPong{}, message.HandlerFunc(func(s message.Sender, msg *message.Message) {
 		_ = msg.Payload.(*testMessages.PingPong)
-		if err := s.Send(defaultCtx, &message.Message{Payload: &testMessages.PingPong{Message: "pong"}}); err != nil {
+		if _, err := s.Send(defaultCtx, &message.Message{Payload: &testMessages.PingPong{Message: "pong"}}); err != nil {
 			arbiter.ErrorHappened(err)
 		}
 		arbiter.ItsAFactThat("SERVER_RECEIVED_PING")
@@ -38,8 +39,9 @@ func TestPingPongServer(t *testing.T) {
 		arbiter.ItsAFactThat("CLIENT_RECEIVED_PONG")
 	}))
 	connect()
-	err := c.Send(defaultCtx, &message.Message{Payload: &testMessages.PingPong{Message: "ping"}})
+	payloadSize, err := c.Send(defaultCtx, &message.Message{Payload: &testMessages.PingPong{Message: "ping"}})
 	require.NoError(t, err)
+	require.NotEmpty(t, payloadSize)
 	arbiter.RequireNoErrors()
 	arbiter.RequireHappened("SERVER_RECEIVED_PING")
 	arbiter.RequireHappened("CLIENT_RECEIVED_PONG")
@@ -59,7 +61,7 @@ func TestSecuredPingPongServer(t *testing.T) {
 
 	s.RegisterHandler(msg, message.HandlerFunc(func(s message.Sender, msg *message.Message) {
 		_ = msg.Payload.(*testMessages.PingPong)
-		if err := s.Send(defaultCtx, &message.Message{Payload: &testMessages.PingPong{Message: "pong"}}); err != nil {
+		if _, err := s.Send(defaultCtx, &message.Message{Payload: &testMessages.PingPong{Message: "pong"}}); err != nil {
 			arbiter.ErrorHappened(err)
 		}
 		arbiter.ItsAFactThat("SERVER_RECEIVED_PING")
@@ -77,7 +79,9 @@ func TestSecuredPingPongServer(t *testing.T) {
 		arbiter.ItsAFactThat("CLIENT_RECEIVED_PONG")
 	}))
 	connect()
-	require.NoError(t, c.Send(defaultCtx, &message.Message{Payload: &testMessages.PingPong{Message: "ping"}}))
+	payloadSize, err := c.Send(defaultCtx, &message.Message{Payload: &testMessages.PingPong{Message: "ping"}})
+	assert.NoError(t, err)
+	assert.NotEmpty(t, payloadSize)
 	arbiter.RequireNoErrors()
 	arbiter.RequireHappened("SERVER_RECEIVED_PING")
 	arbiter.RequireHappened("CLIENT_RECEIVED_PONG")
@@ -95,7 +99,7 @@ func TestMiddlewares(t *testing.T) {
 	})
 	s.RegisterHandler(&testMessages.PingPong{}, message.HandlerFunc(func(s message.Sender, msg *message.Message) {
 		arbiter.ItsAFactThat("SERVER_HANDLER_EXECUTED")
-		if err := s.Send(context.Background(), &message.Message{
+		if _, err := s.Send(context.Background(), &message.Message{
 			Payload: msg.Payload,
 		}); err != nil {
 			arbiter.ErrorHappened(err)
@@ -116,7 +120,7 @@ func TestMiddlewares(t *testing.T) {
 		arbiter.ItsAFactThat("CLIENT_RECEIVED_PONG")
 	}))
 	connect()
-	err := c.Send(defaultCtx, &message.Message{Payload: &testMessages.PingPong{Message: "ping"}})
+	_, err := c.Send(defaultCtx, &message.Message{Payload: &testMessages.PingPong{Message: "ping"}})
 	require.NoError(t, err)
 	arbiter.RequireNoErrors()
 	arbiter.RequireHappenedInOrder("SERVER_MIDDLEWARE_EXECUTED", "SERVER_HANDLER_EXECUTED")
@@ -134,7 +138,7 @@ func TestHeadersAreSent(t *testing.T) {
 		if msg.Header.Get("h1") == "v1" { //nolint: goconst
 			arbiter.ItsAFactThat("SERVER_RECEIVED_MSG_HEADERS")
 		}
-		if err := s.Send(defaultCtx, msg); err != nil {
+		if _, err := s.Send(defaultCtx, msg); err != nil {
 			arbiter.ErrorHappened(err)
 		}
 	}))
@@ -153,7 +157,7 @@ func TestHeadersAreSent(t *testing.T) {
 		Payload: &testMessages.PingPong{Message: "ping"},
 		Header:  map[string]string{"h1": "v1"},
 	}
-	err := c.Send(defaultCtx, msg)
+	_, err := c.Send(defaultCtx, msg)
 	require.NoError(t, err)
 	arbiter.RequireNoErrors()
 	arbiter.RequireHappened("SERVER_RECEIVED_MSG_HEADERS")

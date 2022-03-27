@@ -17,5 +17,5 @@ func (h HandlerFunc) Handle(sender Sender, msg *Message) {
 }
 
 type Sender interface {
-	Send(ctx context.Context, msg *Message) error
+	Send(ctx context.Context, msg *Message) (payloadSize int, err error)
 }

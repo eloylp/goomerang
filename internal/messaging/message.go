@@ -17,10 +17,11 @@ func FQDN(msg proto.Message) string {
 
 func FromFrame(frame *protocol.Frame, msgRegistry Registry) (*message.Message, error) {
 	meta := &message.Metadata{
-		Creation: frame.Creation.AsTime(),
-		UUID:     frame.Uuid,
-		Type:     frame.Type,
-		IsSync:   frame.IsSync,
+		Creation:    frame.Creation.AsTime(),
+		UUID:        frame.Uuid,
+		Type:        frame.Type,
+		PayloadSize: int(frame.PayloadSize),
+		IsSync:      frame.IsSync,
 	}
 	msg, err := msgRegistry.Message(frame.Type)
 	if err != nil {
@@ -36,25 +37,27 @@ func FromFrame(frame *protocol.Frame, msgRegistry Registry) (*message.Message, e
 	}, nil
 }
 
-func Pack(msg *message.Message, opts ...FrameOption) ([]byte, error) {
+func Pack(msg *message.Message, opts ...FrameOption) (int, []byte, error) {
 	payload, err := proto.Marshal(msg.Payload)
 	if err != nil {
-		return nil, err
+		return 0, nil, err
 	}
+	payloadSize := len(payload)
 	frame := &protocol.Frame{
-		Type:     FQDN(msg.Payload),
-		Payload:  payload,
-		Creation: timestamppb.New(time.Now()),
-		Headers:  msg.Header,
+		Type:        FQDN(msg.Payload),
+		PayloadSize: int64(payloadSize),
+		Payload:     payload,
+		Creation:    timestamppb.New(time.Now()),
+		Headers:     msg.Header,
 	}
 	for _, opt := range opts {
 		opt(frame)
 	}
 	bytes, err := proto.Marshal(frame)
 	if err != nil {
-		return nil, err
+		return payloadSize, nil, err
 	}
-	return bytes, nil
+	return payloadSize, bytes, nil
 }
 
 func UnPack(data []byte) (*protocol.Frame, error) {

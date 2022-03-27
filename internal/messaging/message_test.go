@@ -25,7 +25,7 @@ func TestPackTimestamp(t *testing.T) {
 	msg := &message.Message{
 		Payload: payload,
 	}
-	pack, err := messaging.Pack(msg)
+	_, pack, err := messaging.Pack(msg)
 	require.NoError(t, err)
 	unpack, err := messaging.UnPack(pack)
 	require.NoError(t, err)
@@ -36,7 +36,7 @@ func TestPackTimestamp(t *testing.T) {
 }
 
 func TestFromFrame(t *testing.T) {
-	inputMsg := &test.PingPong{}
+	inputMsg := &test.PingPong{Message: "This is a test message."}
 	msgFQDN := string(inputMsg.ProtoReflect().Descriptor().FullName())
 	inputMsgData, err := proto.Marshal(inputMsg)
 	require.NoError(t, err)
@@ -44,14 +44,16 @@ func TestFromFrame(t *testing.T) {
 	now := timestamppb.Now()
 	header := message.Header{}
 	header.Add("my-key", "my-value")
+	size := int64(len(inputMsgData))
 
 	frame := &protocol.Frame{
-		Uuid:     "09AF",
-		Type:     msgFQDN,
-		IsSync:   true,
-		Creation: now,
-		Payload:  inputMsgData,
-		Headers:  header,
+		Uuid:        "09AF",
+		Type:        msgFQDN,
+		PayloadSize: size,
+		IsSync:      true,
+		Creation:    now,
+		Payload:     inputMsgData,
+		Headers:     header,
 	}
 
 	msgRegistry := messaging.Registry{}
@@ -62,9 +64,10 @@ func TestFromFrame(t *testing.T) {
 
 	assert.Equal(t, "09AF", msg.Metadata.UUID)
 	assert.Equal(t, msgFQDN, msg.Metadata.Type)
+	assert.Equal(t, size, int64(msg.Metadata.PayloadSize))
 	assert.Equal(t, now.AsTime(), msg.Metadata.Creation)
 	assert.Equal(t, true, msg.Metadata.IsSync)
 	assert.Equal(t, "my-value", msg.Header.Get("my-key"))
 
-	assert.Equal(t, inputMsg, msg.Payload)
+	assert.Equal(t, inputMsg.Message, msg.Payload.(*test.PingPong).Message)
 }
