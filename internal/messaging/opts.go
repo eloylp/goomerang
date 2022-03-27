@@ -12,7 +12,7 @@ func FrameWithUUID(uuid string) FrameOption {
 	}
 }
 
-func FrameIsRPC() FrameOption {
+func FrameIsSync() FrameOption {
 	return func(f *protocol.Frame) {
 		f.IsSync = true
 	}

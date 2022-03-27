@@ -11,7 +11,7 @@ import (
 	"go.eloylp.dev/goomerang/message"
 )
 
-func TestRPCRegistry(t *testing.T) {
+func TestRequestRegistry(t *testing.T) {
 	reg := newRegistry()
 	id := "09AF"
 
@@ -30,19 +30,19 @@ func TestRPCRegistry(t *testing.T) {
 	assert.Errorf(t, err, "request registry: cannot find key for 09AF", "Last r.ResultFor key should remove key entry")
 }
 
-func TestRPCRegistry_SubmitResult(t *testing.T) {
+func TestRequestRegistry_SubmitResult(t *testing.T) {
 	reg := newRegistry()
 	err := reg.submitResult("NON_EXISTENT", &message.Message{})
 	assert.Errorf(t, err, "request registry: cannot find key for NON_EXISTENT")
 }
 
-func TestRPCRegistry_ResultFor(t *testing.T) {
+func TestRequestRegistry_ResultFor(t *testing.T) {
 	reg := newRegistry()
 	_, err := reg.resultFor(context.Background(), "NON_EXISTENT")
 	assert.Errorf(t, err, "request registry: cannot find result for key for NON_EXISTENT")
 }
 
-func TestRegistry_ResultFor_WaitsUntilResultArrives(t *testing.T) {
+func TestRequestRegistry_ResultFor_WaitsUntilResultArrives(t *testing.T) {
 	reg := newRegistry()
 	reg.createListener("09AF")
 
@@ -56,7 +56,7 @@ func TestRegistry_ResultFor_WaitsUntilResultArrives(t *testing.T) {
 	assert.Same(t, reply, result)
 }
 
-func TestRegistry_ResultFor_cancelOncontext(t *testing.T) {
+func TestRequestRegistry_ResultFor_cancelOncontext(t *testing.T) {
 	reg := newRegistry()
 	reg.createListener("09AF")
 

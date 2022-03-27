@@ -44,7 +44,7 @@ func (s *SyncSender) Send(ctx context.Context, msg *message.Message) (int, error
 	ch := make(chan sendResponse, 1)
 	go func() {
 		defer close(ch)
-		payloadSize, m, err := messaging.Pack(msg, messaging.FrameWithUUID(s.prevMsgUUID), messaging.FrameIsRPC())
+		payloadSize, m, err := messaging.Pack(msg, messaging.FrameWithUUID(s.prevMsgUUID), messaging.FrameIsSync())
 		if err != nil {
 			ch <- sendResponse{payloadSize, err}
 			return

@@ -169,7 +169,7 @@ func (c *Client) SendSync(ctx context.Context, msg *message.Message) (payloadSiz
 	ch := make(chan sendSyncResponse, 1)
 	go func() {
 		UUID := uuid.New().String()
-		payloadSize, data, err := messaging.Pack(msg, messaging.FrameWithUUID(UUID), messaging.FrameIsRPC())
+		payloadSize, data, err := messaging.Pack(msg, messaging.FrameWithUUID(UUID), messaging.FrameIsSync())
 		if err != nil {
 			ch <- sendSyncResponse{payloadSize, nil, err}
 			return
