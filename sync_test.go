@@ -15,8 +15,8 @@ func TestSync(t *testing.T) {
 	s, run := PrepareServer(t)
 	defer s.Shutdown(defaultCtx)
 
-	s.RegisterHandler(&testMessages.PingPong{}, message.HandlerFunc(func(ops message.Sender, msg *message.Message) {
-		if _, err := ops.Send(defaultCtx, &message.Message{Payload: &testMessages.PingPong{Message: "pong !"}}); err != nil {
+	s.RegisterHandler(&testMessages.PingPong{}, message.HandlerFunc(func(sender message.Sender, msg *message.Message) {
+		if _, err := sender.Send(defaultCtx, &message.Message{Payload: &testMessages.PingPong{Message: "pong !"}}); err != nil {
 			arbiter.ErrorHappened(err)
 		}
 	}))

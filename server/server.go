@@ -179,9 +179,7 @@ func (s *Server) processMessage(cs connSlot, data []byte, sOpts message.Sender) 
 		return err
 	}
 	if msg.Metadata.IsSync {
-		if err := processSync(handler, cs, msg); err != nil {
-			return err
-		}
+		handler.Handle(&SyncSender{cs, msg.Metadata.UUID}, msg)
 		return nil
 	}
 	handler.Handle(sOpts, msg)
