@@ -17,7 +17,6 @@ func mainHandler(s *Server) http.HandlerFunc {
 			return
 		}
 		cs := addConnection(s, c)
-		sOpts := &immediateSender{s: s, connSlot: cs}
 		defer removeConnection(s, cs)
 		defer func() {
 			if err := cs.sendCloseSignal(); err != nil {
@@ -44,7 +43,7 @@ func mainHandler(s *Server) http.HandlerFunc {
 				}
 				s.workerPool.Add() // Will block till more processing slots are available.
 				go func() {
-					if err := s.processMessage(cs, msg.data, sOpts); err != nil {
+					if err := s.processMessage(cs, msg.data, &stdSender{cs}); err != nil {
 						s.onErrorHook(err)
 					}
 					s.workerPool.Done()

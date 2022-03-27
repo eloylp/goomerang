@@ -7,12 +7,11 @@ import (
 	"go.eloylp.dev/goomerang/message"
 )
 
-type immediateSender struct {
-	s        *Server
+type stdSender struct {
 	connSlot connSlot
 }
 
-func (so *immediateSender) Send(ctx context.Context, msg *message.Message) (int, error) {
+func (s *stdSender) Send(ctx context.Context, msg *message.Message) (int, error) {
 	ch := make(chan sendResponse, 1)
 	go func() {
 		defer close(ch)
@@ -21,7 +20,7 @@ func (so *immediateSender) Send(ctx context.Context, msg *message.Message) (int,
 			ch <- sendResponse{payloadSize, err}
 			return
 		}
-		ch <- sendResponse{payloadSize, so.connSlot.write(m)}
+		ch <- sendResponse{payloadSize, s.connSlot.write(m)}
 	}()
 	select {
 	case <-ctx.Done():
