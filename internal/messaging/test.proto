@@ -3,10 +3,6 @@ syntax = "proto3";
 package goomerang.test;
 option go_package = "go.eloylp.dev/goomerang/internal/test";
 
-message PingPong {
-  string message = 1;
-}
-
-message GreetV1 {
+message MessageV1 {
   string message = 1;
 }

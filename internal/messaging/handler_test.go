@@ -20,7 +20,7 @@ func TestMiddlewareRegistry(t *testing.T) {
 	handler := message.HandlerFunc(func(sender message.Sender, msg *message.Message) {
 		arbiter.ItsAFactThat("HANDLER_EXECUTED")
 		resp := &message.Message{
-			Payload: &testMessages.PingPong{},
+			Payload: &testMessages.MessageV1{},
 		}
 		sender.Send(context.Background(), resp)
 	})

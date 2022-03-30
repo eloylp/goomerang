@@ -16,12 +16,12 @@ import (
 )
 
 func TestFQDN(t *testing.T) {
-	m := &test.GreetV1{}
-	assert.Equal(t, "goomerang.test.GreetV1", messaging.FQDN(m))
+	m := &test.MessageV1{}
+	assert.Equal(t, "goomerang.test.MessageV1", messaging.FQDN(m))
 }
 
 func TestPackTimestamp(t *testing.T) {
-	payload := &test.GreetV1{}
+	payload := &test.MessageV1{}
 	msg := &message.Message{
 		Payload: payload,
 	}
@@ -31,12 +31,12 @@ func TestPackTimestamp(t *testing.T) {
 	require.NoError(t, err)
 	now := time.Now().UnixMicro()
 	packTime := unpack.Creation.AsTime().UnixMicro()
-	assert.InDelta(t, now, packTime, 1000)
+	assert.InDelta(t, now, packTime, 2000)
 	assert.Less(t, packTime, now)
 }
 
 func TestFromFrame(t *testing.T) {
-	inputMsg := &test.PingPong{Message: "This is a test message."}
+	inputMsg := &test.MessageV1{Message: "This is a test message."}
 	msgFQDN := string(inputMsg.ProtoReflect().Descriptor().FullName())
 	inputMsgData, err := proto.Marshal(inputMsg)
 	require.NoError(t, err)
@@ -69,5 +69,5 @@ func TestFromFrame(t *testing.T) {
 	assert.Equal(t, true, msg.Metadata.IsSync)
 	assert.Equal(t, "my-value", msg.Header.Get("my-key"))
 
-	assert.Equal(t, inputMsg.Message, msg.Payload.(*test.PingPong).Message)
+	assert.Equal(t, inputMsg.Message, msg.Payload.(*test.MessageV1).Message)
 }

@@ -84,7 +84,7 @@ func TestHandlerRegistrationMoment(t *testing.T) {
 }
 
 func registerClientDumbHandler(c *client.Client) {
-	c.RegisterHandler(&test.PingPong{}, message.HandlerFunc(func(s message.Sender, w *message.Message) {}))
+	c.RegisterHandler(&test.MessageV1{}, message.HandlerFunc(func(s message.Sender, w *message.Message) {}))
 }
 
 func registerClientDumbMiddleware(c *client.Client) {
@@ -94,7 +94,7 @@ func registerClientDumbMiddleware(c *client.Client) {
 }
 
 func registerServerDumbHandler(s *server.Server) {
-	s.RegisterHandler(&test.PingPong{}, message.HandlerFunc(func(s message.Sender, w *message.Message) {}))
+	s.RegisterHandler(&test.MessageV1{}, message.HandlerFunc(func(s message.Sender, w *message.Message) {}))
 }
 
 func registerServerDumbMiddleware(s *server.Server) {

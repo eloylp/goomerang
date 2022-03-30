@@ -10,13 +10,13 @@ import (
 )
 
 func TestMessageRegistry(t *testing.T) {
-	msg := &test.GreetV1{}
+	msg := &test.MessageV1{}
 	r := messaging.Registry{}
 	r.Register("m1", msg)
 	res, err := r.Message("m1")
 	require.NoError(t, err)
 	require.EqualValues(t, msg, res)
-	require.NotSame(t, msg, res.(*test.GreetV1))
+	require.NotSame(t, msg, res.(*test.MessageV1))
 }
 
 func TestMessageRegistryNotFound(t *testing.T) {
