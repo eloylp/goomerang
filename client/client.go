@@ -130,39 +130,19 @@ func (c *Client) processMessage(data []byte) (err error) {
 	return nil
 }
 
-func (c *Client) Send(ctx context.Context, msg *message.Message) (payloadSize int, err error) {
-	ch := make(chan sendResponse, 1)
-	go func() {
-		defer close(ch)
-		payloadSize, data, err := messaging.Pack(msg)
-		if err != nil {
-			ch <- sendResponse{payloadSize, ErrServerDisconnected}
-			return
-		}
-		if err := c.writeMessage(data); err != nil {
-			if errors.Is(err, websocket.ErrCloseSent) {
-				ch <- sendResponse{payloadSize, ErrServerDisconnected}
-			} else {
-				ch <- sendResponse{payloadSize, err}
-			}
-			return
-		}
-		ch <- sendResponse{payloadSize, nil}
-	}()
-	select {
-	case <-ctx.Done():
-		return 0, ctx.Err()
-	case resp := <-ch:
-		if resp.err != nil {
-			return 0, resp.err
-		}
-		return resp.payloadSize, resp.err
+func (c *Client) Send(msg *message.Message) (payloadSize int, err error) {
+	payloadSize, data, err := messaging.Pack(msg)
+	if err != nil {
+		return payloadSize, ErrServerDisconnected
 	}
-}
-
-type sendResponse struct {
-	payloadSize int
-	err         error
+	if err := c.writeMessage(data); err != nil {
+		if errors.Is(err, websocket.ErrCloseSent) {
+			return payloadSize, ErrServerDisconnected
+		} else {
+			return payloadSize, err
+		}
+	}
+	return
 }
 
 func (c *Client) SendSync(ctx context.Context, msg *message.Message) (payloadSize int, response *message.Message, err error) {

@@ -52,9 +52,9 @@ func TestServerShutdownIsPropagatedToAllClients(t *testing.T) {
 
 	msg := &message.Message{Payload: &testMessages.MessageV1{Message: "Hi!"}}
 
-	_, err := c1.Send(defaultCtx, msg)
+	_, err := c1.Send(msg)
 	require.ErrorIs(t, err, client.ErrServerDisconnected)
-	_, err = c2.Send(defaultCtx, msg)
+	_, err = c2.Send(msg)
 	require.ErrorIs(t, err, client.ErrServerDisconnected)
 }
 
@@ -70,7 +70,7 @@ func TestServerSupportMultipleClients(t *testing.T) {
 			return
 		}
 		arbiter.ItsAFactThat("SERVER_RECEIVED_FROM_CLIENT_" + pingMsg.Message)
-		_, err := ops.Send(defaultCtx, &message.Message{Payload: &testMessages.MessageV1{Message: pingMsg.Message}})
+		_, err := ops.Send(&message.Message{Payload: &testMessages.MessageV1{Message: pingMsg.Message}})
 		if err != nil {
 			arbiter.ErrorHappened(err)
 			return
@@ -102,9 +102,9 @@ func TestServerSupportMultipleClients(t *testing.T) {
 	connect2()
 	defer c2.Close(defaultCtx)
 
-	_, err := c1.Send(defaultCtx, &message.Message{Payload: &testMessages.MessageV1{Message: "1"}})
+	_, err := c1.Send(&message.Message{Payload: &testMessages.MessageV1{Message: "1"}})
 	require.NoError(t, err)
-	_, err = c2.Send(defaultCtx, &message.Message{Payload: &testMessages.MessageV1{Message: "2"}})
+	_, err = c2.Send(&message.Message{Payload: &testMessages.MessageV1{Message: "2"}})
 	require.NoError(t, err)
 
 	arbiter.RequireNoErrors()

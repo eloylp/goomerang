@@ -1,7 +1,6 @@
 package middleware_test
 
 import (
-	"context"
 	"fmt"
 	"io"
 	"net/http"
@@ -47,7 +46,7 @@ func TestMetrics(t *testing.T) {
 			require.NoError(t, err)
 
 			h := message.HandlerFunc(func(s message.Sender, msg *message.Message) {
-				_, _ = s.Send(context.Background(), msg)
+				_, _ = s.Send(msg)
 			})
 
 			sender := &fakeSender{}
@@ -91,7 +90,7 @@ func AssertMetricsHandler(t *testing.T, handler http.Handler, system string) {
 
 type fakeSender struct{}
 
-func (f *fakeSender) Send(_ context.Context, _ *message.Message) (payloadSize int, err error) {
+func (f *fakeSender) Send(_ *message.Message) (payloadSize int, err error) {
 	return 20, nil
 }
 

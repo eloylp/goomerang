@@ -16,7 +16,7 @@ func TestSync(t *testing.T) {
 	defer s.Shutdown(defaultCtx)
 
 	s.RegisterHandler(&testMessages.MessageV1{}, message.HandlerFunc(func(sender message.Sender, msg *message.Message) {
-		if _, err := sender.Send(defaultCtx, &message.Message{Payload: &testMessages.MessageV1{Message: "pong !"}}); err != nil {
+		if _, err := sender.Send(&message.Message{Payload: &testMessages.MessageV1{Message: "pong !"}}); err != nil {
 			arbiter.ErrorHappened(err)
 		}
 	}))

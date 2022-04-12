@@ -1,7 +1,6 @@
 package messaging_test
 
 import (
-	"context"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -22,7 +21,7 @@ func TestMiddlewareRegistry(t *testing.T) {
 		resp := &message.Message{
 			Payload: &testMessages.MessageV1{},
 		}
-		sender.Send(context.Background(), resp)
+		sender.Send(resp)
 	})
 
 	middleware1 := message.Middleware(func(h message.Handler) message.Handler {
@@ -65,7 +64,7 @@ type FakeSender struct {
 	a *test.Arbiter
 }
 
-func (f *FakeSender) Send(ctx context.Context, msg *message.Message) (int, error) {
+func (f *FakeSender) Send(msg *message.Message) (int, error) {
 	f.a.ItsAFactThat("SENDER_CALLED")
 	return 0, nil
 }

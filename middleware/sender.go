@@ -1,8 +1,6 @@
 package middleware
 
 import (
-	"context"
-
 	"go.eloylp.dev/goomerang/message"
 )
 
@@ -24,8 +22,8 @@ func (s *Sender) Bytes() int {
 	return s.bytes
 }
 
-func (s *Sender) Send(ctx context.Context, msg *message.Message) (int, error) {
-	w, err := s.sender.Send(ctx, msg)
+func (s *Sender) Send(msg *message.Message) (int, error) {
+	w, err := s.sender.Send(msg)
 	s.bytes = w
 	return w, err
 }
