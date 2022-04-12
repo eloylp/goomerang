@@ -17,6 +17,7 @@ func PromHistograms(c PromConfig) (message.Middleware, error) {
 	}
 	return func(h message.Handler) message.Handler {
 		return message.HandlerFunc(func(s message.Sender, msg *message.Message) {
+			c.MessageInflightTime.Observe(time.Since(msg.Metadata.Creation).Seconds())
 			c.ReceivedMessageSize.Observe(float64(msg.Metadata.PayloadSize))
 			wrappedSender := NewSender(s)
 			start := time.Now()
@@ -28,13 +29,16 @@ func PromHistograms(c PromConfig) (message.Middleware, error) {
 }
 
 type PromConfig struct {
+	MessageInflightTime   prometheus.Histogram
 	ReceivedMessageSize   prometheus.Histogram
 	MessageProcessingTime prometheus.Histogram
 	SentMessageSize       prometheus.Histogram
 }
 
 func (c PromConfig) Validate() error {
-
+	if c.MessageInflightTime == nil {
+		return errors.New("validate: messageInflightTime be non nil")
+	}
 	if c.ReceivedMessageSize == nil {
 		return errors.New("validate: receivedMessageSize be non nil")
 	}
