@@ -20,30 +20,50 @@ import (
 	"go.eloylp.dev/goomerang/middleware"
 )
 
-func TestServerMetrics(t *testing.T) {
-	m, err := middleware.PromHistograms(middleware.PromConfig{
-		MessageInflightTime:   serverMetrics.MessageInflightTime,
-		ReceivedMessageSize:   serverMetrics.ReceivedMessageSize,
-		MessageProcessingTime: serverMetrics.MessageProcessingTime,
-		SentMessageSize:       serverMetrics.SentMessageSize,
-	})
-	require.NoError(t, err)
-
-	h := message.HandlerFunc(func(s message.Sender, msg *message.Message) {
-		_, _ = s.Send(context.Background(), msg)
-	})
-	sender := &fakeSender{}
-	msg := &message.Message{
-		Metadata: &message.Metadata{
-			PayloadSize: 10,
-			Creation:    time.Now().Add(-1 * time.Second),
-		},
-		Payload: &testMessages.MessageV1{},
+func TestMetrics(t *testing.T) {
+	cases := []struct {
+		side   string
+		config middleware.PromConfig
+	}{
+		{
+			"server", middleware.PromConfig{
+				MessageInflightTime:   serverMetrics.MessageInflightTime,
+				ReceivedMessageSize:   serverMetrics.ReceivedMessageSize,
+				MessageProcessingTime: serverMetrics.MessageProcessingTime,
+				SentMessageSize:       serverMetrics.SentMessageSize,
+			}},
+		{
+			"client", middleware.PromConfig{
+				MessageInflightTime:   clientMetrics.MessageInflightTime,
+				ReceivedMessageSize:   clientMetrics.ReceivedMessageSize,
+				MessageProcessingTime: clientMetrics.MessageProcessingTime,
+				SentMessageSize:       clientMetrics.SentMessageSize,
+			}},
 	}
 
-	m(h).Handle(sender, msg)
+	for _, c := range cases {
+		t.Run(fmt.Sprintf("testing metrics for %s", c.side), func(t *testing.T) {
+			m, err := middleware.PromHistograms(c.config)
+			require.NoError(t, err)
 
-	AssertMetricsHandler(t, promhttp.Handler(), "server")
+			h := message.HandlerFunc(func(s message.Sender, msg *message.Message) {
+				_, _ = s.Send(context.Background(), msg)
+			})
+
+			sender := &fakeSender{}
+			msg := &message.Message{
+				Metadata: &message.Metadata{
+					PayloadSize: 10,
+					Creation:    time.Now().Add(-1 * time.Second),
+				},
+				Payload: &testMessages.MessageV1{},
+			}
+
+			m(h).Handle(sender, msg)
+
+			AssertMetricsHandler(t, promhttp.Handler(), c.side)
+		})
+	}
 }
 
 func AssertMetricsHandler(t *testing.T, handler http.Handler, system string) {
@@ -73,30 +93,6 @@ type fakeSender struct{}
 
 func (f *fakeSender) Send(_ context.Context, _ *message.Message) (payloadSize int, err error) {
 	return 20, nil
-}
-
-func TestClientMetrics(t *testing.T) {
-	m, err := middleware.PromHistograms(middleware.PromConfig{
-		MessageInflightTime:   clientMetrics.MessageInflightTime,
-		ReceivedMessageSize:   clientMetrics.ReceivedMessageSize,
-		MessageProcessingTime: clientMetrics.MessageProcessingTime,
-		SentMessageSize:       clientMetrics.SentMessageSize,
-	})
-	require.NoError(t, err)
-
-	h := message.HandlerFunc(func(s message.Sender, msg *message.Message) {
-		_, _ = s.Send(context.Background(), msg)
-	})
-	sender := &fakeSender{}
-	msg := &message.Message{
-		Metadata: &message.Metadata{
-			PayloadSize: 10,
-			Creation:    time.Now().Add(-1 * time.Second),
-		},
-		Payload: &testMessages.MessageV1{},
-	}
-	m(h).Handle(sender, msg)
-	AssertMetricsHandler(t, promhttp.Handler(), "client")
 }
 
 func TestPromMiddlewareDoesValidations(t *testing.T) {
