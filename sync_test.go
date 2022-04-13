@@ -15,13 +15,9 @@ func TestSync(t *testing.T) {
 	s, run := PrepareServer(t)
 	defer s.Shutdown(defaultCtx)
 
-	s.RegisterHandler(&testMessages.MessageV1{}, message.HandlerFunc(func(sender message.Sender, msg *message.Message) {
-		m := &message.Message{
-			Payload: &testMessages.MessageV1{
-				Message: "pong !",
-			},
-		}
-		if _, err := sender.Send(m); err != nil {
+	s.RegisterHandler(&testMessages.MessageV1{}, message.HandlerFunc(func(s message.Sender, msg *message.Message) {
+		m := message.New().SetPayload(&testMessages.MessageV1{Message: "pong !"})
+		if _, err := s.Send(m); err != nil {
 			arbiter.ErrorHappened(err)
 		}
 	}))
@@ -32,9 +28,7 @@ func TestSync(t *testing.T) {
 
 	c.RegisterMessage(&testMessages.MessageV1{})
 
-	msg := &message.Message{
-		Payload: &testMessages.MessageV1{Message: "ping"},
-	}
+	msg := message.New().SetPayload(&testMessages.MessageV1{Message: "ping"})
 
 	payloadSize, reply, err := c.SendSync(defaultCtx, msg)
 	require.NoError(t, err)

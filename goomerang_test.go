@@ -18,11 +18,10 @@ import (
 
 var defaultCtx = context.Background()
 
-var defaultMsg = &message.Message{
-	Payload: &testMessages.MessageV1{
+var defaultMsg = message.New().
+	SetPayload(&testMessages.MessageV1{
 		Message: "a message!",
-	},
-}
+	})
 
 func TestRoundTrip(t *testing.T) {
 	arbiter := test.NewArbiter(t)
@@ -159,10 +158,10 @@ func TestHeadersAreSent(t *testing.T) {
 		}
 	}))
 	connect()
-	msg := &message.Message{
-		Payload: &testMessages.MessageV1{Message: "ping"},
-		Header:  message.Header{"h1": "v1"},
-	}
+	msg := message.New().
+		SetPayload(&testMessages.MessageV1{Message: "ping"}).
+		SetHeader("h1", "v1")
+
 	_, err := c.Send(msg)
 	require.NoError(t, err)
 	arbiter.RequireNoErrors()
