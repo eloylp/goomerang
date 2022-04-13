@@ -43,7 +43,7 @@ func TestFromFrame(t *testing.T) {
 
 	now := timestamppb.Now()
 	header := message.Header{}
-	header.Add("my-key", "my-value")
+	header.Set("my-key", "my-value")
 	size := int64(len(inputMsgData))
 
 	frame := &protocol.Frame{

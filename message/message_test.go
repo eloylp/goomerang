@@ -9,6 +9,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"go.eloylp.dev/goomerang/internal/messaging/test"
+	testMessages "go.eloylp.dev/goomerang/internal/messaging/test"
 	"go.eloylp.dev/goomerang/message"
 )
 
@@ -66,4 +67,16 @@ func TestMessageText(t *testing.T) {
 		return
 	}
 	t.Errorf("expected header serialization to at least accomplish one of the possible outputs (see test). Was %s", textMsg)
+}
+
+func TestMessage(t *testing.T) {
+	payload := &testMessages.MessageV1{
+		Message: "Hi !",
+	}
+	msg := message.New().
+		SetPayload(payload).
+		SetHeader("k1", "v1")
+
+	assert.Equal(t, payload, msg.Payload)
+	assert.Equal(t, "v1", msg.GetHeader("k1"))
 }

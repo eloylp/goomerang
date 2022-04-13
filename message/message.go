@@ -14,6 +14,26 @@ type Message struct {
 	Header   Header        `json:"header"`
 }
 
+func New() *Message {
+	return &Message{
+		Header: Header{},
+	}
+}
+
+func (m *Message) SetPayload(p proto.Message) *Message {
+	m.Payload = p
+	return m
+}
+
+func (m *Message) SetHeader(k, v string) *Message {
+	m.Header.Set(k, v)
+	return m
+}
+
+func (m *Message) GetHeader(k string) string {
+	return m.Header.Get(k)
+}
+
 func (m Message) String() string {
 	return fmt.Sprintf("metadata: %s headers: %s - payload: %s", m.Metadata, m.Header, m.Payload)
 }
@@ -50,6 +70,6 @@ func (h Header) Get(key string) string {
 	return h[key]
 }
 
-func (h Header) Add(key, value string) {
+func (h Header) Set(key, value string) {
 	h[key] = value
 }
