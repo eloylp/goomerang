@@ -31,7 +31,7 @@ func TestServerCanBroadCastMessages(t *testing.T) {
 		arbiter.ItsAFactThat("CLIENT2_RECEIVED_SERVER_GREET")
 	}))
 	connect2()
-	payloadSize, sentCount, err := s.BroadCast(defaultCtx, &message.Message{Payload: &testMessages.MessageV1{Message: "Hi!"}})
+	payloadSize, sentCount, err := s.BroadCast(defaultCtx, defaultMsg)
 	require.NoError(t, err)
 	require.NotEmpty(t, payloadSize)
 	require.Equal(t, 2, sentCount)
@@ -50,11 +50,9 @@ func TestServerShutdownIsPropagatedToAllClients(t *testing.T) {
 	connect2()
 	s.Shutdown(defaultCtx)
 
-	msg := &message.Message{Payload: &testMessages.MessageV1{Message: "Hi!"}}
-
-	_, err := c1.Send(msg)
+	_, err := c1.Send(defaultMsg)
 	require.ErrorIs(t, err, client.ErrServerDisconnected)
-	_, err = c2.Send(msg)
+	_, err = c2.Send(defaultMsg)
 	require.ErrorIs(t, err, client.ErrServerDisconnected)
 }
 

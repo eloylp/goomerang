@@ -18,6 +18,12 @@ import (
 
 var defaultCtx = context.Background()
 
+var defaultMsg = &message.Message{
+	Payload: &testMessages.MessageV1{
+		Message: "a message!",
+	},
+}
+
 func TestRoundTrip(t *testing.T) {
 	arbiter := test.NewArbiter(t)
 	s, run := PrepareServer(t)
@@ -25,7 +31,7 @@ func TestRoundTrip(t *testing.T) {
 
 	s.RegisterHandler(&testMessages.MessageV1{}, message.HandlerFunc(func(s message.Sender, msg *message.Message) {
 		_ = msg.Payload.(*testMessages.MessageV1)
-		if _, err := s.Send(&message.Message{Payload: &testMessages.MessageV1{Message: "pong"}}); err != nil {
+		if _, err := s.Send(defaultMsg); err != nil {
 			arbiter.ErrorHappened(err)
 		}
 		arbiter.ItsAFactThat("SERVER_RECEIVED_MSG")
@@ -39,7 +45,7 @@ func TestRoundTrip(t *testing.T) {
 		arbiter.ItsAFactThat("CLIENT_RECEIVED_REPLY")
 	}))
 	connect()
-	payloadSize, err := c.Send(&message.Message{Payload: &testMessages.MessageV1{Message: "ping"}})
+	payloadSize, err := c.Send(defaultMsg)
 	require.NoError(t, err)
 	require.NotEmpty(t, payloadSize)
 	arbiter.RequireNoErrors()
@@ -61,7 +67,7 @@ func TestSecuredRoundTrip(t *testing.T) {
 
 	s.RegisterHandler(msg, message.HandlerFunc(func(s message.Sender, msg *message.Message) {
 		_ = msg.Payload.(*testMessages.MessageV1)
-		if _, err := s.Send(&message.Message{Payload: &testMessages.MessageV1{Message: "pong"}}); err != nil {
+		if _, err := s.Send(defaultMsg); err != nil {
 			arbiter.ErrorHappened(err)
 		}
 		arbiter.ItsAFactThat("SERVER_RECEIVED_MSG")
@@ -79,7 +85,7 @@ func TestSecuredRoundTrip(t *testing.T) {
 		arbiter.ItsAFactThat("CLIENT_RECEIVED_REPLY")
 	}))
 	connect()
-	payloadSize, err := c.Send(&message.Message{Payload: &testMessages.MessageV1{Message: "ping"}})
+	payloadSize, err := c.Send(defaultMsg)
 	assert.NoError(t, err)
 	assert.NotEmpty(t, payloadSize)
 	arbiter.RequireNoErrors()
@@ -120,7 +126,7 @@ func TestMiddlewares(t *testing.T) {
 		arbiter.ItsAFactThat("CLIENT_RECEIVED_REPLY")
 	}))
 	connect()
-	_, err := c.Send(&message.Message{Payload: &testMessages.MessageV1{Message: "ping"}})
+	_, err := c.Send(defaultMsg)
 	require.NoError(t, err)
 	arbiter.RequireNoErrors()
 	arbiter.RequireHappenedInOrder("SERVER_MIDDLEWARE_EXECUTED", "SERVER_HANDLER_EXECUTED")
@@ -155,7 +161,7 @@ func TestHeadersAreSent(t *testing.T) {
 	connect()
 	msg := &message.Message{
 		Payload: &testMessages.MessageV1{Message: "ping"},
-		Header:  map[string]string{"h1": "v1"},
+		Header:  message.Header{"h1": "v1"},
 	}
 	_, err := c.Send(msg)
 	require.NoError(t, err)
