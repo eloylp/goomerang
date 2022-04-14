@@ -10,6 +10,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/gorilla/websocket"
+	"github.com/hashicorp/go-multierror"
 	"google.golang.org/protobuf/proto"
 
 	"go.eloylp.dev/goomerang/internal/conc"
@@ -180,12 +181,10 @@ func (c *Client) Close(ctx context.Context) (err error) {
 		defer c.onCloseHook()
 		if err = c.sendClosingSignal(); err != nil {
 			if errors.Is(err, websocket.ErrCloseSent) {
-				err = ErrServerDisconnected
-				return
+				err = multierror.Append(err, ErrServerDisconnected)
 			}
-			return
 		}
-		err = c.conn.Close()
+		err = multierror.Append(err, c.conn.Close()).ErrorOrNil()
 	}()
 	select {
 	case <-ctx.Done():
