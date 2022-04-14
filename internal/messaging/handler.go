@@ -46,6 +46,7 @@ func (hc *HandlerChainer) PrepareChains() {
 		hc.chains[key] = hc.middlewareFor(h, hc.middlewares...)
 	}
 }
+
 func (hc *HandlerChainer) middlewareFor(h message.Handler, m ...message.Middleware) message.Handler {
 	for i := len(m) - 1; i >= 0; i-- {
 		h = m[i](h)
