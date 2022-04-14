@@ -15,11 +15,11 @@ var (
 
 func init() {
 	Configure(Config{
-		MessageInflightTime:          prometheus.DefBuckets,
+		MessageInflightTimeBuckets:   prometheus.DefBuckets,
 		ReceivedMessageSizeBuckets:   prometheus.DefBuckets,
 		SentMessageSizeBuckets:       prometheus.DefBuckets,
 		MessageProcessingTimeBuckets: prometheus.DefBuckets,
-		SendSyncResponseTime:         prometheus.DefBuckets,
+		SendSyncResponseTimeBuckets:  prometheus.DefBuckets,
 	})
 }
 
@@ -30,7 +30,7 @@ func Configure(config Config) {
 		Subsystem: "client",
 		Name:      "received_message_inflight_duration_seconds",
 		Help:      "The time the message spent over the wire till received",
-		Buckets:   config.ReceivedMessageSizeBuckets,
+		Buckets:   config.MessageInflightTimeBuckets,
 	})
 
 	ReceivedMessageSize = promauto.NewHistogram(prometheus.HistogramOpts{
@@ -57,19 +57,19 @@ func Configure(config Config) {
 		Buckets:   config.MessageProcessingTimeBuckets,
 	})
 
-	MessageProcessingTime = promauto.NewHistogram(prometheus.HistogramOpts{
+	SendSyncResponseTime = promauto.NewHistogram(prometheus.HistogramOpts{
 		Namespace: "goomerang",
 		Subsystem: "client",
 		Name:      "message_sync_send_duration_seconds",
 		Help:      "The time spent in a synchronous message sending operation",
-		Buckets:   config.MessageProcessingTimeBuckets,
+		Buckets:   config.SendSyncResponseTimeBuckets,
 	})
 }
 
 type Config struct {
-	MessageInflightTime          []float64
+	MessageInflightTimeBuckets   []float64
 	ReceivedMessageSizeBuckets   []float64
 	SentMessageSizeBuckets       []float64
 	MessageProcessingTimeBuckets []float64
-	SendSyncResponseTime         []float64
+	SendSyncResponseTimeBuckets  []float64
 }

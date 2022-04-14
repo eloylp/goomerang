@@ -15,7 +15,7 @@ var (
 
 func init() {
 	Configure(Config{
-		MessageInflightTime:          prometheus.DefBuckets,
+		MessageInflightTimeBuckets:   prometheus.DefBuckets,
 		ReceivedMessageSizeBuckets:   prometheus.DefBuckets,
 		SentMessageSizeBuckets:       prometheus.DefBuckets,
 		MessageProcessingTimeBuckets: prometheus.DefBuckets,
@@ -30,7 +30,7 @@ func Configure(c Config) {
 		Subsystem: "server",
 		Name:      "received_message_inflight_duration_seconds",
 		Help:      "The time the message spent over the wire till received",
-		Buckets:   c.ReceivedMessageSizeBuckets,
+		Buckets:   c.MessageInflightTimeBuckets,
 	})
 
 	ReceivedMessageSize = promauto.NewHistogram(prometheus.HistogramOpts{
@@ -68,7 +68,7 @@ func Configure(c Config) {
 }
 
 type Config struct {
-	MessageInflightTime          []float64
+	MessageInflightTimeBuckets   []float64
 	ReceivedMessageSizeBuckets   []float64
 	SentMessageSizeBuckets       []float64
 	MessageProcessingTimeBuckets []float64
