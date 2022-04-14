@@ -117,7 +117,7 @@ func (c *Client) processMessage(data []byte) (err error) {
 		return err
 	}
 	if msg.Metadata.IsSync {
-		if err := c.ReceiveSync(msg); err != nil {
+		if err := c.receiveSync(msg); err != nil {
 			return err
 		}
 		return nil
@@ -238,7 +238,7 @@ func (c *Client) sendClosingSignal() error {
 	return c.conn.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, ""))
 }
 
-func (c *Client) ReceiveSync(msg *message.Message) error {
+func (c *Client) receiveSync(msg *message.Message) error {
 	if err := c.requestRegistry.submitResult(msg.Metadata.UUID, msg); err != nil {
 		return err
 	}
