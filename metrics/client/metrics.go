@@ -10,6 +10,7 @@ var (
 	ReceivedMessageSize   prometheus.Histogram
 	SentMessageSize       prometheus.Histogram
 	MessageProcessingTime prometheus.Histogram
+	SendSyncResponseTime  prometheus.Histogram
 )
 
 func init() {
@@ -18,6 +19,7 @@ func init() {
 		ReceivedMessageSizeBuckets:   prometheus.DefBuckets,
 		SentMessageSizeBuckets:       prometheus.DefBuckets,
 		MessageProcessingTimeBuckets: prometheus.DefBuckets,
+		SendSyncResponseTime:         prometheus.DefBuckets,
 	})
 }
 
@@ -55,6 +57,13 @@ func Configure(config Config) {
 		Buckets:   config.MessageProcessingTimeBuckets,
 	})
 
+	MessageProcessingTime = promauto.NewHistogram(prometheus.HistogramOpts{
+		Namespace: "goomerang",
+		Subsystem: "client",
+		Name:      "message_sync_send_duration_seconds",
+		Help:      "The time spent in a synchronous message sending operation",
+		Buckets:   config.MessageProcessingTimeBuckets,
+	})
 }
 
 type Config struct {
@@ -62,4 +71,5 @@ type Config struct {
 	ReceivedMessageSizeBuckets   []float64
 	SentMessageSizeBuckets       []float64
 	MessageProcessingTimeBuckets []float64
+	SendSyncResponseTime         []float64
 }
