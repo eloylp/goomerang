@@ -131,84 +131,67 @@ func (c *Client) processMessage(data []byte) (err error) {
 }
 
 func (c *Client) Send(msg *message.Message) (payloadSize int, err error) {
-	payloadSize, data, err := messaging.Pack(msg)
+	var data []byte
+	payloadSize, data, err = messaging.Pack(msg)
 	if err != nil {
-		return payloadSize, ErrServerDisconnected
+		return
 	}
-	if err := c.writeMessage(data); err != nil {
+	if err = c.writeMessage(data); err != nil {
 		if errors.Is(err, websocket.ErrCloseSent) {
 			return payloadSize, ErrServerDisconnected
-		} else {
-			return payloadSize, err
 		}
+		return payloadSize, err
 	}
 	return
 }
 
 func (c *Client) SendSync(ctx context.Context, msg *message.Message) (payloadSize int, response *message.Message, err error) {
-	ch := make(chan sendSyncResponse, 1)
+	ch := make(chan struct{})
 	go func() {
+		defer close(ch)
 		UUID := uuid.New().String()
-		payloadSize, data, err := messaging.Pack(msg, messaging.FrameWithUUID(UUID), messaging.FrameIsSync())
+		var data []byte
+		payloadSize, data, err = messaging.Pack(msg, messaging.FrameWithUUID(UUID), messaging.FrameIsSync())
 		if err != nil {
-			ch <- sendSyncResponse{payloadSize, nil, err}
 			return
 		}
 		c.requestRegistry.createListener(UUID)
 		if err := c.writeMessage(data); err != nil {
 			if errors.Is(err, websocket.ErrCloseSent) {
-				ch <- sendSyncResponse{payloadSize, nil, ErrServerDisconnected}
+				err = ErrServerDisconnected
 			}
-			ch <- sendSyncResponse{payloadSize, nil, err}
 			return
 		}
-		repliedMsg, err := c.requestRegistry.resultFor(ctx, UUID)
-		if err != nil {
-			ch <- sendSyncResponse{payloadSize, nil, err}
-			return
-		}
-		ch <- sendSyncResponse{payloadSize, repliedMsg, nil}
+		response, err = c.requestRegistry.resultFor(ctx, UUID)
 	}()
 	select {
 	case <-ctx.Done():
 		return 0, nil, ctx.Err()
-	case resp := <-ch:
-		if resp.err != nil {
-			return 0, nil, resp.err
-		}
-		return resp.payloadSize, resp.respMsg, resp.err
+	case <-ch:
+		return
 	}
 }
 
-type sendSyncResponse struct {
-	payloadSize int
-	respMsg     *message.Message
-	err         error
-}
-
-func (c *Client) Close(ctx context.Context) error {
-	ch := make(chan error, 1)
+func (c *Client) Close(ctx context.Context) (err error) {
+	ch := make(chan struct{})
 	go func() {
 		defer close(ch)
 		defer c.workerPool.Wait()
 		defer c.onCloseHook()
-		if err := c.sendClosingSignal(); err != nil {
+		if err = c.sendClosingSignal(); err != nil {
 			if errors.Is(err, websocket.ErrCloseSent) {
-				ch <- ErrServerDisconnected
-			} else {
-				ch <- err
+				err = ErrServerDisconnected
+				return
 			}
 			return
 		}
-		if err := c.conn.Close(); err != nil {
-			ch <- err
-		}
+		err = c.conn.Close()
 	}()
 	select {
 	case <-ctx.Done():
 		return ctx.Err()
-	case err := <-ch:
-		return err
+	case <-ch:
+		return
 	}
 }
 

@@ -84,45 +84,40 @@ func (s *Server) RegisterHandler(msg proto.Message, handler message.Handler) {
 	s.handlerChainer.AppendHandler(fqdn, handler)
 }
 
-func (s *Server) BroadCast(ctx context.Context, msg *message.Message) (int, int, error) {
-	ch := make(chan broadcastResponse, 1)
+func (s *Server) BroadCast(ctx context.Context, msg *message.Message) (payloadSize int, msgCount int, err error) {
+	ch := make(chan struct{})
 	go func() {
 		defer close(ch)
-		payloadSize, bytes, err := messaging.Pack(msg)
+		var data []byte
+		payloadSize, data, err = messaging.Pack(msg)
 		if err != nil {
-			ch <- broadcastResponse{payloadSize, 0, err}
 			return
 		}
-		var errList error
+		errs := make([]error, 0, 100)
 		var errCount int
-		var count int
 		s.serverL.RLock()
 		defer s.serverL.RUnlock()
 		for conn := range s.connRegistry {
 			cs := s.connRegistry[conn]
-			if err := cs.write(bytes); err != nil && errCount < 100 {
+			if err := cs.write(data); err != nil && errCount < 100 {
 				if errors.Is(err, websocket.ErrCloseSent) {
 					err = ErrClientDisconnected
 				}
-				errList = multierror.Append(err, errList)
+				errs = append(errs, err)
 				errCount++
 			}
-			count++
+			msgCount++
 		}
-		ch <- broadcastResponse{payloadSize, count, nil}
+		if errCount > 0 {
+			err = multierror.Append(errors.New("broadcast: some errors where found during operation"), errs...)
+		}
 	}()
 	select {
 	case <-ctx.Done():
 		return 0, 0, ctx.Err()
-	case resp := <-ch:
-		return resp.payloadSize, resp.count, resp.err
+	case <-ch:
+		return
 	}
-}
-
-type broadcastResponse struct {
-	payloadSize int
-	count       int
-	err         error
 }
 
 func (s *Server) Run() error {
@@ -142,25 +137,21 @@ func (s *Server) Run() error {
 	return nil
 }
 
-func (s *Server) Shutdown(ctx context.Context) error {
-	ch := make(chan error, 1)
+func (s *Server) Shutdown(ctx context.Context) (err error) {
+	ch := make(chan struct{})
 	go func() {
 		defer close(ch)
 		defer s.onCloseHook()
 		s.cancl()
-		var multiErr error
-		if err := s.intServer.Shutdown(ctx); err != nil {
-			multiErr = multierror.Append(multiErr, err)
-		}
+		err = s.intServer.Shutdown(ctx)
 		s.workerPool.Wait() // Wait for in flight user handlers
 		s.wg.Wait()         // Wait for in flight server handlers
-		ch <- multiErr
 	}()
 	select {
 	case <-ctx.Done():
 		return ctx.Err()
-	case err := <-ch:
-		return err
+	case <-ch:
+		return
 	}
 }
 
