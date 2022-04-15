@@ -108,9 +108,7 @@ func (s *Server) BroadCast(ctx context.Context, msg *message.Message) (payloadSi
 			}
 			msgCount++
 		}
-		if errCount > 0 {
-			err = multierror.Append(errors.New("broadcast: some errors where found during operation"), errs...)
-		}
+		err = multierror.Append(err, errs...).ErrorOrNil()
 	}()
 	select {
 	case <-ctx.Done():
