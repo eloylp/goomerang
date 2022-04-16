@@ -2,7 +2,6 @@ package client
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -84,19 +83,16 @@ func (c *Client) receiver() {
 		default:
 			messageType, data, err := c.conn.ReadMessage()
 			if err != nil {
-				var closeErr *websocket.CloseError
-				if errors.As(err, &closeErr) {
-					if closeErr.Code == websocket.CloseNormalClosure {
-						c.onErrorHook(c.Close(context.Background()))
-						return
-					}
+				if websocket.IsCloseError(err, websocket.CloseNormalClosure) {
+					c.onErrorHook(c.Close(context.Background()))
+					return
 				}
 				c.onErrorHook(err)
 				return
 			}
 			if messageType != websocket.BinaryMessage {
 				c.onErrorHook(fmt.Errorf("protocol: unexpected message type %v", messageType))
-				return
+				continue
 			}
 			c.workerPool.Add()
 			go func() {
