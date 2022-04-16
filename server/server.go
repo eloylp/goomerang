@@ -136,7 +136,7 @@ func (s *Server) Shutdown(ctx context.Context) (err error) {
 	go func() {
 		defer close(ch)
 		defer s.onCloseHook()
-		s.cancl()
+		s.cancl() // This will finish all connections, as will cancel all receiver goroutines. See uses.
 		err = s.intServer.Shutdown(ctx)
 		s.workerPool.Wait() // Wait for in flight user handlers
 		s.wg.Wait()         // Wait for in flight server handlers
