@@ -6,7 +6,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"go.eloylp.dev/goomerang/client"
+	"go.eloylp.dev/goomerang"
 	testMessages "go.eloylp.dev/goomerang/internal/messaging/test"
 	"go.eloylp.dev/goomerang/internal/test"
 	"go.eloylp.dev/goomerang/message"
@@ -39,7 +39,7 @@ func TestServerCanBroadCastMessages(t *testing.T) {
 	arbiter.RequireHappened("CLIENT2_RECEIVED_SERVER_GREET")
 }
 
-func TestServerShutdownIsPropagatedToAllClients(t *testing.T) {
+func TestClientsCanInterceptClosedConnection(t *testing.T) {
 	s, run := PrepareServer(t)
 	run()
 	c1, connect1 := PrepareClient(t)
@@ -51,9 +51,9 @@ func TestServerShutdownIsPropagatedToAllClients(t *testing.T) {
 	s.Shutdown(defaultCtx)
 
 	_, err := c1.Send(defaultMsg)
-	require.ErrorIs(t, err, client.ErrServerDisconnected)
+	require.ErrorIs(t, err, goomerang.ErrConnectionClosed)
 	_, err = c2.Send(defaultMsg)
-	require.ErrorIs(t, err, client.ErrServerDisconnected)
+	require.ErrorIs(t, err, goomerang.ErrConnectionClosed)
 }
 
 func TestServerSupportMultipleClients(t *testing.T) {

@@ -63,5 +63,6 @@ func TestClientCloseWhenServerClosed(t *testing.T) {
 	err := s.Shutdown(defaultCtx)
 	require.NoError(t, err)
 
-	require.ErrorIs(t, c.Close(defaultCtx), client.ErrServerDisconnected)
+	err = c.Close(defaultCtx)
+	require.NoError(t, err)
 }

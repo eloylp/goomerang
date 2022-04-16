@@ -2,7 +2,6 @@ package server
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"net/http"
 	"sync"
@@ -100,10 +99,7 @@ func (s *Server) BroadCast(ctx context.Context, msg *message.Message) (payloadSi
 		for conn := range s.connRegistry {
 			cs := s.connRegistry[conn]
 			if err := cs.write(data); err != nil && errCount < 100 {
-				if errors.Is(err, websocket.ErrCloseSent) {
-					err = ErrClientDisconnected
-				}
-				errs = append(errs, err)
+				errs = append(errs, fmt.Errorf("broadCast: %v", err))
 				errCount++
 			}
 			msgCount++

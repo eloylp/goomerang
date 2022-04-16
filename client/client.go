@@ -15,6 +15,7 @@ import (
 
 	"go.eloylp.dev/goomerang/internal/conc"
 	"go.eloylp.dev/goomerang/internal/messaging"
+	"go.eloylp.dev/goomerang/internal/ws"
 	"go.eloylp.dev/goomerang/message"
 )
 
@@ -138,10 +139,7 @@ func (c *Client) Send(msg *message.Message) (payloadSize int, err error) {
 		return
 	}
 	if err = c.writeMessage(data); err != nil {
-		if errors.Is(err, websocket.ErrCloseSent) {
-			return payloadSize, ErrServerDisconnected
-		}
-		return payloadSize, err
+		return payloadSize, fmt.Errorf("send: %w", ws.MapErr(err))
 	}
 	return
 }
@@ -157,10 +155,8 @@ func (c *Client) SendSync(ctx context.Context, msg *message.Message) (payloadSiz
 			return
 		}
 		c.requestRegistry.createListener(UUID)
-		if err := c.writeMessage(data); err != nil {
-			if errors.Is(err, websocket.ErrCloseSent) {
-				err = ErrServerDisconnected
-			}
+		if err = c.writeMessage(data); err != nil {
+			err = fmt.Errorf("sendSync: %w", err)
 			return
 		}
 		response, err = c.requestRegistry.resultFor(ctx, UUID)
@@ -179,12 +175,14 @@ func (c *Client) Close(ctx context.Context) (err error) {
 		defer close(ch)
 		defer c.workerPool.Wait()
 		defer c.onCloseHook()
-		if err = c.sendClosingSignal(); err != nil {
-			if errors.Is(err, websocket.ErrCloseSent) {
-				err = multierror.Append(err, ErrServerDisconnected)
-			}
+		errList := multierror.Append(nil, nil)
+		if err := c.sendClosingSignal(); ws.IsNotExpectedCloseError(err) {
+			errList = multierror.Append(nil, fmt.Errorf("connection: write: %v", err))
 		}
-		err = multierror.Append(err, c.conn.Close()).ErrorOrNil()
+		if err := c.conn.Close(); ws.IsNotExpectedCloseError(err) {
+			errList = multierror.Append(nil, fmt.Errorf("connection: write: %v", err))
+		}
+		err = errList.ErrorOrNil()
 	}()
 	select {
 	case <-ctx.Done():
