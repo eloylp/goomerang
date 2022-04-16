@@ -67,7 +67,7 @@ func (c *Client) Connect(ctx context.Context) error {
 	c.handlerChainer.PrepareChains()
 	conn, resp, err := c.dialer.DialContext(ctx, c.ServerURL.String(), nil)
 	if err != nil {
-		return err
+		return fmt.Errorf("connect: %w", ws.MapErr(err))
 	}
 	defer resp.Body.Close()
 	c.conn = conn
@@ -152,7 +152,7 @@ func (c *Client) SendSync(ctx context.Context, msg *message.Message) (payloadSiz
 		}
 		c.requestRegistry.createListener(UUID)
 		if err = c.writeMessage(data); err != nil {
-			err = fmt.Errorf("sendSync: %w", err)
+			err = fmt.Errorf("sendSync: %w", ws.MapErr(err))
 			return
 		}
 		response, err = c.requestRegistry.resultFor(ctx, UUID)
@@ -173,10 +173,10 @@ func (c *Client) Close(ctx context.Context) (err error) {
 		defer c.onCloseHook()
 		errList := multierror.Append(nil, nil)
 		if err := c.sendClosingSignal(); ws.IsNotExpectedCloseError(err) {
-			errList = multierror.Append(nil, fmt.Errorf("connection: write: %v", err))
+			errList = multierror.Append(nil, fmt.Errorf("close: %v", ws.MapErr(err)))
 		}
 		if err := c.conn.Close(); ws.IsNotExpectedCloseError(err) {
-			errList = multierror.Append(nil, fmt.Errorf("connection: write: %v", err))
+			errList = multierror.Append(nil, fmt.Errorf("close: %v", ws.MapErr(err)))
 		}
 		err = errList.ErrorOrNil()
 	}()

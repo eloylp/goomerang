@@ -12,6 +12,7 @@ import (
 
 	"go.eloylp.dev/goomerang/internal/conc"
 	"go.eloylp.dev/goomerang/internal/messaging"
+	"go.eloylp.dev/goomerang/internal/ws"
 	"go.eloylp.dev/goomerang/message"
 )
 
@@ -99,7 +100,7 @@ func (s *Server) BroadCast(ctx context.Context, msg *message.Message) (payloadSi
 		for conn := range s.connRegistry {
 			cs := s.connRegistry[conn]
 			if err := cs.write(data); err != nil && errCount < 100 {
-				errs = append(errs, fmt.Errorf("broadCast: %v", err))
+				errs = append(errs, fmt.Errorf("broadCast: %w", ws.MapErr(err)))
 				errCount++
 			}
 			msgCount++
@@ -119,13 +120,13 @@ func (s *Server) Run() error {
 	if s.cfg.TLSConfig != nil {
 		// The "certFile" and "keyFile" params are with "" values, since the server has the certificates already configured.
 		if err := s.intServer.ListenAndServeTLS("", ""); err != http.ErrServerClosed {
-			s.onErrorHook(err)
+			err = fmt.Errorf("run: %v", err)
 			return err
 		}
 		return nil
 	}
 	if err := s.intServer.ListenAndServe(); err != http.ErrServerClosed {
-		s.onErrorHook(err)
+		err = fmt.Errorf("run: %v", err)
 		return err
 	}
 	return nil
