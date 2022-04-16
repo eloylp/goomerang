@@ -66,3 +66,25 @@ func TestClientCloseWhenServerClosed(t *testing.T) {
 	err = c.Close(defaultCtx)
 	require.NoError(t, err)
 }
+
+func TestServerSendsCloseToAllClients(t *testing.T) {
+	arbiter := test.NewArbiter(t)
+
+	s, run := PrepareServer(t)
+	run()
+
+	_, connect1 := PrepareClient(t, client.WithOnCloseHook(func() {
+		arbiter.ItsAFactThat("CLIENT1_RECEIVED_CLOSE")
+	}))
+	connect1()
+
+	_, connect2 := PrepareClient(t, client.WithOnCloseHook(func() {
+		arbiter.ItsAFactThat("CLIENT2_RECEIVED_CLOSE")
+	}))
+	connect2()
+
+	require.NoError(t, s.Shutdown(defaultCtx))
+
+	arbiter.RequireHappened("CLIENT1_RECEIVED_CLOSE")
+	arbiter.RequireHappened("CLIENT2_RECEIVED_CLOSE")
+}
