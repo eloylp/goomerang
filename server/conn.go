@@ -1,7 +1,6 @@
 package server
 
 import (
-	"errors"
 	"sync"
 
 	"github.com/gorilla/websocket"
@@ -60,11 +59,8 @@ func readMessages(s *Server, cs connSlot) chan *receivedMessage {
 			default:
 				messageType, data, err := cs.c.ReadMessage()
 				if err != nil {
-					var closeErr *websocket.CloseError
-					if errors.As(err, &closeErr) {
-						if closeErr.Code == websocket.CloseNormalClosure {
-							return // will trigger normal connection close at handler
-						}
+					if websocket.IsCloseError(err, websocket.CloseNormalClosure) {
+						return // will trigger normal connection close at handler, as channel (ch) will be closed.
 					}
 					s.onErrorHook(err)
 					return
