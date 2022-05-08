@@ -11,6 +11,7 @@ var (
 	SentMessageSize       prometheus.Histogram
 	MessageProcessingTime prometheus.Histogram
 	SendSyncResponseTime  prometheus.Histogram
+	CurrentStatus         prometheus.Gauge
 )
 
 func init() {
@@ -63,6 +64,13 @@ func Configure(config Config) {
 		Name:      "message_sync_send_duration_seconds",
 		Help:      "The time spent in a synchronous message sending operation",
 		Buckets:   config.SendSyncResponseTimeBuckets,
+	})
+
+	CurrentStatus = promauto.NewGauge(prometheus.GaugeOpts{
+		Namespace: "goomerang",
+		Subsystem: "client",
+		Name:      "status",
+		Help:      "The current status of the client (0 => New, 1 => Running, 2=> Closing, 3 => closed)",
 	})
 }
 

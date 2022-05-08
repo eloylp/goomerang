@@ -11,6 +11,7 @@ var (
 	SentMessageSize       prometheus.Histogram
 	MessageProcessingTime prometheus.Histogram
 	BroadcastSentTime     prometheus.Histogram
+	CurrentStatus         prometheus.Gauge
 )
 
 func init() {
@@ -65,6 +66,12 @@ func Configure(c Config) {
 		Buckets:   c.BroadcastSentTimeBuckets,
 	})
 
+	CurrentStatus = promauto.NewGauge(prometheus.GaugeOpts{
+		Namespace: "goomerang",
+		Subsystem: "server",
+		Name:      "status",
+		Help:      "The current status of the server (0 => New, 1 => Running, 2=> Closing, 3 => closed)",
+	})
 }
 
 type Config struct {

@@ -8,6 +8,8 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 
 	"go.eloylp.dev/goomerang/message"
+	"go.eloylp.dev/goomerang/metrics/client"
+	server "go.eloylp.dev/goomerang/metrics/server"
 )
 
 func PromHistograms(c PromConfig) (message.Middleware, error) {
@@ -49,4 +51,12 @@ func (c PromConfig) Validate() error {
 		return errors.New("validate: SentMessageSize be non nil")
 	}
 	return nil
+}
+
+func ClientStatusMetricHook(status uint32) {
+	client.CurrentStatus.Set(float64(status))
+}
+
+func ServerStatusMetricHook(status uint32) {
+	server.CurrentStatus.Set(float64(status))
 }
