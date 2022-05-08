@@ -82,7 +82,7 @@ func (c *Client) Connect(ctx context.Context) error {
 	c.handlerChainer.PrepareChains()
 	conn, resp, err := c.dialer.DialContext(ctx, c.ServerURL.String(), nil)
 	if err != nil {
-		return fmt.Errorf("connect: %w", ws.MapErr(err))
+		return fmt.Errorf("connect: %v", err)
 	}
 	defer resp.Body.Close()
 	c.conn = conn
@@ -164,7 +164,7 @@ func (c *Client) Send(msg *message.Message) (payloadSize int, err error) {
 		return
 	}
 	if err = c.writeMessage(data); err != nil {
-		return payloadSize, fmt.Errorf("send: %w", ws.MapErr(err))
+		return payloadSize, fmt.Errorf("send: %v", err)
 	}
 	return
 }
@@ -184,7 +184,7 @@ func (c *Client) SendSync(ctx context.Context, msg *message.Message) (payloadSiz
 		}
 		c.requestRegistry.createListener(UUID)
 		if err = c.writeMessage(data); err != nil {
-			err = fmt.Errorf("sendSync: %w", ws.MapErr(err))
+			err = fmt.Errorf("sendSync: %v", err)
 			return
 		}
 		response, err = c.requestRegistry.resultFor(ctx, UUID)
@@ -210,14 +210,14 @@ func (c *Client) close(ctx context.Context, isInitiator bool) (err error) {
 		defer c.setStatus(ws.StatusClosed)
 		errList := multierror.Append(nil, nil)
 		if err := c.sendClosingSignal(); err != nil {
-			errList = multierror.Append(nil, fmt.Errorf("close: %v", ws.MapErr(err)))
+			errList = multierror.Append(nil, fmt.Errorf("close: %v", err))
 		}
 		var serverLooksUnresponsive bool
 		if isInitiator {
 			// Wait for server shutdown handshake, not forever of course.
 			if err := c.waitForServerCloseReply(); err != nil {
 				serverLooksUnresponsive = true
-				errList = multierror.Append(nil, fmt.Errorf("close: %v", ws.MapErr(err)))
+				errList = multierror.Append(nil, fmt.Errorf("close: %v", err))
 			}
 		}
 		c.cancl()
@@ -228,7 +228,7 @@ func (c *Client) close(ctx context.Context, isInitiator bool) (err error) {
 		// Of course, if server did not reply in the close handshake, we ensure the connection close.
 		if serverLooksUnresponsive {
 			if err := c.conn.Close(); err != nil {
-				errList = multierror.Append(errList, fmt.Errorf("close: %v", ws.MapErr(err)))
+				errList = multierror.Append(errList, fmt.Errorf("close: %v", err))
 			}
 		}
 		err = errList.ErrorOrNil()

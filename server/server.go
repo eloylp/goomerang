@@ -111,7 +111,7 @@ func (s *Server) BroadCast(ctx context.Context, msg *message.Message) (payloadSi
 		for conn := range s.connRegistry {
 			cs := s.connRegistry[conn]
 			if err := cs.write(data); err != nil && errCount < 100 {
-				errs = append(errs, fmt.Errorf("broadCast: %w", ws.MapErr(err)))
+				errs = append(errs, fmt.Errorf("broadCast: %v", err))
 				errCount++
 			}
 			msgCount++
