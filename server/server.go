@@ -2,9 +2,11 @@ package server
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
 	"sync"
+	"sync/atomic"
 
 	"github.com/gorilla/websocket"
 	"github.com/hashicorp/go-multierror"
@@ -17,19 +19,22 @@ import (
 )
 
 type Server struct {
-	intServer       *http.Server
-	connRegistry    map[*websocket.Conn]connSlot
-	serverL         *sync.RWMutex
-	wg              *sync.WaitGroup
-	ctx             context.Context
-	cancl           context.CancelFunc
-	wsUpgrader      *websocket.Upgrader
-	handlerChainer  *messaging.HandlerChainer
-	messageRegistry messaging.Registry
-	onErrorHook     func(err error)
-	onCloseHook     func()
-	cfg             *Config
-	workerPool      *conc.WorkerPool
+	intServer          *http.Server
+	connRegistry       map[*websocket.Conn]connSlot
+	serverL            *sync.RWMutex
+	wg                 *sync.WaitGroup
+	ctx                context.Context
+	cancl              context.CancelFunc
+	wsUpgrader         *websocket.Upgrader
+	handlerChainer     *messaging.HandlerChainer
+	messageRegistry    messaging.Registry
+	onStatusChangeHook func(status uint32)
+	onErrorHook        func(err error)
+	onCloseHook        func()
+	cfg                *Config
+	workerPool         *conc.WorkerPool
+	currentStatus      uint32
+	chCloseWait        chan struct{}
 }
 
 func NewServer(opts ...Option) (*Server, error) {
@@ -43,12 +48,6 @@ func NewServer(opts ...Option) (*Server, error) {
 	}
 	ctx, cancl := context.WithCancel(context.Background())
 	s := &Server{
-		wsUpgrader: &websocket.Upgrader{
-			HandshakeTimeout:  cfg.HandshakeTimeout,
-			ReadBufferSize:    cfg.ReadBufferSize,
-			WriteBufferSize:   cfg.WriteBufferSize,
-			EnableCompression: cfg.EnableCompression,
-		},
 		intServer: &http.Server{
 			Addr:              cfg.ListenURL,
 			TLSConfig:         cfg.TLSConfig,
@@ -56,21 +55,30 @@ func NewServer(opts ...Option) (*Server, error) {
 			ReadTimeout:       cfg.HTTPReadTimeout,
 			WriteTimeout:      cfg.HTTPWriteTimeout,
 		},
-		onErrorHook:     cfg.OnErrorHook,
-		onCloseHook:     cfg.OnCloseHook,
-		handlerChainer:  messaging.NewHandlerChainer(),
-		messageRegistry: messaging.Registry{},
-		connRegistry:    map[*websocket.Conn]connSlot{},
-		serverL:         &sync.RWMutex{},
-		cancl:           cancl,
-		wg:              &sync.WaitGroup{},
-		ctx:             ctx,
-		cfg:             cfg,
-		workerPool:      wp,
+		connRegistry: map[*websocket.Conn]connSlot{},
+		serverL:      &sync.RWMutex{},
+		wg:           &sync.WaitGroup{},
+		ctx:          ctx,
+		cancl:        cancl,
+		wsUpgrader: &websocket.Upgrader{
+			HandshakeTimeout:  cfg.HandshakeTimeout,
+			ReadBufferSize:    cfg.ReadBufferSize,
+			WriteBufferSize:   cfg.WriteBufferSize,
+			EnableCompression: cfg.EnableCompression,
+		},
+		handlerChainer:     messaging.NewHandlerChainer(),
+		messageRegistry:    messaging.Registry{},
+		onStatusChangeHook: cfg.OnStatusChangeHook,
+		onErrorHook:        cfg.OnErrorHook,
+		onCloseHook:        cfg.OnCloseHook,
+		cfg:                cfg,
+		workerPool:         wp,
+		chCloseWait:        make(chan struct{}, 1),
 	}
 	mux := http.NewServeMux()
 	mux.Handle(endpoint(cfg), mainHandler(s))
 	s.intServer.Handler = mux
+	s.setStatus(ws.StatusNew)
 	return s, nil
 }
 
@@ -85,6 +93,9 @@ func (s *Server) RegisterHandler(msg proto.Message, handler message.Handler) {
 }
 
 func (s *Server) BroadCast(ctx context.Context, msg *message.Message) (payloadSize int, msgCount int, err error) {
+	if s.status() != ws.StatusRunning {
+		return 0, 0, errors.New("server: not running")
+	}
 	ch := make(chan struct{})
 	go func() {
 		defer close(ch)
@@ -117,6 +128,8 @@ func (s *Server) BroadCast(ctx context.Context, msg *message.Message) (payloadSi
 
 func (s *Server) Run() error {
 	s.handlerChainer.PrepareChains()
+	s.setStatus(ws.StatusRunning)
+	defer s.setStatus(ws.StatusClosed)
 	if s.cfg.TLSConfig != nil {
 		// The "certFile" and "keyFile" params are with "" values, since the server has the certificates already configured.
 		if err := s.intServer.ListenAndServeTLS("", ""); err != http.ErrServerClosed {
@@ -133,10 +146,12 @@ func (s *Server) Run() error {
 }
 
 func (s *Server) Shutdown(ctx context.Context) (err error) {
+	s.setStatus(ws.StatusClosing)
 	ch := make(chan struct{})
 	go func() {
 		defer close(ch)
 		defer s.onCloseHook()
+		s.broadcastClose()
 		s.cancl() // This will finish all connections, as will cancel all receiver goroutines. See uses.
 		err = s.intServer.Shutdown(ctx)
 		s.workerPool.Wait() // Wait for in flight user handlers
@@ -148,6 +163,25 @@ func (s *Server) Shutdown(ctx context.Context) (err error) {
 	case <-ch:
 		return
 	}
+}
+
+func (s *Server) broadcastClose() {
+	s.serverL.Lock()
+	defer s.serverL.Unlock()
+	wg := sync.WaitGroup{}
+	for _, cs := range s.connRegistry {
+		wg.Add(1)
+		go func(cs connSlot) {
+			defer wg.Done()
+			if err := cs.sendCloseSignal(); err != nil {
+				s.onErrorHook(err)
+			}
+			if err := cs.waitReceivedClose(); err != nil {
+				s.onErrorHook(err)
+			}
+		}(cs)
+	}
+	wg.Wait()
 }
 
 func (s *Server) processMessage(cs connSlot, data []byte, sOpts message.Sender) (err error) {
@@ -170,4 +204,13 @@ func (s *Server) processMessage(cs connSlot, data []byte, sOpts message.Sender) 
 	}
 	handler.Handle(sOpts, msg)
 	return nil
+}
+
+func (s *Server) setStatus(status uint32) {
+	atomic.StoreUint32(&s.currentStatus, status)
+	s.onStatusChangeHook(status)
+}
+
+func (s *Server) status() uint32 {
+	return atomic.LoadUint32(&s.currentStatus)
 }

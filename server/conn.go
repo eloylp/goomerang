@@ -1,14 +1,18 @@
 package server
 
 import (
+	"context"
+	"fmt"
 	"sync"
+	"time"
 
 	"github.com/gorilla/websocket"
 )
 
 type connSlot struct {
-	l *sync.Mutex
-	c *websocket.Conn
+	l             *sync.Mutex
+	c             *websocket.Conn
+	receivedClose chan struct{}
 }
 
 func (cs *connSlot) write(msg []byte) error {
@@ -20,7 +24,11 @@ func (cs *connSlot) write(msg []byte) error {
 func (cs *connSlot) sendCloseSignal() error {
 	cs.l.Lock()
 	defer cs.l.Unlock()
-	return cs.c.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, ""))
+	err := cs.c.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, ""))
+	if err == websocket.ErrCloseSent {
+		return nil
+	}
+	return err
 }
 
 func (cs *connSlot) close() error {
@@ -29,12 +37,28 @@ func (cs *connSlot) close() error {
 	return cs.c.Close()
 }
 
+func (cs *connSlot) setReceivedClose() {
+	cs.receivedClose <- struct{}{}
+}
+
+func (cs *connSlot) waitReceivedClose() error {
+	ctx, cancl := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancl()
+	select {
+	case <-ctx.Done():
+		return fmt.Errorf("client connection spend more than 5 seconds to send close. Continuing anyway: %v", ctx.Err())
+	case <-cs.receivedClose:
+		return nil
+	}
+}
+
 func addConnection(s *Server, c *websocket.Conn) connSlot {
 	s.serverL.Lock()
 	defer s.serverL.Unlock()
 	slot := connSlot{
-		l: &sync.Mutex{},
-		c: c,
+		l:             &sync.Mutex{},
+		c:             c,
+		receivedClose: make(chan struct{}, 1),
 	}
 	s.connRegistry[c] = slot
 	return slot
@@ -44,38 +68,4 @@ func removeConnection(s *Server, c connSlot) {
 	s.serverL.Lock()
 	defer s.serverL.Unlock()
 	delete(s.connRegistry, c.c)
-}
-
-func readMessages(s *Server, cs connSlot) chan *receivedMessage {
-	ch := make(chan *receivedMessage)
-	s.wg.Add(1)
-	go func() {
-		defer s.wg.Done()
-		defer close(ch)
-		for {
-			select {
-			case <-s.ctx.Done():
-				return
-			default:
-				messageType, data, err := cs.c.ReadMessage()
-				if err != nil {
-					if websocket.IsCloseError(err, websocket.CloseNormalClosure) {
-						return // will trigger normal connection close at handler, as channel (ch) will be closed.
-					}
-					s.onErrorHook(err)
-					return
-				}
-				ch <- &receivedMessage{
-					mType: messageType,
-					data:  data,
-				}
-			}
-		}
-	}()
-	return ch
-}
-
-type receivedMessage struct {
-	mType int
-	data  []byte
 }

@@ -13,6 +13,12 @@ func WithTargetServer(addr string) Option {
 	}
 }
 
+func WithOnStatusChangeHook(h func(status uint32)) Option {
+	return func(cfg *Config) {
+		cfg.OnStatusChangeHook = h
+	}
+}
+
 func WithOnCloseHook(h func()) Option {
 	return func(cfg *Config) {
 		cfg.OnCloseHook = h

@@ -5,12 +5,19 @@ import (
 	"net/http"
 
 	"github.com/gorilla/websocket"
+
+	"go.eloylp.dev/goomerang/internal/ws"
 )
 
 func mainHandler(s *Server) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		s.wg.Add(1)
 		defer s.wg.Done()
+		if s.status() != ws.StatusRunning {
+			w.WriteHeader(http.StatusUnavailableForLegalReasons)
+			_, _ = w.Write([]byte("server: not running"))
+			return
+		}
 		c, err := s.wsUpgrader.Upgrade(w, r, nil)
 		if err != nil {
 			s.onErrorHook(err)
@@ -19,34 +26,42 @@ func mainHandler(s *Server) http.HandlerFunc {
 		cs := addConnection(s, c)
 		defer removeConnection(s, cs)
 		defer func() {
-			if err := cs.sendCloseSignal(); err != nil {
-				s.onErrorHook(err)
-			}
 			if err := cs.close(); err != nil {
 				s.onErrorHook(err)
 			}
 		}()
 
-		messageReader := readMessages(s, cs)
-
 		for {
 			select {
 			case <-s.ctx.Done():
 				return
-			case msg, ok := <-messageReader:
-				if !ok { // Channel closed in the receiver, we abort this handler and start defer calling.
-					return
+			default:
+				messageType, data, err := cs.c.ReadMessage()
+				if err != nil {
+					if websocket.IsCloseError(err, websocket.CloseNormalClosure) {
+						cs.setReceivedClose()
+						// If the close was not initiated by this server, we just ack
+						// the close handshake to the client.
+						if s.status() != ws.StatusClosing {
+							if err := cs.sendCloseSignal(); err != nil {
+								s.onErrorHook(err)
+							}
+						}
+						return // will trigger normal connection close at handler, as channel (ch) will be closed.
+					}
+					s.onErrorHook(err)
+					continue
 				}
-				if msg.mType != websocket.BinaryMessage {
-					s.onErrorHook(fmt.Errorf("server: cannot process websocket frame type %v", msg.mType))
+				if messageType != websocket.BinaryMessage {
+					s.onErrorHook(fmt.Errorf("server: cannot process websocket frame type %v", messageType))
 					continue
 				}
 				s.workerPool.Add() // Will block till more processing slots are available.
 				go func() {
-					if err := s.processMessage(cs, msg.data, &stdSender{cs}); err != nil {
+					defer s.workerPool.Done()
+					if err := s.processMessage(cs, data, &stdSender{cs}); err != nil {
 						s.onErrorHook(err)
 					}
-					s.workerPool.Done()
 				}()
 			}
 		}

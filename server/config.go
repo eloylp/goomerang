@@ -8,6 +8,7 @@ import (
 
 type Config struct {
 	ListenURL             string
+	OnStatusChangeHook    func(status uint32)
 	OnErrorHook           func(err error)
 	OnCloseHook           func()
 	TLSConfig             *tls.Config
@@ -23,6 +24,7 @@ type Config struct {
 
 func defaultConfig() *Config {
 	cfg := &Config{
+		OnStatusChangeHook: func(status uint32) {},
 		OnErrorHook: func(err error) {
 			log.Printf("goomerang error: %v", err) //nolint:forbidigo
 		},

@@ -7,22 +7,24 @@ import (
 )
 
 type Config struct {
-	TargetServer      string
-	OnCloseHook       func()
-	OnErrorHook       func(err error)
-	TLSConfig         *tls.Config
-	MaxConcurrency    int
-	ReadBufferSize    int
-	WriteBufferSize   int
-	HandshakeTimeout  time.Duration
-	EnableCompression bool
+	TargetServer       string
+	OnStatusChangeHook func(status uint32)
+	OnCloseHook        func()
+	OnErrorHook        func(err error)
+	TLSConfig          *tls.Config
+	MaxConcurrency     int
+	ReadBufferSize     int
+	WriteBufferSize    int
+	HandshakeTimeout   time.Duration
+	EnableCompression  bool
 }
 
 func defaultConfig() *Config {
 	cfg := &Config{
-		OnErrorHook:    func(err error) {},
-		OnCloseHook:    func() {},
-		MaxConcurrency: 10,
+		OnStatusChangeHook: func(status uint32) {},
+		OnErrorHook:        func(err error) {},
+		OnCloseHook:        func() {},
+		MaxConcurrency:     10,
 	}
 	return cfg
 }
