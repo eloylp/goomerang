@@ -19,6 +19,12 @@ func WithOnStatusChangeHook(h func(status uint32)) Option {
 	}
 }
 
+func WithHeartbeatInterval(interval time.Duration) Option {
+	return func(cfg *Config) {
+		cfg.HeartbeatInterval = interval
+	}
+}
+
 func WithOnCloseHook(h func()) Option {
 	return func(cfg *Config) {
 		cfg.OnCloseHook = h

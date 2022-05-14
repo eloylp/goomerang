@@ -17,6 +17,7 @@ type Config struct {
 	WriteBufferSize    int
 	HandshakeTimeout   time.Duration
 	EnableCompression  bool
+	HeartbeatInterval  time.Duration
 }
 
 func defaultConfig() *Config {
@@ -24,6 +25,7 @@ func defaultConfig() *Config {
 		OnStatusChangeHook: func(status uint32) {},
 		OnErrorHook:        func(err error) {},
 		OnCloseHook:        func() {},
+		HeartbeatInterval:  5 * time.Second,
 		MaxConcurrency:     10,
 	}
 	return cfg

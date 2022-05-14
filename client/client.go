@@ -38,6 +38,7 @@ type Client struct {
 	workerPool         *conc.WorkerPool
 	currentStatus      uint32
 	chCloseWait        chan struct{}
+	heartbeatInterval  time.Duration
 }
 
 func NewClient(opts ...Option) (*Client, error) {
@@ -54,6 +55,7 @@ func NewClient(opts ...Option) (*Client, error) {
 		onStatusChangeHook: cfg.OnStatusChangeHook,
 		onCloseHook:        cfg.OnCloseHook,
 		onErrorHook:        cfg.OnErrorHook,
+		heartbeatInterval:  cfg.HeartbeatInterval,
 		dialer: &websocket.Dialer{
 			Proxy:             http.ProxyFromEnvironment,
 			TLSClientConfig:   cfg.TLSConfig,
@@ -88,6 +90,8 @@ func (c *Client) Connect(ctx context.Context) error {
 	c.conn = conn
 	c.wg.Add(1)
 	go c.receiver()
+	c.wg.Add(1)
+	go c.heartbeat()
 	c.setStatus(ws.StatusRunning)
 	return nil
 }
@@ -303,4 +307,26 @@ func (c *Client) waitForServerCloseReply() error {
 
 func (c *Client) receivedCloseFromServer() {
 	c.chCloseWait <- struct{}{}
+}
+
+func (c *Client) heartbeat() {
+	defer c.wg.Done()
+	ticker := time.NewTicker(c.heartbeatInterval)
+	defer ticker.Stop()
+	pingFn := func() (err error) {
+		c.writeLock.Lock()
+		defer c.writeLock.Unlock()
+		if c.status() == ws.StatusRunning {
+			err = c.conn.WriteMessage(websocket.PingMessage, []byte("ping"))
+		}
+		return
+	}
+	for {
+		select {
+		case <-ticker.C:
+			c.onErrorHook(pingFn())
+		case <-c.ctx.Done():
+			return
+		}
+	}
 }
