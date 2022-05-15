@@ -39,16 +39,18 @@ func TestShutdownProcedureClientSideInit(t *testing.T) {
 	require.NoError(t, err)
 
 	arbiter.RequireNoErrors()
-
-	arbiter.RequireHappened("SERVER_PROPERLY_CLOSED")
-	arbiter.RequireHappened("CLIENT_PROPERLY_CLOSED")
-
-	arbiter.RequireHappenedInOrder("CLIENT_WAS_RUNNING", "CLIENT_WAS_CLOSING")
-	arbiter.RequireHappenedInOrder("CLIENT_WAS_CLOSING", "CLIENT_WAS_CLOSED")
-
-	arbiter.RequireHappenedInOrder("SERVER_WAS_RUNNING", "SERVER_WAS_CLOSING")
-	arbiter.RequireHappenedInOrder("SERVER_WAS_CLOSING", "SERVER_WAS_CLOSED")
-
+	arbiter.RequireHappenedInOrder(
+		"SERVER_WAS_NEW",
+		"SERVER_WAS_RUNNING",
+		"CLIENT_WAS_NEW",
+		"CLIENT_WAS_RUNNING",
+		"CLIENT_WAS_CLOSING",
+		"CLIENT_WAS_CLOSED",
+		"CLIENT_PROPERLY_CLOSED",
+		"SERVER_WAS_CLOSING",
+		"SERVER_WAS_CLOSED",
+		"SERVER_PROPERLY_CLOSED",
+	)
 }
 
 func statusChangesHook(a *test.Arbiter, side string) func(status uint32) {
@@ -92,15 +94,18 @@ func TestShutdownProcedureServerSideInit(t *testing.T) {
 	require.NoError(t, s.Shutdown(defaultCtx))
 
 	arbiter.RequireNoErrors()
-
-	arbiter.RequireHappened("SERVER_PROPERLY_CLOSED")
-	arbiter.RequireHappened("CLIENT_PROPERLY_CLOSED")
-
-	arbiter.RequireHappenedInOrder("SERVER_WAS_RUNNING", "SERVER_WAS_CLOSING")
-	arbiter.RequireHappenedInOrder("SERVER_WAS_CLOSING", "SERVER_WAS_CLOSED")
-
-	arbiter.RequireHappenedInOrder("CLIENT_WAS_RUNNING", "CLIENT_WAS_CLOSING")
-	arbiter.RequireHappenedInOrder("CLIENT_WAS_CLOSING", "CLIENT_WAS_CLOSED")
+	arbiter.RequireHappenedInOrder(
+		"SERVER_WAS_NEW",
+		"SERVER_WAS_RUNNING",
+		"CLIENT_WAS_NEW",
+		"CLIENT_WAS_RUNNING",
+		"SERVER_WAS_CLOSING",
+		"CLIENT_WAS_CLOSING",
+		"CLIENT_WAS_CLOSED",
+		"CLIENT_PROPERLY_CLOSED",
+		"SERVER_WAS_CLOSED",
+		"SERVER_PROPERLY_CLOSED",
+	)
 
 }
 

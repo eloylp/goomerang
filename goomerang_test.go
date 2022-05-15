@@ -128,9 +128,12 @@ func TestMiddlewares(t *testing.T) {
 	_, err := c.Send(defaultMsg)
 	require.NoError(t, err)
 	arbiter.RequireNoErrors()
-	arbiter.RequireHappenedInOrder("SERVER_MIDDLEWARE_EXECUTED", "SERVER_HANDLER_EXECUTED")
-	arbiter.RequireHappenedInOrder("SERVER_HANDLER_EXECUTED", "CLIENT_MIDDLEWARE_EXECUTED")
-	arbiter.RequireHappenedInOrder("CLIENT_MIDDLEWARE_EXECUTED", "CLIENT_RECEIVED_REPLY")
+	arbiter.RequireHappenedInOrder(
+		"SERVER_MIDDLEWARE_EXECUTED",
+		"SERVER_HANDLER_EXECUTED",
+		"CLIENT_MIDDLEWARE_EXECUTED",
+		"CLIENT_RECEIVED_REPLY",
+	)
 }
 
 func TestHeadersAreSent(t *testing.T) {

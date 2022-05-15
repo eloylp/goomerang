@@ -48,9 +48,12 @@ func TestMiddlewareRegistry(t *testing.T) {
 
 	h.Handle(&FakeSender{a: arbiter}, &message.Message{})
 
-	arbiter.RequireHappenedInOrder("MIDDLEWARE_1_EXECUTED", "MIDDLEWARE_2_EXECUTED")
-	arbiter.RequireHappenedInOrder("MIDDLEWARE_2_EXECUTED", "HANDLER_EXECUTED")
-	arbiter.RequireHappenedInOrder("HANDLER_EXECUTED", "SENDER_CALLED")
+	arbiter.RequireHappenedInOrder(
+		"MIDDLEWARE_1_EXECUTED",
+		"MIDDLEWARE_2_EXECUTED",
+		"HANDLER_EXECUTED",
+		"SENDER_CALLED",
+	)
 }
 
 func TestMiddlewareRegistryNotFound(t *testing.T) {
