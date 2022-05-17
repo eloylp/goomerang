@@ -27,8 +27,9 @@ func PrepareServer(t *testing.T, opts ...server.Option) (s *server.Server, run f
 }
 
 func configureServer(t *testing.T, opts []server.Option) *server.Server {
-	opts = append(opts, server.WithListenAddr(serverAddr))
-	s, err := server.NewServer(opts...)
+	allOpts := []server.Option{server.WithListenAddr(serverAddr)}
+	allOpts = append(allOpts, opts...)
+	s, err := server.NewServer(allOpts...)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -45,7 +46,9 @@ func PrepareTLSServer(t *testing.T, opts ...server.Option) (s *server.Server, ru
 }
 
 func PrepareClient(t *testing.T, opts ...client.Option) (c *client.Client, connect func()) {
-	opts = append(opts, client.WithTargetServer(serverAddr))
+	allOpts := []client.Option{client.WithTargetServer(serverAddr)}
+	allOpts = append(allOpts, opts...)
+	opts = append(allOpts)
 	c, err := client.NewClient(opts...)
 	if err != nil {
 		t.Fatal(err)
