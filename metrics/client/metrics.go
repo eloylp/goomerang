@@ -12,6 +12,7 @@ var (
 	MessageProcessingTime prometheus.Histogram
 	SendSyncResponseTime  prometheus.Histogram
 	CurrentStatus         prometheus.Gauge
+	Errors                prometheus.Counter
 )
 
 func init() {
@@ -71,6 +72,13 @@ func Configure(config Config) {
 		Subsystem: "client",
 		Name:      "status",
 		Help:      "The current status of the client (0 => New, 1 => Running, 2=> Closing, 3 => closed)",
+	})
+
+	Errors = promauto.NewCounter(prometheus.CounterOpts{
+		Namespace: "goomerang",
+		Subsystem: "client",
+		Name:      "errors_total",
+		Help:      "The errors happened in client",
 	})
 }
 
