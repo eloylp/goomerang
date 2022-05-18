@@ -110,6 +110,7 @@ func (c *Client) receiver() {
 					if c.status() == ws.StatusClosing {
 						return
 					}
+					c.setStatus(ws.StatusClosing)
 					go func() {
 						if err := c.close(context.Background(), false); err != nil {
 							c.onErrorHook(err)
@@ -217,7 +218,6 @@ func (c *Client) Close(ctx context.Context) (err error) {
 }
 
 func (c *Client) close(ctx context.Context, isInitiator bool) (err error) {
-	c.setStatus(ws.StatusClosing)
 	ch := make(chan struct{})
 	go func() {
 		defer close(ch)
