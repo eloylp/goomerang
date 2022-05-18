@@ -23,6 +23,10 @@ var defaultMsg = message.New().
 		Message: "a message!",
 	})
 
+var echoHandler = message.HandlerFunc(func(s message.Sender, msg *message.Message) {
+	s.Send(msg)
+})
+
 func TestRoundTrip(t *testing.T) {
 	arbiter := test.NewArbiter(t)
 	s, run := PrepareServer(t)
