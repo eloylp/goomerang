@@ -6,6 +6,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
+	"go.eloylp.dev/goomerang/client"
 	testMessages "go.eloylp.dev/goomerang/internal/messaging/test"
 	"go.eloylp.dev/goomerang/internal/test"
 	"go.eloylp.dev/goomerang/message"
@@ -50,9 +51,9 @@ func TestClientsCanInterceptClosedConnection(t *testing.T) {
 	s.Shutdown(defaultCtx)
 
 	_, err := c1.Send(defaultMsg)
-	require.EqualErrorf(t, err, "client: not running", "expected client to intercept server close")
+	require.ErrorIs(t, err, client.ErrNotRunning, "expected client to intercept server close")
 	_, err = c2.Send(defaultMsg)
-	require.EqualErrorf(t, err, "client: not running", "expected client to intercept server close")
+	require.ErrorIs(t, err, client.ErrNotRunning, "expected client to intercept server close")
 }
 
 func TestServerSupportMultipleClients(t *testing.T) {

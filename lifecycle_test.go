@@ -193,7 +193,7 @@ func TestClientCannotSendMessagesIfClosed(t *testing.T) {
 	require.NoError(t, err)
 
 	_, err = c.Send(defaultMsg)
-	assert.EqualErrorf(t, err, "client: not running", "expected not to be able to send messages on closed status")
+	assert.ErrorIs(t, err, client.ErrNotRunning, "expected not to be able to send messages on closed status")
 }
 
 func TestClientCannotSendSyncMessagesIfClosed(t *testing.T) {
@@ -209,7 +209,7 @@ func TestClientCannotSendSyncMessagesIfClosed(t *testing.T) {
 	require.NoError(t, err)
 
 	_, _, err = c.SendSync(defaultCtx, defaultMsg)
-	assert.EqualErrorf(t, err, "client: not running", "expected not to be able to sendSync messages on closed status")
+	assert.ErrorIs(t, err, client.ErrNotRunning, "expected not to be able to sendSync messages on closed status")
 }
 
 func TestServerCannotSendSyncMessagesIfClosed(t *testing.T) {

@@ -49,6 +49,10 @@ func mainHandler(s *Server) http.HandlerFunc {
 						}
 						return // will trigger normal connection close at handler, as channel (ch) will be closed.
 					}
+					if websocket.IsCloseError(err, websocket.CloseAbnormalClosure) {
+						s.onErrorHook(err)
+						return
+					}
 					s.onErrorHook(err)
 					continue
 				}

@@ -117,6 +117,10 @@ func (c *Client) receiver() {
 					}()
 					return
 				}
+				if websocket.IsCloseError(err, websocket.CloseAbnormalClosure) {
+					c.setStatus(ws.StatusClosing)
+					go c.forceClose()
+				}
 				c.onErrorHook(err)
 				return
 			}
@@ -133,6 +137,13 @@ func (c *Client) receiver() {
 			}()
 		}
 	}
+}
+
+func (c *Client) forceClose() {
+	c.cancl()
+	c.wg.Wait()
+	c.setStatus(ws.StatusClosed)
+	c.onCloseHook()
 }
 
 func (c *Client) processMessage(data []byte) (err error) {
@@ -160,7 +171,7 @@ func (c *Client) processMessage(data []byte) (err error) {
 
 func (c *Client) Send(msg *message.Message) (payloadSize int, err error) {
 	if c.status() != ws.StatusRunning {
-		return 0, errors.New("client: not running")
+		return 0, ErrNotRunning
 	}
 	var data []byte
 	payloadSize, data, err = messaging.Pack(msg)
@@ -175,7 +186,7 @@ func (c *Client) Send(msg *message.Message) (payloadSize int, err error) {
 
 func (c *Client) SendSync(ctx context.Context, msg *message.Message) (payloadSize int, response *message.Message, err error) {
 	if c.status() != ws.StatusRunning {
-		return 0, nil, errors.New("client: not running")
+		return 0, nil, ErrNotRunning
 	}
 	ch := make(chan struct{})
 	go func() {
