@@ -24,25 +24,16 @@ const (
 )
 
 var (
-	proxyServer    *toxiproxy.ApiServer
-	proxyClient    *toxiClient.Client
-	goomerangProxy *toxiClient.Proxy
+	proxyServer *toxiproxy.ApiServer
+	proxyClient *toxiClient.Client
 )
 
 func init() {
 	proxyServer = toxiproxy.NewServer()
 	proxyAddrParts := strings.Split(proxyAddr, ":")
-
 	go proxyServer.Listen(proxyAddrParts[0], proxyAddrParts[1])
-
 	mustWaitTCPService("localhost:8474", time.Millisecond, time.Second)
-
 	proxyClient = toxiClient.NewClient(proxyAddr)
-	var err error
-	goomerangProxy, err = proxyClient.CreateProxy("goomerang", proxyServerAddr, serverBackendAddr)
-	if err != nil {
-		panic(err)
-	}
 }
 
 func mustWaitTCPService(addr string, interval, maxWait time.Duration) {
@@ -92,7 +83,7 @@ func PrepareTLSServer(t *testing.T, opts ...server.Option) (s *server.Server, ru
 }
 
 func PrepareClient(t *testing.T, opts ...client.Option) (c *client.Client, connect func()) {
-	allOpts := []client.Option{client.WithTargetServer(proxyServerAddr)}
+	allOpts := []client.Option{client.WithTargetServer(serverBackendAddr)}
 	allOpts = append(allOpts, opts...)
 	opts = append(allOpts)
 	c, err := client.NewClient(opts...)
