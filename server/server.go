@@ -127,8 +127,8 @@ func (s *Server) BroadCast(ctx context.Context, msg *message.Message) (payloadSi
 }
 
 func (s *Server) Run() error {
-	s.handlerChainer.PrepareChains()
 	s.setStatus(ws.StatusRunning)
+	s.handlerChainer.PrepareChains()
 	defer s.setStatus(ws.StatusClosed)
 	if s.cfg.TLSConfig != nil {
 		// The "certFile" and "keyFile" params are with "" values, since the server has the certificates already configured.
