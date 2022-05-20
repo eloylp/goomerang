@@ -218,6 +218,9 @@ func (c *Client) Close(ctx context.Context) (err error) {
 }
 
 func (c *Client) close(ctx context.Context, isInitiator bool) (err error) {
+	if c.status() != ws.StatusRunning {
+		return ErrNotRunning
+	}
 	ch := make(chan struct{})
 	go func() {
 		defer close(ch)

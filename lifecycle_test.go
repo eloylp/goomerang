@@ -181,44 +181,79 @@ func TestClientCannotConnectForSecondTime(t *testing.T) {
 	assert.EqualError(t, c.Connect(defaultCtx), "client: already connected")
 }
 
-func TestClientCannotSendMessagesIfClosed(t *testing.T) {
+func TestClientCannotSendMessagesIfNotRunning(t *testing.T) {
 	s, run := PrepareServer(t)
 	defer s.Shutdown(defaultCtx)
 	run()
 
+	// Cannot send if not connected
 	c, connect := PrepareClient(t)
-	connect()
-
-	err := c.Close(defaultCtx)
-	require.NoError(t, err)
-
-	_, err = c.Send(defaultMsg)
-	assert.ErrorIs(t, err, client.ErrNotRunning, "expected not to be able to send messages on closed status")
-}
-
-func TestClientCannotSendSyncMessagesIfClosed(t *testing.T) {
-
-	s, run := PrepareServer(t)
-	defer s.Shutdown(defaultCtx)
-	run()
-
-	c, connect := PrepareClient(t)
-	connect()
-
-	err := c.Close(defaultCtx)
-	require.NoError(t, err)
+	_, err := c.Send(defaultMsg)
+	assert.ErrorIs(t, err, client.ErrNotRunning, "should not send messages if not connected")
 
 	_, _, err = c.SendSync(defaultCtx, defaultMsg)
-	assert.ErrorIs(t, err, client.ErrNotRunning, "expected not to be able to sendSync messages on closed status")
+	assert.ErrorIs(t, err, client.ErrNotRunning, "should not send sync messages if not connected")
+
+	connect()
+
+	err = c.Close(defaultCtx)
+	require.NoError(t, err)
+
+	// Cannot send if closed
+	_, err = c.Send(defaultMsg)
+	assert.ErrorIs(t, err, client.ErrNotRunning, "should not send messages on closed status")
+
+	_, _, err = c.SendSync(defaultCtx, defaultMsg)
+	assert.ErrorIs(t, err, client.ErrNotRunning, "should not send sync messages on closed status")
 }
 
-func TestServerCannotSendSyncMessagesIfClosed(t *testing.T) {
+func TestClientCannotShutdownIfNotRunning(t *testing.T) {
 	s, run := PrepareServer(t)
 	run()
+	defer s.Shutdown(defaultCtx)
 
-	err := s.Shutdown(defaultCtx)
+	c, connect := PrepareClient(t)
+	assert.ErrorIs(t, c.Close(defaultCtx), client.ErrNotRunning, "should not shutdown if not running")
+	connect()
+	require.NoError(t, c.Close(defaultCtx))
+
+	assert.ErrorIs(t, c.Close(defaultCtx), client.ErrNotRunning, "should not shutdown if already closed")
+}
+
+func TestServerCannotSendMessagesIfNotRunning(t *testing.T) {
+	s, run := PrepareServer(t)
+
+	_, _, err := s.BroadCast(defaultCtx, defaultMsg)
+	assert.ErrorIs(t, err, server.ErrNotRunning, "should not broadcast messages if not connected")
+
+	run()
+
+	err = s.Shutdown(defaultCtx)
 	require.NoError(t, err)
 
 	_, _, err = s.BroadCast(defaultCtx, defaultMsg)
-	assert.EqualErrorf(t, err, "server: not running", "expected not to be able to sendSync messages on closed status")
+	assert.ErrorIs(t, err, server.ErrNotRunning, "should not broadcast messages on closed status")
+}
+
+func TestServerCannotShutdownIfNotRunning(t *testing.T) {
+	s, _ := PrepareServer(t)
+	err := s.Shutdown(defaultCtx)
+	assert.ErrorIs(t, err, server.ErrNotRunning, "should not shutdown if not running")
+}
+
+func TestServerCannotShutdownIfClosed(t *testing.T) {
+	s, run := PrepareServer(t)
+	run()
+	err := s.Shutdown(defaultCtx)
+	require.NoError(t, err)
+	err = s.Shutdown(defaultCtx)
+	assert.ErrorIs(t, err, server.ErrNotRunning, "should not shutdown if already closed")
+}
+
+func TestServerCannotRunIfAlreadyRunning(t *testing.T) {
+	s, run := PrepareServer(t)
+	run()
+	defer s.Shutdown(defaultCtx)
+	err := s.Run()
+	assert.ErrorIs(t, err, server.ErrAlreadyRunning, "should not run if already running")
 }

@@ -2,7 +2,6 @@ package server
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"net/http"
 	"sync"
@@ -94,7 +93,7 @@ func (s *Server) RegisterHandler(msg proto.Message, handler message.Handler) {
 
 func (s *Server) BroadCast(ctx context.Context, msg *message.Message) (payloadSize int, msgCount int, err error) {
 	if s.status() != ws.StatusRunning {
-		return 0, 0, errors.New("server: not running")
+		return 0, 0, ErrNotRunning
 	}
 	ch := make(chan struct{})
 	go func() {
@@ -127,6 +126,12 @@ func (s *Server) BroadCast(ctx context.Context, msg *message.Message) (payloadSi
 }
 
 func (s *Server) Run() error {
+	if s.status() == ws.StatusClosing {
+		return ErrClosing
+	}
+	if s.status() == ws.StatusRunning {
+		return ErrAlreadyRunning
+	}
 	s.setStatus(ws.StatusRunning)
 	s.handlerChainer.PrepareChains()
 	defer s.setStatus(ws.StatusClosed)
@@ -146,6 +151,9 @@ func (s *Server) Run() error {
 }
 
 func (s *Server) Shutdown(ctx context.Context) (err error) {
+	if s.status() != ws.StatusRunning {
+		return ErrNotRunning
+	}
 	s.setStatus(ws.StatusClosing)
 	ch := make(chan struct{})
 	go func() {
