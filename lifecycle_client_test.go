@@ -60,7 +60,7 @@ func TestClientNormalClose(t *testing.T) {
 	require.NoError(t, c.Close(defaultCtx))
 }
 
-func TestClientCloseWhenServerClosed(t *testing.T) {
+func TestClientShouldBeClosedWhenServerCloses(t *testing.T) {
 	s, run := PrepareServer(t)
 	run()
 	c, connect := PrepareClient(t)
@@ -69,7 +69,7 @@ func TestClientCloseWhenServerClosed(t *testing.T) {
 	require.NoError(t, err)
 
 	err = c.Close(defaultCtx)
-	require.NoError(t, err)
+	require.ErrorIs(t, err, client.ErrNotRunning)
 }
 
 func TestClientCanBeResumed(t *testing.T) {
