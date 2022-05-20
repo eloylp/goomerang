@@ -100,7 +100,7 @@ func TestClientCannotConnectForSecondTime(t *testing.T) {
 	connect()
 	defer c.Close(defaultCtx)
 
-	assert.EqualError(t, c.Connect(defaultCtx), "client: already connected")
+	assert.ErrorIs(t, c.Connect(defaultCtx), client.ErrAlreadyRunning)
 }
 
 func TestClientCannotSendMessagesIfNotRunning(t *testing.T) {

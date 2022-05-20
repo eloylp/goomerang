@@ -2,7 +2,6 @@ package client
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -78,7 +77,7 @@ func NewClient(opts ...Option) (*Client, error) {
 
 func (c *Client) Connect(ctx context.Context) error {
 	if c.status() != ws.StatusNew && c.status() != ws.StatusClosed {
-		return errors.New("client: already connected")
+		return ErrAlreadyRunning
 	}
 	c.ctx, c.cancl = context.WithCancel(context.Background())
 	c.handlerChainer.PrepareChains()
