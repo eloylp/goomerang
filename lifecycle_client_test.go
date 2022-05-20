@@ -13,21 +13,22 @@ import (
 )
 
 func TestShutdownProcedureClientSideInit(t *testing.T) {
-	arbiter := test.NewArbiter(t)
+	serverArbiter := test.NewArbiter(t)
+	clientArbiter := test.NewArbiter(t)
 
 	s, run := PrepareServer(t, server.WithOnCloseHook(func() {
-		arbiter.ItsAFactThat("SERVER_PROPERLY_CLOSED")
+		serverArbiter.ItsAFactThat("SERVER_PROPERLY_CLOSED")
 	}),
-		server.WithOnStatusChangeHook(statusChangesHook(arbiter, "server")),
-		server.WithOnErrorHook(noErrorHook(arbiter)),
+		server.WithOnStatusChangeHook(statusChangesHook(serverArbiter, "server")),
+		server.WithOnErrorHook(noErrorHook(serverArbiter)),
 	)
 	run()
 
 	c, connect := PrepareClient(t, client.WithOnCloseHook(func() {
-		arbiter.ItsAFactThat("CLIENT_PROPERLY_CLOSED")
+		clientArbiter.ItsAFactThat("CLIENT_PROPERLY_CLOSED")
 	}),
-		client.WithOnStatusChangeHook(statusChangesHook(arbiter, "client")),
-		client.WithOnErrorHook(noErrorHook(arbiter)),
+		client.WithOnStatusChangeHook(statusChangesHook(clientArbiter, "client")),
+		client.WithOnErrorHook(noErrorHook(clientArbiter)),
 	)
 	connect()
 
@@ -36,18 +37,23 @@ func TestShutdownProcedureClientSideInit(t *testing.T) {
 	err = s.Shutdown(context.Background())
 	require.NoError(t, err)
 
-	arbiter.RequireNoErrors()
-	arbiter.RequireHappenedInOrder(
+	serverArbiter.RequireNoErrors()
+	clientArbiter.RequireNoErrors()
+
+	serverArbiter.RequireHappenedInOrder(
 		"SERVER_WAS_NEW",
 		"SERVER_WAS_RUNNING",
+		"SERVER_WAS_CLOSING",
+		"SERVER_WAS_CLOSED",
+		"SERVER_PROPERLY_CLOSED",
+	)
+
+	clientArbiter.RequireHappenedInOrder(
 		"CLIENT_WAS_NEW",
 		"CLIENT_WAS_RUNNING",
 		"CLIENT_WAS_CLOSING",
 		"CLIENT_WAS_CLOSED",
 		"CLIENT_PROPERLY_CLOSED",
-		"SERVER_WAS_CLOSING",
-		"SERVER_WAS_CLOSED",
-		"SERVER_PROPERLY_CLOSED",
 	)
 }
 
