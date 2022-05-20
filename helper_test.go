@@ -11,9 +11,11 @@ import (
 	"github.com/Shopify/toxiproxy"
 	toxiClient "github.com/Shopify/toxiproxy/client"
 	"go.eloylp.dev/kit/pki"
-	"go.eloylp.dev/kit/test"
+	kitTest "go.eloylp.dev/kit/test"
 
 	"go.eloylp.dev/goomerang/client"
+	"go.eloylp.dev/goomerang/internal/test"
+	"go.eloylp.dev/goomerang/internal/ws"
 	"go.eloylp.dev/goomerang/server"
 )
 
@@ -59,7 +61,7 @@ func PrepareServer(t *testing.T, opts ...server.Option) (s *server.Server, run f
 	is := configureServer(t, opts)
 	return is, func() {
 		go is.Run()
-		test.WaitTCPService(t, serverBackendAddr, 50*time.Millisecond, 2*time.Second)
+		kitTest.WaitTCPService(t, serverBackendAddr, 50*time.Millisecond, 2*time.Second)
 	}
 }
 
@@ -78,7 +80,7 @@ func PrepareTLSServer(t *testing.T, opts ...server.Option) (s *server.Server, ru
 	is := configureServer(t, opts)
 	return is, func() {
 		go is.Run()
-		test.WaitTLSService(t, serverBackendAddr, 50*time.Millisecond, 2*time.Second)
+		kitTest.WaitTLSService(t, serverBackendAddr, 50*time.Millisecond, 2*time.Second)
 	}
 }
 
@@ -111,4 +113,26 @@ func SelfSignedCert(t *testing.T) tls.Certificate {
 		t.Fatal(err)
 	}
 	return crt
+}
+
+func statusChangesHook(a *test.Arbiter, side string) func(status uint32) {
+	side = strings.ToUpper(side)
+	return func(status uint32) {
+		switch status {
+		case ws.StatusNew:
+			a.ItsAFactThat(side + "_WAS_NEW")
+		case ws.StatusRunning:
+			a.ItsAFactThat(side + "_WAS_RUNNING")
+		case ws.StatusClosing:
+			a.ItsAFactThat(side + "_WAS_CLOSING")
+		case ws.StatusClosed:
+			a.ItsAFactThat(side + "_WAS_CLOSED")
+		}
+	}
+}
+
+func noErrorHook(a *test.Arbiter) func(err error) {
+	return func(err error) {
+		a.ErrorHappened(err)
+	}
 }
