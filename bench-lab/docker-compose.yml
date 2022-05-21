@@ -1,0 +1,105 @@
+version: "3.8"
+services:
+
+  server:
+    build:
+      dockerfile: Dockerfile
+      context: ./server
+    container_name: server
+    depends_on:
+      - prometheus
+      - grafana
+    environment:
+      - LISTEN_ADDR=0.0.0.0:8080
+      - PPROF_LISTEN_ADDR=0.0.0.0:6060
+    expose:
+      - 8080 # serving port
+      - 9971 # metrics
+    ports:
+      - "127.0.0.1:6060:6060" ## Go pprof
+    networks:
+      - bench-lab
+
+  proxy:
+    build:
+      dockerfile: Dockerfile
+      context: ./proxy
+    container_name: proxy
+    depends_on:
+      - prometheus
+      - grafana
+      - server
+    environment:
+      - PROXY_LISTEN_ADDR=0.0.0.0:8081
+      - SERVER_LISTEN_ADDR=server:8080
+    expose:
+      - 8081
+    networks:
+      - bench-lab
+
+  client1: &client1
+    build:
+      dockerfile: Dockerfile
+      context: ./client
+    environment:
+      - PROXY_ADDR=proxy:8081
+      - PPROF_LISTEN_ADDR=0.0.0.0:6060
+    depends_on:
+      - prometheus
+      - grafana
+      - proxy
+    expose:
+      - 9971 # metrics
+    ports:
+      - "127.0.0.1:6061:6060" ## Go pprof
+    networks:
+      - bench-lab
+
+  #  We could add more clients here (just keeping this close), copying the first one.
+  #  We must REMEMBER to add it into the targets config, located at ./prometheus/prometheus.yml.
+  #  Just uncomment and replica the following lines:
+  #
+  #  client2:
+  #    <<: *client1
+
+  prometheus:
+    image: prom/prometheus:v2.35.0
+    container_name: prometheus
+    volumes:
+      - ./prometheus:/etc/prometheus:z
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--storage.tsdb.retention.time=200h'
+      - '--web.enable-lifecycle'
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:9090:9090"
+    networks:
+      - bench-lab
+
+  grafana:
+    image: grafana/grafana-oss:8.5.3
+    depends_on:
+      - prometheus
+    container_name: grafana
+    volumes:
+      - grafana_data:/var/lib/grafana:z
+      - ./grafana/provisioning:/etc/grafana/provisioning:z
+    environment:
+      - GF_USERS_ALLOW_SIGN_UP=false
+      - GF_SECURITY_ANONYMOUS=true
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:3000:3000"
+    networks:
+      - bench-lab
+
+networks:
+  bench-lab:
+volumes:
+  prometheus_data:
+  grafana_data:
