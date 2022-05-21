@@ -2,12 +2,14 @@ package goomerang_test
 
 import (
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"go.eloylp.dev/goomerang/client"
 	"go.eloylp.dev/goomerang/internal/test"
+	"go.eloylp.dev/goomerang/message"
 	"go.eloylp.dev/goomerang/server"
 )
 
@@ -113,4 +115,31 @@ func TestServerCannotRunIfAlreadyRunning(t *testing.T) {
 	defer s.Shutdown(defaultCtx)
 	err := s.Run()
 	assert.ErrorIs(t, err, server.ErrAlreadyRunning, "should not run if already running")
+}
+
+func TestServerHandlerCannotSendIfClosed(t *testing.T) {
+	arbiter := test.NewArbiter(t)
+	s, run := PrepareServer(t)
+	s.RegisterHandler(defaultMsg.Payload, message.HandlerFunc(func(s message.Sender, msg *message.Message) {
+		// We wait for the closed state to send,
+		// as we expect an error.
+		time.Sleep(50 * time.Millisecond)
+		if _, err := s.Send(msg); err != nil {
+			arbiter.ErrorHappened(err)
+		}
+	}))
+	run()
+	c, connect := PrepareClient(t)
+	connect()
+	defer c.Close(defaultCtx)
+	// We send the message, in order to invoke the handler.
+	_, err := c.Send(defaultMsg)
+	require.NoError(t, err)
+	// While the handler is sleeping before sending,
+	// we close the server, so changin its internal
+	// state.
+	require.NoError(t, s.Shutdown(defaultCtx))
+	// The handler should try to send a message,
+	// getting the expected error.
+	arbiter.RequireErrorIs(server.ErrNotRunning)
 }

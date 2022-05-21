@@ -1,6 +1,7 @@
 package test
 
 import (
+	"errors"
 	"fmt"
 	"strings"
 	"sync"
@@ -115,4 +116,15 @@ func (a *Arbiter) RequireError(errMsg string) {
 	}, time.Second, time.Millisecond, "expected error %q not happened in expected time.", errMsg)
 	a.L.RLock()
 	defer a.L.RUnlock()
+}
+
+func (a *Arbiter) RequireErrorIs(err error) {
+	a.L.RLock()
+	defer a.L.RUnlock()
+	for i := range a.errors {
+		if errors.Is(a.errors[i], err) {
+			return
+		}
+	}
+	a.t.Errorf("expected error: %q : not found in chain, found: %q", err, a.errors)
 }

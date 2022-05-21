@@ -3,12 +3,14 @@ package goomerang_test
 import (
 	"context"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"go.eloylp.dev/goomerang/client"
 	"go.eloylp.dev/goomerang/internal/test"
+	"go.eloylp.dev/goomerang/message"
 	"go.eloylp.dev/goomerang/server"
 )
 
@@ -140,4 +142,33 @@ func TestClientCannotShutdownIfNotRunning(t *testing.T) {
 	require.NoError(t, c.Close(defaultCtx))
 
 	assert.ErrorIs(t, c.Close(defaultCtx), client.ErrNotRunning, "should not shutdown if already closed")
+}
+
+func TestClientHandlerCannotSendIfClosed(t *testing.T) {
+	arbiter := test.NewArbiter(t)
+	s, run := PrepareServer(t)
+	run()
+	defer s.Shutdown(defaultCtx)
+	c, connect := PrepareClient(t)
+	c.RegisterHandler(defaultMsg.Payload, message.HandlerFunc(func(s message.Sender, msg *message.Message) {
+		// Let's wait the close before sending.
+		// We expect an error here.
+		time.Sleep(50 * time.Millisecond)
+		if _, err := s.Send(msg); err != nil {
+			arbiter.ErrorHappened(err)
+		}
+	}))
+	connect()
+
+	// We provoke the handler execution of the client
+	// with a broadcast message.
+	_, _, err := s.BroadCast(defaultCtx, defaultMsg)
+	require.NoError(t, err)
+
+	// We close the client, now the internal status changed.
+	require.NoError(t, c.Close(defaultCtx))
+	// At this point the wait time of the handler has expired,
+	// so we check it tried to send a message back in a closed state,
+	// causing the error.
+	arbiter.RequireErrorIs(client.ErrNotRunning)
 }

@@ -63,7 +63,7 @@ func mainHandler(s *Server) http.HandlerFunc {
 				s.workerPool.Add() // Will block till more processing slots are available.
 				go func() {
 					defer s.workerPool.Done()
-					if err := s.processMessage(cs, data, &stdSender{cs}); err != nil {
+					if err := s.processMessage(cs, data, &stdSender{cs, s}); err != nil {
 						s.onErrorHook(err)
 					}
 				}()
