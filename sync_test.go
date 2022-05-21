@@ -5,6 +5,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
+	"go.eloylp.dev/goomerang/client"
 	testMessages "go.eloylp.dev/goomerang/internal/messaging/test"
 	"go.eloylp.dev/goomerang/internal/test"
 	"go.eloylp.dev/goomerang/message"
@@ -22,7 +23,7 @@ func TestSync(t *testing.T) {
 		}
 	}))
 	run()
-	c, connect := PrepareClient(t)
+	c, connect := PrepareClient(t, client.WithTargetServer(s.Addr()))
 	connect()
 	defer c.Close(defaultCtx)
 

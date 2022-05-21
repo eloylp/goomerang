@@ -12,16 +12,17 @@ import (
 func TestClientReturnsKnownErrOnConnFailure(t *testing.T) {
 	arbiter := test.NewArbiter(t)
 
-	goomerangProxy, err := proxyClient.CreateProxy(t.Name(), proxyServerAddr, serverBackendAddr)
-	require.NoError(t, err)
-	defer goomerangProxy.Delete()
-
 	s, run := PrepareServer(t)
 	s.RegisterHandler(defaultMsg.Payload, echoHandler)
 	run()
 	defer s.Shutdown(defaultCtx)
 
+	goomerangProxy, err := proxyClient.CreateProxy(t.Name(), "", s.Addr())
+	require.NoError(t, err)
+	defer goomerangProxy.Delete()
+
 	c, connect := PrepareClient(t,
+		client.WithTargetServer(s.Addr()),
 		client.WithTargetServer(goomerangProxy.Listen),
 		client.WithOnCloseHook(func() {
 			arbiter.ItsAFactThat("CLIENT_ONCLOSE_HOOK")

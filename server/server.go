@@ -3,6 +3,7 @@ package server
 import (
 	"context"
 	"fmt"
+	"net"
 	"net/http"
 	"sync"
 	"sync/atomic"
@@ -34,6 +35,7 @@ type Server struct {
 	workerPool         *conc.WorkerPool
 	currentStatus      uint32
 	chCloseWait        chan struct{}
+	listener           net.Listener
 }
 
 func NewServer(opts ...Option) (*Server, error) {
@@ -48,7 +50,6 @@ func NewServer(opts ...Option) (*Server, error) {
 	ctx, cancl := context.WithCancel(context.Background())
 	s := &Server{
 		intServer: &http.Server{
-			Addr:              cfg.ListenURL,
 			TLSConfig:         cfg.TLSConfig,
 			ReadHeaderTimeout: cfg.HTTPReadHeaderTimeout,
 			ReadTimeout:       cfg.HTTPReadTimeout,
@@ -125,29 +126,41 @@ func (s *Server) BroadCast(ctx context.Context, msg *message.Message) (payloadSi
 	}
 }
 
-func (s *Server) Run() error {
+func (s *Server) Run() (err error) {
 	if s.status() == ws.StatusClosing {
 		return ErrClosing
 	}
 	if s.status() == ws.StatusRunning {
 		return ErrAlreadyRunning
 	}
+	s.listener, err = net.Listen("tcp", s.cfg.ListenURL)
+	if err != nil {
+		return fmt.Errorf("run: %v", err)
+	}
 	s.setStatus(ws.StatusRunning)
 	s.handlerChainer.PrepareChains()
 	defer s.setStatus(ws.StatusClosed)
+
 	if s.cfg.TLSConfig != nil {
 		// The "certFile" and "keyFile" params are with "" values, since the server has the certificates already configured.
-		if err := s.intServer.ListenAndServeTLS("", ""); err != http.ErrServerClosed {
+		if err := s.intServer.ServeTLS(s.listener, "", ""); err != http.ErrServerClosed {
 			err = fmt.Errorf("run: %v", err)
 			return err
 		}
 		return nil
 	}
-	if err := s.intServer.ListenAndServe(); err != http.ErrServerClosed {
+	if err := s.intServer.Serve(s.listener); err != http.ErrServerClosed {
 		err = fmt.Errorf("run: %v", err)
 		return err
 	}
 	return nil
+}
+
+func (s *Server) Addr() string {
+	if s.status() != ws.StatusRunning {
+		return ""
+	}
+	return s.listener.Addr().String()
 }
 
 func (s *Server) Shutdown(ctx context.Context) (err error) {

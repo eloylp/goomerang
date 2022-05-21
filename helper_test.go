@@ -3,6 +3,7 @@ package goomerang_test
 import (
 	"context"
 	"crypto/tls"
+	"fmt"
 	"net"
 	"strings"
 	"testing"
@@ -20,9 +21,8 @@ import (
 )
 
 const (
-	proxyServerAddr   = "127.0.0.1:3000"
 	proxyAddr         = "127.0.0.1:8474"
-	serverBackendAddr = "127.0.0.1:3001"
+	kernelDefinedPort = "127.0.0.1:0"
 )
 
 var (
@@ -61,12 +61,31 @@ func PrepareServer(t *testing.T, opts ...server.Option) (s *server.Server, run f
 	is := configureServer(t, opts)
 	return is, func() {
 		go is.Run()
-		kitTest.WaitTCPService(t, serverBackendAddr, 50*time.Millisecond, 2*time.Second)
+		waitForServer(t, is)
+	}
+}
+
+func waitForServer(t *testing.T, is *server.Server) {
+	ctx, cancl := context.WithTimeout(defaultCtx, time.Second)
+	defer cancl()
+	var serverAddr string
+	for {
+		select {
+		case <-ctx.Done():
+			t.Fatal(fmt.Errorf("error waiting for server addr: %v", ctx.Err()))
+		default:
+			serverAddr = is.Addr()
+			if serverAddr == "" {
+				continue
+			}
+			kitTest.WaitTCPService(t, serverAddr, 50*time.Millisecond, 2*time.Second)
+			return
+		}
 	}
 }
 
 func configureServer(t *testing.T, opts []server.Option) *server.Server {
-	allOpts := []server.Option{server.WithListenAddr(serverBackendAddr)}
+	allOpts := []server.Option{server.WithListenAddr(kernelDefinedPort)}
 	allOpts = append(allOpts, opts...)
 	s, err := server.NewServer(allOpts...)
 	if err != nil {
@@ -80,14 +99,11 @@ func PrepareTLSServer(t *testing.T, opts ...server.Option) (s *server.Server, ru
 	is := configureServer(t, opts)
 	return is, func() {
 		go is.Run()
-		kitTest.WaitTLSService(t, serverBackendAddr, 50*time.Millisecond, 2*time.Second)
+		waitForServer(t, is)
 	}
 }
 
 func PrepareClient(t *testing.T, opts ...client.Option) (c *client.Client, connect func()) {
-	allOpts := []client.Option{client.WithTargetServer(serverBackendAddr)}
-	allOpts = append(allOpts, opts...)
-	opts = append(allOpts)
 	c, err := client.NewClient(opts...)
 	if err != nil {
 		t.Fatal(err)

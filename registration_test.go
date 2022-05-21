@@ -23,7 +23,7 @@ func TestHandlerRegistrationMoment(t *testing.T) {
 		s, run := PrepareServer(t)
 		run()
 		defer s.Shutdown(defaultCtx)
-		c, connect := PrepareClient(t)
+		c, connect := PrepareClient(t, client.WithTargetServer(s.Addr()))
 		connect()
 		defer c.Close(defaultCtx)
 		assert.Panics(t, func() {
@@ -40,7 +40,7 @@ func TestHandlerRegistrationMoment(t *testing.T) {
 		s, run := PrepareServer(t)
 		run()
 		defer s.Shutdown(defaultCtx)
-		c, connect := PrepareClient(t)
+		c, connect := PrepareClient(t, client.WithTargetServer(s.Addr()))
 		connect()
 		defer c.Close(defaultCtx)
 		assert.Panics(t, func() {
@@ -57,7 +57,7 @@ func TestHandlerRegistrationMoment(t *testing.T) {
 		s, run := PrepareServer(t)
 		run()
 		defer s.Shutdown(defaultCtx)
-		c, connect := PrepareClient(t)
+		c, connect := PrepareClient(t, client.WithTargetServer(s.Addr()))
 		connect()
 		defer c.Close(defaultCtx)
 		assert.Panics(t, func() {
@@ -74,7 +74,7 @@ func TestHandlerRegistrationMoment(t *testing.T) {
 		s, run := PrepareServer(t)
 		run()
 		defer s.Shutdown(defaultCtx)
-		c, connect := PrepareClient(t)
+		c, connect := PrepareClient(t, client.WithTargetServer(s.Addr()))
 		connect()
 		defer c.Close(defaultCtx)
 		assert.Panics(t, func() {

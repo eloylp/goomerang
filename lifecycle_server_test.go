@@ -24,9 +24,11 @@ func TestShutdownProcedureServerSideInit(t *testing.T) {
 		server.WithOnErrorHook(noErrorHook(serverArbiter)),
 	)
 	run()
-	_, connect := PrepareClient(t, client.WithOnCloseHook(func() {
-		clientArbiter.ItsAFactThat("CLIENT_PROPERLY_CLOSED")
-	}),
+	_, connect := PrepareClient(t,
+		client.WithTargetServer(s.Addr()),
+		client.WithOnCloseHook(func() {
+			clientArbiter.ItsAFactThat("CLIENT_PROPERLY_CLOSED")
+		}),
 		client.WithOnStatusChangeHook(statusChangesHook(clientArbiter, "client")),
 		client.WithOnErrorHook(noErrorHook(clientArbiter)),
 	)
@@ -62,14 +64,20 @@ func TestServerSendsCloseToAllClients(t *testing.T) {
 	s, run := PrepareServer(t, server.WithOnErrorHook(errHook))
 	run()
 
-	_, connect1 := PrepareClient(t, client.WithOnErrorHook(errHook), client.WithOnCloseHook(func() {
-		arbiter.ItsAFactThat("CLIENT1_RECEIVED_CLOSE")
-	}))
+	_, connect1 := PrepareClient(t,
+		client.WithTargetServer(s.Addr()),
+		client.WithOnErrorHook(errHook),
+		client.WithOnCloseHook(func() {
+			arbiter.ItsAFactThat("CLIENT1_RECEIVED_CLOSE")
+		}))
 	connect1()
 
-	_, connect2 := PrepareClient(t, client.WithOnErrorHook(errHook), client.WithOnCloseHook(func() {
-		arbiter.ItsAFactThat("CLIENT2_RECEIVED_CLOSE")
-	}))
+	_, connect2 := PrepareClient(t,
+		client.WithTargetServer(s.Addr()),
+		client.WithOnErrorHook(errHook),
+		client.WithOnCloseHook(func() {
+			arbiter.ItsAFactThat("CLIENT2_RECEIVED_CLOSE")
+		}))
 	connect2()
 
 	require.NoError(t, s.Shutdown(defaultCtx))
@@ -129,7 +137,7 @@ func TestServerHandlerCannotSendIfClosed(t *testing.T) {
 		}
 	}))
 	run()
-	c, connect := PrepareClient(t)
+	c, connect := PrepareClient(t, client.WithTargetServer(s.Addr()))
 	connect()
 	defer c.Close(defaultCtx)
 	// We send the message, in order to invoke the handler.

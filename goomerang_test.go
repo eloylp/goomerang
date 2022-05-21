@@ -40,7 +40,7 @@ func TestRoundTrip(t *testing.T) {
 		arbiter.ItsAFactThat("SERVER_RECEIVED_MSG")
 	}))
 	run()
-	c, connect := PrepareClient(t)
+	c, connect := PrepareClient(t, client.WithTargetServer(s.Addr()))
 	defer c.Close(defaultCtx)
 
 	c.RegisterHandler(&testMessages.MessageV1{}, message.HandlerFunc(func(c message.Sender, msg *message.Message) {
@@ -78,9 +78,11 @@ func TestSecuredRoundTrip(t *testing.T) {
 	run()
 	certPool := x509.NewCertPool()
 	certPool.AddCert(certificate.Leaf)
-	c, connect := PrepareClient(t, client.WithWithTLSConfig(&tls.Config{
-		RootCAs: certPool,
-	}))
+	c, connect := PrepareClient(t,
+		client.WithTargetServer(s.Addr()),
+		client.WithWithTLSConfig(&tls.Config{
+			RootCAs: certPool,
+		}))
 	defer c.Close(defaultCtx)
 
 	c.RegisterHandler(msg, message.HandlerFunc(func(c message.Sender, msg *message.Message) {
@@ -115,7 +117,7 @@ func TestMiddlewares(t *testing.T) {
 		}
 	}))
 	run()
-	c, connect := PrepareClient(t)
+	c, connect := PrepareClient(t, client.WithTargetServer(s.Addr()))
 	defer c.Close(defaultCtx)
 
 	c.RegisterMiddleware(func(h message.Handler) message.Handler {
@@ -156,7 +158,7 @@ func TestHeadersAreSent(t *testing.T) {
 	}))
 	run()
 
-	c, connect := PrepareClient(t)
+	c, connect := PrepareClient(t, client.WithTargetServer(s.Addr()))
 	defer c.Close(defaultCtx)
 
 	c.RegisterHandler(m, message.HandlerFunc(func(sender message.Sender, msg *message.Message) {
