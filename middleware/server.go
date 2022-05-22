@@ -31,6 +31,7 @@ func (s *MeteredServer) BroadCast(ctx context.Context, msg *message.Message) (in
 	start := time.Now()
 	payloadSize, count, err := s.s.BroadCast(ctx, msg)
 	if err != nil {
+		serverMetrics.Errors.Inc()
 		return 0, 0, err
 	}
 	serverMetrics.BroadcastSentTime.Observe(time.Since(start).Seconds())
@@ -40,10 +41,16 @@ func (s *MeteredServer) BroadCast(ctx context.Context, msg *message.Message) (in
 	return payloadSize, count, err
 }
 
-func (s *MeteredServer) Run() error {
-	return s.s.Run()
+func (s *MeteredServer) Run() (err error) {
+	if err = s.s.Run(); err != nil {
+		serverMetrics.Errors.Inc()
+	}
+	return
 }
 
-func (s *MeteredServer) Shutdown(ctx context.Context) error {
-	return s.s.Shutdown(ctx)
+func (s *MeteredServer) Shutdown(ctx context.Context) (err error) {
+	if err = s.s.Shutdown(ctx); err != nil {
+		serverMetrics.Errors.Inc()
+	}
+	return
 }

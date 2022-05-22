@@ -28,6 +28,7 @@ func (c *MeteredClient) Connect(ctx context.Context) error {
 		SentMessageSize:       clientMetrics.SentMessageSize,
 	})
 	if err != nil {
+		clientMetrics.Errors.Inc()
 		return fmt.Errorf("goomerang: connect: instrumentation: %v", err)
 	}
 	c.RegisterMiddleware(metricsMiddleware)
@@ -37,6 +38,7 @@ func (c *MeteredClient) Connect(ctx context.Context) error {
 func (c *MeteredClient) Send(msg *message.Message) (payloadSize int, err error) {
 	payloadSize, err = c.c.Send(msg)
 	if err != nil {
+		clientMetrics.Errors.Inc()
 		return 0, err
 	}
 	clientMetrics.SentMessageSize.Observe(float64(payloadSize))
@@ -47,6 +49,7 @@ func (c *MeteredClient) SendSync(ctx context.Context, msg *message.Message) (pay
 	start := time.Now()
 	payloadSize, response, err = c.c.SendSync(ctx, msg)
 	if err != nil {
+		clientMetrics.Errors.Inc()
 		return 0, nil, err
 	}
 	clientMetrics.SendSyncResponseTime.Observe(time.Since(start).Seconds())
@@ -54,8 +57,11 @@ func (c *MeteredClient) SendSync(ctx context.Context, msg *message.Message) (pay
 	return
 }
 
-func (c *MeteredClient) Close(ctx context.Context) error {
-	return c.c.Close(ctx)
+func (c *MeteredClient) Close(ctx context.Context) (err error) {
+	if err = c.c.Close(ctx); err != nil {
+		clientMetrics.Errors.Inc()
+	}
+	return
 }
 
 func (c *MeteredClient) RegisterMiddleware(m message.Middleware) {
