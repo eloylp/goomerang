@@ -16,6 +16,17 @@ type MeteredServer struct {
 }
 
 func NewMeteredServer(s *server.Server) *MeteredServer {
+	metricsMiddleware, err := PromHistograms(PromConfig{
+		MessageInflightTime:   serverMetrics.MessageInflightTime,
+		ReceivedMessageSize:   serverMetrics.ReceivedMessageSize,
+		MessageProcessingTime: serverMetrics.MessageProcessingTime,
+		SentMessageSize:       serverMetrics.SentMessageSize,
+	})
+	if err != nil {
+		serverMetrics.Errors.Inc()
+		panic(fmt.Errorf("goomerang: connect: instrumentation: %v", err))
+	}
+	s.RegisterMiddleware(metricsMiddleware)
 	return &MeteredServer{s: s}
 }
 
