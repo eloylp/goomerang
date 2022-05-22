@@ -19,10 +19,10 @@ type MeteredServer struct {
 func NewMeteredServer(s *server.Server) *MeteredServer {
 	metricsMiddleware, err := PromHistograms(PromConfig{
 		MessageInflightTime:   serverMetrics.MessageInflightTime,
-		ReceivedMessageSize:   serverMetrics.ReceivedMessageSize,
+		MessageReceivedSize:   serverMetrics.MessageReceivedSize,
 		MessageProcessingTime: serverMetrics.MessageProcessingTime,
-		SentMessageSize:       serverMetrics.SentMessageSize,
-		SentMessageTime:       serverMetrics.SentMessageTime,
+		MessageSentSize:       serverMetrics.MessageSentSize,
+		MessageSentTime:       serverMetrics.MessageSentTime,
 	})
 	if err != nil {
 		serverMetrics.Errors.Inc()
@@ -47,9 +47,9 @@ func (s *MeteredServer) BroadCast(ctx context.Context, msg *message.Message) (in
 		serverMetrics.Errors.Inc()
 		return 0, 0, err
 	}
-	serverMetrics.BroadcastSentTime.WithLabelValues(msg.Metadata.Type).Observe(time.Since(start).Seconds())
+	serverMetrics.MessageBroadcastSentTime.WithLabelValues(msg.Metadata.Type).Observe(time.Since(start).Seconds())
 	for i := 0; i < count; i++ {
-		serverMetrics.SentMessageSize.WithLabelValues(msg.Metadata.Type).Observe(float64(payloadSize))
+		serverMetrics.MessageSentSize.WithLabelValues(msg.Metadata.Type).Observe(float64(payloadSize))
 	}
 	return payloadSize, count, err
 }

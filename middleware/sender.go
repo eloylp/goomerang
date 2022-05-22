@@ -57,7 +57,7 @@ func (s *MeteredSender) Send(msg *message.Message) (int, error) {
 	start := time.Now()
 	w, err := s.sender.Send(msg)
 	if err == nil {
-		s.promConfig.SentMessageTime.WithLabelValues(msg.Metadata.Type).Observe(time.Since(start).Seconds())
+		s.promConfig.MessageSentTime.WithLabelValues(msg.Metadata.Type).Observe(time.Since(start).Seconds())
 	}
 	s.msg = msg
 	s.bytes = w

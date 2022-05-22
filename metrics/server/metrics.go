@@ -6,24 +6,24 @@ import (
 )
 
 var (
-	MessageInflightTime   *prometheus.HistogramVec
-	ReceivedMessageSize   *prometheus.HistogramVec
-	SentMessageSize       *prometheus.HistogramVec
-	SentMessageTime       *prometheus.HistogramVec
-	MessageProcessingTime *prometheus.HistogramVec
-	BroadcastSentTime     *prometheus.HistogramVec
-	CurrentStatus         prometheus.Gauge
-	Errors                prometheus.Counter
+	MessageInflightTime      *prometheus.HistogramVec
+	MessageReceivedSize      *prometheus.HistogramVec
+	MessageSentSize          *prometheus.HistogramVec
+	MessageSentTime          *prometheus.HistogramVec
+	MessageProcessingTime    *prometheus.HistogramVec
+	MessageBroadcastSentTime *prometheus.HistogramVec
+	CurrentStatus            prometheus.Gauge
+	Errors                   prometheus.Counter
 )
 
 func init() {
 	Configure(Config{
-		MessageInflightTimeBuckets:   prometheus.DefBuckets,
-		ReceivedMessageSizeBuckets:   prometheus.DefBuckets,
-		SentMessageSizeBuckets:       prometheus.DefBuckets,
-		SentMessageTimeBuckets:       prometheus.DefBuckets,
-		MessageProcessingTimeBuckets: prometheus.DefBuckets,
-		BroadcastSentTimeBuckets:     prometheus.DefBuckets,
+		MessageInflightTimeBuckets:      prometheus.DefBuckets,
+		MessageReceivedSizeBuckets:      prometheus.DefBuckets,
+		MessageSentSizeBuckets:          prometheus.DefBuckets,
+		MessageSentTimeBuckets:          prometheus.DefBuckets,
+		MessageProcessingTimeBuckets:    prometheus.DefBuckets,
+		MessageBroadcastSentTimeBuckets: prometheus.DefBuckets,
 	})
 }
 
@@ -37,28 +37,28 @@ func Configure(c Config) {
 		Buckets:   c.MessageInflightTimeBuckets,
 	}, []string{"type"})
 
-	ReceivedMessageSize = promauto.NewHistogramVec(prometheus.HistogramOpts{
+	MessageReceivedSize = promauto.NewHistogramVec(prometheus.HistogramOpts{
 		Namespace: "goomerang",
 		Subsystem: "server",
 		Name:      "message_received_size_bytes",
 		Help:      "The size of the received messages in bytes",
-		Buckets:   c.ReceivedMessageSizeBuckets,
+		Buckets:   c.MessageReceivedSizeBuckets,
 	}, []string{"type"})
 
-	SentMessageSize = promauto.NewHistogramVec(prometheus.HistogramOpts{
+	MessageSentSize = promauto.NewHistogramVec(prometheus.HistogramOpts{
 		Namespace: "goomerang",
 		Subsystem: "server",
 		Name:      "message_sent_size_bytes",
 		Help:      "The size of the sent messages in bytes",
-		Buckets:   c.SentMessageSizeBuckets,
+		Buckets:   c.MessageSentSizeBuckets,
 	}, []string{"type"})
 
-	SentMessageTime = promauto.NewHistogramVec(prometheus.HistogramOpts{
+	MessageSentTime = promauto.NewHistogramVec(prometheus.HistogramOpts{
 		Namespace: "goomerang",
 		Subsystem: "server",
 		Name:      "message_sent_duration_seconds",
 		Help:      "The time spent in during asynchronous message sending operation (buffer)",
-		Buckets:   c.SentMessageTimeBuckets,
+		Buckets:   c.MessageSentTimeBuckets,
 	}, []string{"type"})
 
 	MessageProcessingTime = promauto.NewHistogramVec(prometheus.HistogramOpts{
@@ -69,12 +69,12 @@ func Configure(c Config) {
 		Buckets:   c.MessageProcessingTimeBuckets,
 	}, []string{"type"})
 
-	BroadcastSentTime = promauto.NewHistogramVec(prometheus.HistogramOpts{
+	MessageBroadcastSentTime = promauto.NewHistogramVec(prometheus.HistogramOpts{
 		Namespace: "goomerang",
 		Subsystem: "server",
 		Name:      "message_broadcast_sent_duration_seconds",
 		Help:      "The time spent in a broadcast operation",
-		Buckets:   c.BroadcastSentTimeBuckets,
+		Buckets:   c.MessageBroadcastSentTimeBuckets,
 	}, []string{"type"})
 
 	CurrentStatus = promauto.NewGauge(prometheus.GaugeOpts{
@@ -93,10 +93,10 @@ func Configure(c Config) {
 }
 
 type Config struct {
-	MessageInflightTimeBuckets   []float64
-	ReceivedMessageSizeBuckets   []float64
-	SentMessageSizeBuckets       []float64
-	MessageProcessingTimeBuckets []float64
-	BroadcastSentTimeBuckets     []float64
-	SentMessageTimeBuckets       []float64
+	MessageInflightTimeBuckets      []float64
+	MessageReceivedSizeBuckets      []float64
+	MessageSentSizeBuckets          []float64
+	MessageProcessingTimeBuckets    []float64
+	MessageBroadcastSentTimeBuckets []float64
+	MessageSentTimeBuckets          []float64
 }

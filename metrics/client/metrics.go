@@ -6,14 +6,14 @@ import (
 )
 
 var (
-	MessageInflightTime   *prometheus.HistogramVec
-	ReceivedMessageSize   *prometheus.HistogramVec
-	SentMessageSize       *prometheus.HistogramVec
-	MessageProcessingTime *prometheus.HistogramVec
-	SendSyncResponseTime  *prometheus.HistogramVec
-	MessageSendTime       *prometheus.HistogramVec
-	CurrentStatus         prometheus.Gauge
-	Errors                prometheus.Counter
+	MessageInflightTime         *prometheus.HistogramVec
+	MessageReceivedSize         *prometheus.HistogramVec
+	MessageSentSize             *prometheus.HistogramVec
+	MessageProcessingTime       *prometheus.HistogramVec
+	MessageSentSyncResponseTime *prometheus.HistogramVec
+	MessageSentTime             *prometheus.HistogramVec
+	CurrentStatus               prometheus.Gauge
+	Errors                      prometheus.Counter
 )
 
 func init() {
@@ -37,7 +37,7 @@ func Configure(config Config) {
 		Buckets:   config.MessageInflightTimeBuckets,
 	}, []string{"type"})
 
-	ReceivedMessageSize = promauto.NewHistogramVec(prometheus.HistogramOpts{
+	MessageReceivedSize = promauto.NewHistogramVec(prometheus.HistogramOpts{
 		Namespace: "goomerang",
 		Subsystem: "client",
 		Name:      "message_received_size_bytes",
@@ -45,7 +45,7 @@ func Configure(config Config) {
 		Buckets:   config.ReceivedMessageSizeBuckets,
 	}, []string{"type"})
 
-	SentMessageSize = promauto.NewHistogramVec(prometheus.HistogramOpts{
+	MessageSentSize = promauto.NewHistogramVec(prometheus.HistogramOpts{
 		Namespace: "goomerang",
 		Subsystem: "client",
 		Name:      "message_sent_size_bytes",
@@ -53,7 +53,7 @@ func Configure(config Config) {
 		Buckets:   config.SentMessageSizeBuckets,
 	}, []string{"type"})
 
-	MessageSendTime = promauto.NewHistogramVec(prometheus.HistogramOpts{
+	MessageSentTime = promauto.NewHistogramVec(prometheus.HistogramOpts{
 		Namespace: "goomerang",
 		Subsystem: "client",
 		Name:      "message_sent_duration_seconds",
@@ -69,7 +69,7 @@ func Configure(config Config) {
 		Buckets:   config.MessageProcessingTimeBuckets,
 	}, []string{"type"})
 
-	SendSyncResponseTime = promauto.NewHistogramVec(prometheus.HistogramOpts{
+	MessageSentSyncResponseTime = promauto.NewHistogramVec(prometheus.HistogramOpts{
 		Namespace: "goomerang",
 		Subsystem: "client",
 		Name:      "message_sync_sent_duration_seconds",

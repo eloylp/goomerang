@@ -19,10 +19,10 @@ type MeteredClient struct {
 func NewMeteredClient(c *client.Client) *MeteredClient {
 	metricsMiddleware, err := PromHistograms(PromConfig{
 		MessageInflightTime:   clientMetrics.MessageInflightTime,
-		ReceivedMessageSize:   clientMetrics.ReceivedMessageSize,
+		MessageReceivedSize:   clientMetrics.MessageReceivedSize,
 		MessageProcessingTime: clientMetrics.MessageProcessingTime,
-		SentMessageSize:       clientMetrics.SentMessageSize,
-		SentMessageTime:       clientMetrics.MessageSendTime,
+		MessageSentSize:       clientMetrics.MessageSentSize,
+		MessageSentTime:       clientMetrics.MessageSentTime,
 	})
 	if err != nil {
 		clientMetrics.Errors.Inc()
@@ -43,8 +43,8 @@ func (c *MeteredClient) Send(msg *message.Message) (payloadSize int, err error) 
 		clientMetrics.Errors.Inc()
 		return 0, err
 	}
-	clientMetrics.MessageSendTime.WithLabelValues(msg.Metadata.Type).Observe(time.Since(start).Seconds())
-	clientMetrics.SentMessageSize.WithLabelValues(msg.Metadata.Type).Observe(float64(payloadSize))
+	clientMetrics.MessageSentTime.WithLabelValues(msg.Metadata.Type).Observe(time.Since(start).Seconds())
+	clientMetrics.MessageSentSize.WithLabelValues(msg.Metadata.Type).Observe(float64(payloadSize))
 	return
 }
 
@@ -55,8 +55,8 @@ func (c *MeteredClient) SendSync(ctx context.Context, msg *message.Message) (pay
 		clientMetrics.Errors.Inc()
 		return 0, nil, err
 	}
-	clientMetrics.SendSyncResponseTime.WithLabelValues(msg.Metadata.Type).Observe(time.Since(start).Seconds())
-	clientMetrics.SentMessageSize.WithLabelValues(msg.Metadata.Type).Observe(float64(payloadSize))
+	clientMetrics.MessageSentSyncResponseTime.WithLabelValues(msg.Metadata.Type).Observe(time.Since(start).Seconds())
+	clientMetrics.MessageSentSize.WithLabelValues(msg.Metadata.Type).Observe(float64(payloadSize))
 	return
 }
 

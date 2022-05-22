@@ -20,7 +20,7 @@ func PromHistograms(c PromConfig) (message.Middleware, error) {
 	return func(h message.Handler) message.Handler {
 		return message.HandlerFunc(func(s message.Sender, msg *message.Message) {
 			c.MessageInflightTime.WithLabelValues(msg.Metadata.Type).Observe(time.Since(msg.Metadata.Creation).Seconds())
-			c.ReceivedMessageSize.WithLabelValues(msg.Metadata.Type).Observe(float64(msg.Metadata.PayloadSize))
+			c.MessageReceivedSize.WithLabelValues(msg.Metadata.Type).Observe(float64(msg.Metadata.PayloadSize))
 
 			wrappedSender := NewMeteredSender(s, c)
 			start := time.Now()
@@ -28,34 +28,34 @@ func PromHistograms(c PromConfig) (message.Middleware, error) {
 
 			sentMessage := wrappedSender.Msg()
 			c.MessageProcessingTime.WithLabelValues(sentMessage.Metadata.Type).Observe(float64(time.Since(start)))
-			c.SentMessageSize.WithLabelValues(sentMessage.Metadata.Type).Observe(float64(wrappedSender.Bytes()))
+			c.MessageSentSize.WithLabelValues(sentMessage.Metadata.Type).Observe(float64(wrappedSender.Bytes()))
 		})
 	}, nil
 }
 
 type PromConfig struct {
 	MessageInflightTime   *prometheus.HistogramVec
-	ReceivedMessageSize   *prometheus.HistogramVec
+	MessageReceivedSize   *prometheus.HistogramVec
 	MessageProcessingTime *prometheus.HistogramVec
-	SentMessageSize       *prometheus.HistogramVec
-	SentMessageTime       *prometheus.HistogramVec
+	MessageSentSize       *prometheus.HistogramVec
+	MessageSentTime       *prometheus.HistogramVec
 }
 
 func (c PromConfig) Validate() error {
 	if c.MessageInflightTime == nil {
 		return errors.New("validate: messageInflightTime be non nil")
 	}
-	if c.ReceivedMessageSize == nil {
+	if c.MessageReceivedSize == nil {
 		return errors.New("validate: receivedMessageSize be non nil")
 	}
 	if c.MessageProcessingTime == nil {
 		return errors.New("validate: MessageProcessingTime be non nil")
 	}
-	if c.SentMessageSize == nil {
-		return errors.New("validate: SentMessageSize be non nil")
+	if c.MessageSentSize == nil {
+		return errors.New("validate: MessageSentSize be non nil")
 	}
-	if c.SentMessageTime == nil {
-		return errors.New("validate: SentMessageTime be non nil")
+	if c.MessageSentTime == nil {
+		return errors.New("validate: MessageSentTime be non nil")
 	}
 	return nil
 }
