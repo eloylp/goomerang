@@ -1,0 +1,13 @@
+syntax = "proto3";
+
+import "google/protobuf/timestamp.proto";
+
+package company.map;
+option go_package = "go.eloylp.dev/goomerang/bench-lab/model";
+
+message Point {
+  float x = 1;
+  float y = 2;
+  google.protobuf.Timestamp time = 3;
+  bytes device_data = 4;
+}
