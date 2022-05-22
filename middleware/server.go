@@ -22,6 +22,7 @@ func NewMeteredServer(s *server.Server) *MeteredServer {
 		ReceivedMessageSize:   serverMetrics.ReceivedMessageSize,
 		MessageProcessingTime: serverMetrics.MessageProcessingTime,
 		SentMessageSize:       serverMetrics.SentMessageSize,
+		SentMessageTime:       serverMetrics.SentMessageTime,
 	})
 	if err != nil {
 		serverMetrics.Errors.Inc()

@@ -30,6 +30,7 @@ func TestMetrics(t *testing.T) {
 				ReceivedMessageSize:   serverMetrics.ReceivedMessageSize,
 				MessageProcessingTime: serverMetrics.MessageProcessingTime,
 				SentMessageSize:       serverMetrics.SentMessageSize,
+				SentMessageTime:       serverMetrics.SentMessageTime,
 			}},
 		{
 			"client", middleware.PromConfig{
@@ -37,6 +38,7 @@ func TestMetrics(t *testing.T) {
 				ReceivedMessageSize:   clientMetrics.ReceivedMessageSize,
 				MessageProcessingTime: clientMetrics.MessageProcessingTime,
 				SentMessageSize:       clientMetrics.SentMessageSize,
+				SentMessageTime:       clientMetrics.MessageSendTime,
 			}},
 	}
 
@@ -88,6 +90,10 @@ func AssertMetricsHandler(t *testing.T, handler http.Handler, system string) {
 	assert.Contains(t, body, fmt.Sprintf(`goomerang_%s_sent_message_size_bytes_bucket{type="goomerang.test.MessageV1",le="+Inf"} 1`, system))
 	assert.Contains(t, body, fmt.Sprintf(`goomerang_%s_sent_message_size_bytes_sum{type="goomerang.test.MessageV1"} 20`, system))
 	assert.Contains(t, body, fmt.Sprintf(`goomerang_%s_sent_message_size_bytes_count{type="goomerang.test.MessageV1"} 1`, system))
+
+	assert.Contains(t, body, fmt.Sprintf(`goomerang_%s_message_send_duration_seconds_bucket{type="goomerang.test.MessageV1",le="+Inf"} 1`, system))
+	assert.Contains(t, body, fmt.Sprintf(`goomerang_%s_message_send_duration_seconds_sum{type="goomerang.test.MessageV1"}`, system))
+	assert.Contains(t, body, fmt.Sprintf(`goomerang_%s_message_send_duration_seconds_count{type="goomerang.test.MessageV1"} 1`, system))
 }
 
 type fakeSender struct{}
@@ -138,4 +144,14 @@ func TestPromConfig_Validate_SentMessageSize(t *testing.T) {
 		MessageProcessingTime: clientMetrics.MessageProcessingTime,
 	}
 	assert.EqualError(t, c.Validate(), "validate: SentMessageSize be non nil")
+}
+
+func TestPromConfig_Validate_SentMessageTime(t *testing.T) {
+	c := middleware.PromConfig{
+		MessageInflightTime:   clientMetrics.MessageInflightTime,
+		ReceivedMessageSize:   clientMetrics.ReceivedMessageSize,
+		MessageProcessingTime: clientMetrics.MessageProcessingTime,
+		SentMessageSize:       clientMetrics.SentMessageSize,
+	}
+	assert.EqualError(t, c.Validate(), "validate: SentMessageTime be non nil")
 }

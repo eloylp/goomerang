@@ -22,7 +22,7 @@ func PromHistograms(c PromConfig) (message.Middleware, error) {
 			c.MessageInflightTime.WithLabelValues(msg.Metadata.Type).Observe(time.Since(msg.Metadata.Creation).Seconds())
 			c.ReceivedMessageSize.WithLabelValues(msg.Metadata.Type).Observe(float64(msg.Metadata.PayloadSize))
 
-			wrappedSender := NewSender(s)
+			wrappedSender := NewMeteredSender(s, c)
 			start := time.Now()
 			h.Handle(wrappedSender, msg)
 
@@ -38,6 +38,7 @@ type PromConfig struct {
 	ReceivedMessageSize   *prometheus.HistogramVec
 	MessageProcessingTime *prometheus.HistogramVec
 	SentMessageSize       *prometheus.HistogramVec
+	SentMessageTime       *prometheus.HistogramVec
 }
 
 func (c PromConfig) Validate() error {
@@ -52,6 +53,9 @@ func (c PromConfig) Validate() error {
 	}
 	if c.SentMessageSize == nil {
 		return errors.New("validate: SentMessageSize be non nil")
+	}
+	if c.SentMessageTime == nil {
+		return errors.New("validate: SentMessageTime be non nil")
 	}
 	return nil
 }

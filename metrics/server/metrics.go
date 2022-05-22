@@ -9,6 +9,7 @@ var (
 	MessageInflightTime   *prometheus.HistogramVec
 	ReceivedMessageSize   *prometheus.HistogramVec
 	SentMessageSize       *prometheus.HistogramVec
+	SentMessageTime       *prometheus.HistogramVec
 	MessageProcessingTime *prometheus.HistogramVec
 	BroadcastSentTime     *prometheus.HistogramVec
 	CurrentStatus         prometheus.Gauge
@@ -20,6 +21,7 @@ func init() {
 		MessageInflightTimeBuckets:   prometheus.DefBuckets,
 		ReceivedMessageSizeBuckets:   prometheus.DefBuckets,
 		SentMessageSizeBuckets:       prometheus.DefBuckets,
+		SentMessageTimeBuckets:       prometheus.DefBuckets,
 		MessageProcessingTimeBuckets: prometheus.DefBuckets,
 		BroadcastSentTimeBuckets:     prometheus.DefBuckets,
 	})
@@ -49,6 +51,14 @@ func Configure(c Config) {
 		Name:      "sent_message_size_bytes",
 		Help:      "The size of the sent messages in bytes",
 		Buckets:   c.SentMessageSizeBuckets,
+	}, []string{"type"})
+
+	SentMessageTime = promauto.NewHistogramVec(prometheus.HistogramOpts{
+		Namespace: "goomerang",
+		Subsystem: "server",
+		Name:      "message_send_duration_seconds",
+		Help:      "The time spent in during asynchronous message sending operation (buffer)",
+		Buckets:   c.SentMessageTimeBuckets,
 	}, []string{"type"})
 
 	MessageProcessingTime = promauto.NewHistogramVec(prometheus.HistogramOpts{
@@ -88,4 +98,5 @@ type Config struct {
 	SentMessageSizeBuckets       []float64
 	MessageProcessingTimeBuckets []float64
 	BroadcastSentTimeBuckets     []float64
+	SentMessageTimeBuckets       []float64
 }

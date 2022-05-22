@@ -22,6 +22,7 @@ func NewMeteredClient(c *client.Client) *MeteredClient {
 		ReceivedMessageSize:   clientMetrics.ReceivedMessageSize,
 		MessageProcessingTime: clientMetrics.MessageProcessingTime,
 		SentMessageSize:       clientMetrics.SentMessageSize,
+		SentMessageTime:       clientMetrics.MessageSendTime,
 	})
 	if err != nil {
 		clientMetrics.Errors.Inc()
@@ -36,11 +37,13 @@ func (c *MeteredClient) Connect(ctx context.Context) error {
 }
 
 func (c *MeteredClient) Send(msg *message.Message) (payloadSize int, err error) {
+	start := time.Now()
 	payloadSize, err = c.c.Send(msg)
 	if err != nil {
 		clientMetrics.Errors.Inc()
 		return 0, err
 	}
+	clientMetrics.MessageSendTime.WithLabelValues(msg.Metadata.Type).Observe(time.Since(start).Seconds())
 	clientMetrics.SentMessageSize.WithLabelValues(msg.Metadata.Type).Observe(float64(payloadSize))
 	return
 }
