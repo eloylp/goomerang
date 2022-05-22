@@ -32,7 +32,7 @@ func Configure(config Config) {
 	MessageInflightTime = promauto.NewHistogramVec(prometheus.HistogramOpts{
 		Namespace: "goomerang",
 		Subsystem: "client",
-		Name:      "received_message_inflight_duration_seconds",
+		Name:      "message_received_inflight_duration_seconds",
 		Help:      "The time the message spent over the wire till received",
 		Buckets:   config.MessageInflightTimeBuckets,
 	}, []string{"type"})
@@ -40,7 +40,7 @@ func Configure(config Config) {
 	ReceivedMessageSize = promauto.NewHistogramVec(prometheus.HistogramOpts{
 		Namespace: "goomerang",
 		Subsystem: "client",
-		Name:      "received_message_size_bytes",
+		Name:      "message_received_size_bytes",
 		Help:      "The size of the received messages in bytes",
 		Buckets:   config.ReceivedMessageSizeBuckets,
 	}, []string{"type"})
@@ -48,7 +48,7 @@ func Configure(config Config) {
 	SentMessageSize = promauto.NewHistogramVec(prometheus.HistogramOpts{
 		Namespace: "goomerang",
 		Subsystem: "client",
-		Name:      "sent_message_size_bytes",
+		Name:      "message_sent_size_bytes",
 		Help:      "The size of the sent messages in bytes",
 		Buckets:   config.SentMessageSizeBuckets,
 	}, []string{"type"})
@@ -56,7 +56,7 @@ func Configure(config Config) {
 	MessageSendTime = promauto.NewHistogramVec(prometheus.HistogramOpts{
 		Namespace: "goomerang",
 		Subsystem: "client",
-		Name:      "message_send_duration_seconds",
+		Name:      "message_sent_duration_seconds",
 		Help:      "The time spent in during asynchronous message sending operation (buffer)",
 		Buckets:   config.SendTimeBuckets,
 	}, []string{"type"})
@@ -72,7 +72,7 @@ func Configure(config Config) {
 	SendSyncResponseTime = promauto.NewHistogramVec(prometheus.HistogramOpts{
 		Namespace: "goomerang",
 		Subsystem: "client",
-		Name:      "message_sync_send_duration_seconds",
+		Name:      "message_sync_sent_duration_seconds",
 		Help:      "The time spent in a synchronous message sending operation",
 		Buckets:   config.SendSyncResponseTimeBuckets,
 	}, []string{"type"})

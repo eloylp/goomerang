@@ -32,7 +32,7 @@ func Configure(c Config) {
 	MessageInflightTime = promauto.NewHistogramVec(prometheus.HistogramOpts{
 		Namespace: "goomerang",
 		Subsystem: "server",
-		Name:      "received_message_inflight_duration_seconds",
+		Name:      "message_received_inflight_duration_seconds",
 		Help:      "The time the message spent over the wire till received",
 		Buckets:   c.MessageInflightTimeBuckets,
 	}, []string{"type"})
@@ -40,7 +40,7 @@ func Configure(c Config) {
 	ReceivedMessageSize = promauto.NewHistogramVec(prometheus.HistogramOpts{
 		Namespace: "goomerang",
 		Subsystem: "server",
-		Name:      "received_message_size_bytes",
+		Name:      "message_received_size_bytes",
 		Help:      "The size of the received messages in bytes",
 		Buckets:   c.ReceivedMessageSizeBuckets,
 	}, []string{"type"})
@@ -48,7 +48,7 @@ func Configure(c Config) {
 	SentMessageSize = promauto.NewHistogramVec(prometheus.HistogramOpts{
 		Namespace: "goomerang",
 		Subsystem: "server",
-		Name:      "sent_message_size_bytes",
+		Name:      "message_sent_size_bytes",
 		Help:      "The size of the sent messages in bytes",
 		Buckets:   c.SentMessageSizeBuckets,
 	}, []string{"type"})
@@ -56,7 +56,7 @@ func Configure(c Config) {
 	SentMessageTime = promauto.NewHistogramVec(prometheus.HistogramOpts{
 		Namespace: "goomerang",
 		Subsystem: "server",
-		Name:      "message_send_duration_seconds",
+		Name:      "message_sent_duration_seconds",
 		Help:      "The time spent in during asynchronous message sending operation (buffer)",
 		Buckets:   c.SentMessageTimeBuckets,
 	}, []string{"type"})
