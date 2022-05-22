@@ -6,11 +6,11 @@ import (
 )
 
 var (
-	MessageInflightTime   prometheus.Histogram
-	ReceivedMessageSize   prometheus.Histogram
-	SentMessageSize       prometheus.Histogram
-	MessageProcessingTime prometheus.Histogram
-	BroadcastSentTime     prometheus.Histogram
+	MessageInflightTime   *prometheus.HistogramVec
+	ReceivedMessageSize   *prometheus.HistogramVec
+	SentMessageSize       *prometheus.HistogramVec
+	MessageProcessingTime *prometheus.HistogramVec
+	BroadcastSentTime     *prometheus.HistogramVec
 	CurrentStatus         prometheus.Gauge
 	Errors                prometheus.Counter
 )
@@ -27,45 +27,45 @@ func init() {
 
 func Configure(c Config) {
 
-	MessageInflightTime = promauto.NewHistogram(prometheus.HistogramOpts{
+	MessageInflightTime = promauto.NewHistogramVec(prometheus.HistogramOpts{
 		Namespace: "goomerang",
 		Subsystem: "server",
 		Name:      "received_message_inflight_duration_seconds",
 		Help:      "The time the message spent over the wire till received",
 		Buckets:   c.MessageInflightTimeBuckets,
-	})
+	}, []string{"type"})
 
-	ReceivedMessageSize = promauto.NewHistogram(prometheus.HistogramOpts{
+	ReceivedMessageSize = promauto.NewHistogramVec(prometheus.HistogramOpts{
 		Namespace: "goomerang",
 		Subsystem: "server",
 		Name:      "received_message_size_bytes",
 		Help:      "The size of the received messages in bytes",
 		Buckets:   c.ReceivedMessageSizeBuckets,
-	})
+	}, []string{"type"})
 
-	SentMessageSize = promauto.NewHistogram(prometheus.HistogramOpts{
+	SentMessageSize = promauto.NewHistogramVec(prometheus.HistogramOpts{
 		Namespace: "goomerang",
 		Subsystem: "server",
 		Name:      "sent_message_size_bytes",
 		Help:      "The size of the sent messages in bytes",
 		Buckets:   c.SentMessageSizeBuckets,
-	})
+	}, []string{"type"})
 
-	MessageProcessingTime = promauto.NewHistogram(prometheus.HistogramOpts{
+	MessageProcessingTime = promauto.NewHistogramVec(prometheus.HistogramOpts{
 		Namespace: "goomerang",
 		Subsystem: "server",
 		Name:      "message_processing_duration_seconds",
 		Help:      "The time spent in message handler execution",
 		Buckets:   c.MessageProcessingTimeBuckets,
-	})
+	}, []string{"type"})
 
-	BroadcastSentTime = promauto.NewHistogram(prometheus.HistogramOpts{
+	BroadcastSentTime = promauto.NewHistogramVec(prometheus.HistogramOpts{
 		Namespace: "goomerang",
 		Subsystem: "server",
 		Name:      "message_broadcast_sent_duration_seconds",
 		Help:      "The time spent in a broadcast operation",
 		Buckets:   c.BroadcastSentTimeBuckets,
-	})
+	}, []string{"type"})
 
 	CurrentStatus = promauto.NewGauge(prometheus.GaugeOpts{
 		Namespace: "goomerang",

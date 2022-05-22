@@ -24,6 +24,7 @@ func (s *Sender) Bytes() int {
 
 func (s *Sender) Send(msg *message.Message) (int, error) {
 	w, err := s.sender.Send(msg)
+	s.msg = msg
 	s.bytes = w
 	return w, err
 }

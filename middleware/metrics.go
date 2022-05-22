@@ -19,22 +19,25 @@ func PromHistograms(c PromConfig) (message.Middleware, error) {
 	}
 	return func(h message.Handler) message.Handler {
 		return message.HandlerFunc(func(s message.Sender, msg *message.Message) {
-			c.MessageInflightTime.Observe(time.Since(msg.Metadata.Creation).Seconds())
-			c.ReceivedMessageSize.Observe(float64(msg.Metadata.PayloadSize))
+			c.MessageInflightTime.WithLabelValues(msg.Metadata.Type).Observe(time.Since(msg.Metadata.Creation).Seconds())
+			c.ReceivedMessageSize.WithLabelValues(msg.Metadata.Type).Observe(float64(msg.Metadata.PayloadSize))
+
 			wrappedSender := NewSender(s)
 			start := time.Now()
 			h.Handle(wrappedSender, msg)
-			c.MessageProcessingTime.Observe(float64(time.Since(start)))
-			c.SentMessageSize.Observe(float64(wrappedSender.Bytes()))
+
+			sentMessage := wrappedSender.Msg()
+			c.MessageProcessingTime.WithLabelValues(sentMessage.Metadata.Type).Observe(float64(time.Since(start)))
+			c.SentMessageSize.WithLabelValues(sentMessage.Metadata.Type).Observe(float64(wrappedSender.Bytes()))
 		})
 	}, nil
 }
 
 type PromConfig struct {
-	MessageInflightTime   prometheus.Histogram
-	ReceivedMessageSize   prometheus.Histogram
-	MessageProcessingTime prometheus.Histogram
-	SentMessageSize       prometheus.Histogram
+	MessageInflightTime   *prometheus.HistogramVec
+	ReceivedMessageSize   *prometheus.HistogramVec
+	MessageProcessingTime *prometheus.HistogramVec
+	SentMessageSize       *prometheus.HistogramVec
 }
 
 func (c PromConfig) Validate() error {

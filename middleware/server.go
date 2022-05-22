@@ -2,6 +2,7 @@ package middleware
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"google.golang.org/protobuf/proto"
@@ -45,9 +46,9 @@ func (s *MeteredServer) BroadCast(ctx context.Context, msg *message.Message) (in
 		serverMetrics.Errors.Inc()
 		return 0, 0, err
 	}
-	serverMetrics.BroadcastSentTime.Observe(time.Since(start).Seconds())
+	serverMetrics.BroadcastSentTime.WithLabelValues(msg.Metadata.Type).Observe(time.Since(start).Seconds())
 	for i := 0; i < count; i++ {
-		serverMetrics.SentMessageSize.Observe(float64(payloadSize))
+		serverMetrics.SentMessageSize.WithLabelValues(msg.Metadata.Type).Observe(float64(payloadSize))
 	}
 	return payloadSize, count, err
 }

@@ -46,6 +46,7 @@ func TestMetrics(t *testing.T) {
 			require.NoError(t, err)
 
 			h := message.HandlerFunc(func(s message.Sender, msg *message.Message) {
+				msg = message.New().SetPayload(&testMessages.MessageV1{})
 				_, _ = s.Send(msg)
 			})
 
@@ -54,6 +55,7 @@ func TestMetrics(t *testing.T) {
 				Metadata: &message.Metadata{
 					PayloadSize: 10,
 					Creation:    time.Now().Add(-1 * time.Second),
+					Type:        "goomerang.test.MessageV1",
 				},
 				Payload: &testMessages.MessageV1{},
 			}
@@ -75,22 +77,25 @@ func AssertMetricsHandler(t *testing.T, handler http.Handler, system string) {
 	}
 	body := string(data)
 
-	assert.Contains(t, body, fmt.Sprintf(`goomerang_%s_received_message_inflight_duration_seconds_bucket{le="2.5"} 1`, system))
-	assert.Contains(t, body, fmt.Sprintf(`goomerang_%s_received_message_inflight_duration_seconds_sum 1`, system))
-	assert.Contains(t, body, fmt.Sprintf(`goomerang_%s_received_message_inflight_duration_seconds_count 1`, system))
+	assert.Contains(t, body, fmt.Sprintf(`goomerang_%s_received_message_inflight_duration_seconds_bucket{type="goomerang.test.MessageV1",le="2.5"} 1`, system))
+	assert.Contains(t, body, fmt.Sprintf(`goomerang_%s_received_message_inflight_duration_seconds_sum{type="goomerang.test.MessageV1"} 1`, system))
+	assert.Contains(t, body, fmt.Sprintf(`goomerang_%s_received_message_inflight_duration_seconds_count{type="goomerang.test.MessageV1"} 1`, system))
 
-	assert.Contains(t, body, fmt.Sprintf(`goomerang_%s_received_message_size_bytes_bucket{le="10"} 1`, system))
-	assert.Contains(t, body, fmt.Sprintf(`goomerang_%s_received_message_size_bytes_sum 10`, system))
-	assert.Contains(t, body, fmt.Sprintf(`goomerang_%s_received_message_size_bytes_count 1`, system))
+	assert.Contains(t, body, fmt.Sprintf(`goomerang_%s_received_message_size_bytes_bucket{type="goomerang.test.MessageV1",le="10"} 1`, system))
+	assert.Contains(t, body, fmt.Sprintf(`goomerang_%s_received_message_size_bytes_sum{type="goomerang.test.MessageV1"} 10`, system))
+	assert.Contains(t, body, fmt.Sprintf(`goomerang_%s_received_message_size_bytes_count{type="goomerang.test.MessageV1"} 1`, system))
 
-	assert.Contains(t, body, fmt.Sprintf(`goomerang_%s_sent_message_size_bytes_bucket{le="+Inf"} 1`, system))
-	assert.Contains(t, body, fmt.Sprintf(`goomerang_%s_sent_message_size_bytes_sum 20`, system))
-	assert.Contains(t, body, fmt.Sprintf(`goomerang_%s_sent_message_size_bytes_count 1`, system))
+	assert.Contains(t, body, fmt.Sprintf(`goomerang_%s_sent_message_size_bytes_bucket{type="goomerang.test.MessageV1",le="+Inf"} 1`, system))
+	assert.Contains(t, body, fmt.Sprintf(`goomerang_%s_sent_message_size_bytes_sum{type="goomerang.test.MessageV1"} 20`, system))
+	assert.Contains(t, body, fmt.Sprintf(`goomerang_%s_sent_message_size_bytes_count{type="goomerang.test.MessageV1"} 1`, system))
 }
 
 type fakeSender struct{}
 
-func (f *fakeSender) Send(_ *message.Message) (payloadSize int, err error) {
+func (f *fakeSender) Send(msg *message.Message) (payloadSize int, err error) {
+	msg.Metadata = &message.Metadata{
+		Type: "goomerang.test.MessageV1",
+	}
 	return 20, nil
 }
 

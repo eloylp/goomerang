@@ -41,7 +41,7 @@ func (c *MeteredClient) Send(msg *message.Message) (payloadSize int, err error) 
 		clientMetrics.Errors.Inc()
 		return 0, err
 	}
-	clientMetrics.SentMessageSize.Observe(float64(payloadSize))
+	clientMetrics.SentMessageSize.WithLabelValues(msg.Metadata.Type).Observe(float64(payloadSize))
 	return
 }
 
@@ -52,8 +52,8 @@ func (c *MeteredClient) SendSync(ctx context.Context, msg *message.Message) (pay
 		clientMetrics.Errors.Inc()
 		return 0, nil, err
 	}
-	clientMetrics.SendSyncResponseTime.Observe(time.Since(start).Seconds())
-	clientMetrics.SentMessageSize.Observe(float64(payloadSize))
+	clientMetrics.SendSyncResponseTime.WithLabelValues(msg.Metadata.Type).Observe(time.Since(start).Seconds())
+	clientMetrics.SentMessageSize.WithLabelValues(msg.Metadata.Type).Observe(float64(payloadSize))
 	return
 }
 
