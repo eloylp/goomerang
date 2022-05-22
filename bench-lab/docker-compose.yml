@@ -12,6 +12,8 @@ services:
     environment:
       - LISTEN_ADDR=0.0.0.0:8080
       - PPROF_LISTEN_ADDR=0.0.0.0:6060
+      - METRICS_LISTEN_ADDR=0.0.0.0:9971
+      - MESSAGE_SIZE_BYTES=100000
     expose:
       - 8080 # serving port
       - 9971 # metrics
