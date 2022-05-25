@@ -96,6 +96,32 @@ func AssertMetricsHandler(t *testing.T, handler http.Handler, system string) {
 	assert.Contains(t, body, fmt.Sprintf(`goomerang_%s_message_sent_duration_seconds_count{type="goomerang.test.MessageV1"} 1`, system))
 }
 
+func TestMetricsIfNotSendsMessageBack(t *testing.T) {
+	m, err := middleware.PromHistograms(middleware.PromConfig{
+		MessageInflightTime:   serverMetrics.MessageInflightTime,
+		MessageReceivedSize:   serverMetrics.MessageReceivedSize,
+		MessageProcessingTime: serverMetrics.MessageProcessingTime,
+		MessageSentSize:       serverMetrics.MessageSentSize,
+		MessageSentTime:       serverMetrics.MessageSentTime,
+	})
+	require.NoError(t, err)
+
+	h := message.HandlerFunc(func(s message.Sender, msg *message.Message) {
+		msg = message.New().SetPayload(&testMessages.MessageV1{})
+	})
+	msg := &message.Message{
+		Metadata: &message.Metadata{
+			PayloadSize: 10,
+			Creation:    time.Now().Add(-1 * time.Second),
+			Type:        "goomerang.test.MessageV1",
+		},
+		Payload: &testMessages.MessageV1{},
+	}
+	assert.NotPanics(t, func() {
+		m(h).Handle(&fakeSender{}, msg)
+	})
+}
+
 type fakeSender struct{}
 
 func (f *fakeSender) Send(msg *message.Message) (payloadSize int, err error) {
