@@ -8,6 +8,7 @@ import (
 	"google.golang.org/protobuf/proto"
 
 	"go.eloylp.dev/goomerang/client"
+	"go.eloylp.dev/goomerang/internal/messaging"
 	"go.eloylp.dev/goomerang/message"
 	clientMetrics "go.eloylp.dev/goomerang/metrics/client"
 )
@@ -43,8 +44,9 @@ func (c *MeteredClient) Send(msg *message.Message) (payloadSize int, err error) 
 		clientMetrics.Errors.Inc()
 		return 0, err
 	}
-	clientMetrics.MessageSentTime.WithLabelValues(msg.Metadata.Type).Observe(time.Since(start).Seconds())
-	clientMetrics.MessageSentSize.WithLabelValues(msg.Metadata.Type).Observe(float64(payloadSize))
+	fqdn := messaging.FQDN(msg.Payload)
+	clientMetrics.MessageSentTime.WithLabelValues(fqdn).Observe(time.Since(start).Seconds())
+	clientMetrics.MessageSentSize.WithLabelValues(fqdn).Observe(float64(payloadSize))
 	return
 }
 
@@ -55,8 +57,9 @@ func (c *MeteredClient) SendSync(ctx context.Context, msg *message.Message) (pay
 		clientMetrics.Errors.Inc()
 		return 0, nil, err
 	}
-	clientMetrics.MessageSentSyncResponseTime.WithLabelValues(msg.Metadata.Type).Observe(time.Since(start).Seconds())
-	clientMetrics.MessageSentSize.WithLabelValues(msg.Metadata.Type).Observe(float64(payloadSize))
+	fqdn := messaging.FQDN(msg.Payload)
+	clientMetrics.MessageSentSyncResponseTime.WithLabelValues(fqdn).Observe(time.Since(start).Seconds())
+	clientMetrics.MessageSentSize.WithLabelValues(fqdn).Observe(float64(payloadSize))
 	return
 }
 

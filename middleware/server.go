@@ -7,6 +7,7 @@ import (
 
 	"google.golang.org/protobuf/proto"
 
+	"go.eloylp.dev/goomerang/internal/messaging"
 	"go.eloylp.dev/goomerang/message"
 	serverMetrics "go.eloylp.dev/goomerang/metrics/server"
 	"go.eloylp.dev/goomerang/server"
@@ -47,9 +48,10 @@ func (s *MeteredServer) BroadCast(ctx context.Context, msg *message.Message) (in
 		serverMetrics.Errors.Inc()
 		return 0, 0, err
 	}
-	serverMetrics.MessageBroadcastSentTime.WithLabelValues(msg.Metadata.Type).Observe(time.Since(start).Seconds())
+	fqdn := messaging.FQDN(msg.Payload)
+	serverMetrics.MessageBroadcastSentTime.WithLabelValues(fqdn).Observe(time.Since(start).Seconds())
 	for i := 0; i < count; i++ {
-		serverMetrics.MessageSentSize.WithLabelValues(msg.Metadata.Type).Observe(float64(payloadSize))
+		serverMetrics.MessageSentSize.WithLabelValues(fqdn).Observe(float64(payloadSize))
 	}
 	return payloadSize, count, err
 }
