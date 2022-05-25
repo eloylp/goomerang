@@ -5,6 +5,9 @@ services:
     build:
       dockerfile: Dockerfile
       context: ./server
+      args:
+        - ssh_prv_key=${SSH_PRIV}
+        - ssh_pub_key=${SSH_PUB}
     container_name: server
     depends_on:
       - prometheus
@@ -14,6 +17,7 @@ services:
       - PPROF_LISTEN_ADDR=0.0.0.0:6060
       - METRICS_LISTEN_ADDR=0.0.0.0:9971
       - MESSAGE_SIZE_BYTES=100000
+      - HANDLER_CONCURRENCY=10
     expose:
       - 8080 # serving port
       - 9971 # metrics
@@ -39,13 +43,19 @@ services:
     networks:
       - bench-lab
 
-  client1: &client1
+  client: &client
     build:
       dockerfile: Dockerfile
       context: ./client
+      args:
+        - ssh_prv_key=${SSH_PRIV}
+        - ssh_pub_key=${SSH_PUB}
     environment:
       - PROXY_ADDR=proxy:8081
       - PPROF_LISTEN_ADDR=0.0.0.0:6060
+      - METRICS_LISTEN_ADDR=0.0.0.0:9971
+      - MESSAGE_SIZE_BYTES=100000
+      - HANDLER_CONCURRENCY=10
     depends_on:
       - prometheus
       - grafana
@@ -62,7 +72,7 @@ services:
   #  Just uncomment and replica the following lines:
   #
   #  client2:
-  #    <<: *client1
+  #    <<: *client
 
   prometheus:
     image: prom/prometheus:v2.35.0

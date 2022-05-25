@@ -23,10 +23,11 @@ import (
 )
 
 var (
-	ListenAddr        = os.Getenv("LISTEN_ADDR")
-	PprofListenAddr   = os.Getenv("PPROF_LISTEN_ADDR")
-	MetricsListenAddr = os.Getenv("METRICS_LISTEN_ADDR")
-	MessageSizeBytes  = os.Getenv("MESSAGE_SIZE_BYTES")
+	ListenAddr         = os.Getenv("LISTEN_ADDR")
+	PprofListenAddr    = os.Getenv("PPROF_LISTEN_ADDR")
+	MetricsListenAddr  = os.Getenv("METRICS_LISTEN_ADDR")
+	MessageSizeBytes   = os.Getenv("MESSAGE_SIZE_BYTES")
+	HandlerConcurrency = os.Getenv("HANDLER_CONCURRENCY")
 )
 
 func main() {
@@ -36,9 +37,13 @@ func main() {
 	go func() {
 		logrus.Println(http.ListenAndServe(MetricsListenAddr, promhttp.Handler()))
 	}()
+	concurrency, err := strconv.Atoi(HandlerConcurrency)
+	if err != nil {
+		panic(err)
+	}
 	s, err := server.NewServer(
 		server.WithListenAddr(ListenAddr),
-		server.WithMaxConcurrency(10),
+		server.WithMaxConcurrency(concurrency),
 		server.WithOnStatusChangeHook(middleware.ServerStatusMetricHook),
 		server.WithOnErrorHook(func(err error) {
 			metrics.Errors.Inc()
@@ -46,6 +51,9 @@ func main() {
 		}),
 	)
 	ms := middleware.NewMeteredServer(s)
+	ms.RegisterHandler(&model.Point{}, message.HandlerFunc(func(s message.Sender, msg *message.Message) {
+		logrus.Printf("server: received message : %s \n", msg.Metadata.Type)
+	}))
 	if err != nil {
 		log.Fatal(err)
 	}
