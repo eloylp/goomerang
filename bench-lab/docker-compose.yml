@@ -2,16 +2,15 @@ version: "3.8"
 services:
 
   server:
-    build:
-      dockerfile: Dockerfile
-      context: ./server
-      args:
-        - ssh_prv_key=${SSH_PRIV}
-        - ssh_pub_key=${SSH_PUB}
+    image: golang:1.8-alpine
     container_name: server
     depends_on:
       - prometheus
       - grafana
+    command:
+      - /app/server
+    volumes:
+      - ./server/server:/app/server:z
     environment:
       - LISTEN_ADDR=0.0.0.0:8080
       - PPROF_LISTEN_ADDR=0.0.0.0:6060
@@ -27,10 +26,12 @@ services:
       - bench-lab
 
   proxy:
-    build:
-      dockerfile: Dockerfile
-      context: ./proxy
     container_name: proxy
+    image: golang:1.8-alpine
+    command:
+      - /app/proxy
+    volumes:
+      - ./proxy/proxy:/app/proxy:z
     depends_on:
       - prometheus
       - grafana
@@ -44,12 +45,12 @@ services:
       - bench-lab
 
   client: &client
-    build:
-      dockerfile: Dockerfile
-      context: ./client
-      args:
-        - ssh_prv_key=${SSH_PRIV}
-        - ssh_pub_key=${SSH_PUB}
+    container_name: client
+    image: golang:1.8-alpine
+    command:
+      - /app/client
+    volumes:
+      - ./client/client:/app/client:z
     environment:
       - PROXY_ADDR=proxy:8081
       - PPROF_LISTEN_ADDR=0.0.0.0:6060
