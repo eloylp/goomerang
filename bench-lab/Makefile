@@ -1,6 +1,6 @@
 
 .PHONY: bench-lab
-bench-lab: bench-lab-update
+bench-lab-up: bench-lab-update
 	CGO_ENABLED=0 go build -trimpath -tags timetzdata -o ./server/server server/main.go
 	CGO_ENABLED=0 go build -trimpath -tags timetzdata -o ./proxy/proxy proxy/main.go
 	CGO_ENABLED=0 go build -trimpath -tags timetzdata -o ./client/client client/main.go
@@ -9,6 +9,10 @@ bench-lab: bench-lab-update
 	@echo "Prometheus access at: http://localhost:3000"
 	@echo "Server pprof access at: http://localhost:6060/debug/pprof"
 	@echo "Client pprof access at: http://localhost:6061/debug/pprof"
+
+.PHONY: bench-lab-down
+bench-lab-down:
+	docker-compose down
 
 .PHONY: bench-lab-update
 bench-lab-update:
