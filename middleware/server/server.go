@@ -70,3 +70,7 @@ func (s *MeteredServer) Shutdown(ctx context.Context) (err error) {
 	}
 	return
 }
+
+func StatusMetricHook(status uint32) {
+	serverMetrics.CurrentStatus.Set(float64(status))
+}

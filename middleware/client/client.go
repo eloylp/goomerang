@@ -82,3 +82,7 @@ func (c *MeteredClient) RegisterHandler(msg proto.Message, h message.Handler) {
 func (c *MeteredClient) RegisterMessage(msg proto.Message) {
 	c.c.RegisterMessage(msg)
 }
+
+func StatusMetricHook(status uint32) {
+	clientMetrics.CurrentStatus.Set(float64(status))
+}
