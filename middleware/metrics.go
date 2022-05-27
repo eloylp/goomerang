@@ -24,9 +24,9 @@ func PromHistograms(c PromConfig) (message.Middleware, error) {
 			start := time.Now()
 			h.Handle(wrappedSender, msg)
 
+			c.MessageProcessingTime.WithLabelValues(msg.Metadata.Type).Observe(float64(time.Since(start)))
 			sentMessage := wrappedSender.Msg()
 			if sentMessage != nil {
-				c.MessageProcessingTime.WithLabelValues(sentMessage.Metadata.Type).Observe(float64(time.Since(start)))
 				c.MessageSentSize.WithLabelValues(sentMessage.Metadata.Type).Observe(float64(wrappedSender.Bytes()))
 			}
 		})
