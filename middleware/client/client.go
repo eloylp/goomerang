@@ -1,4 +1,4 @@
-package middleware
+package client
 
 import (
 	"context"
@@ -11,6 +11,7 @@ import (
 	"go.eloylp.dev/goomerang/internal/messaging"
 	"go.eloylp.dev/goomerang/message"
 	clientMetrics "go.eloylp.dev/goomerang/metrics/client"
+	"go.eloylp.dev/goomerang/middleware"
 )
 
 type MeteredClient struct {
@@ -18,7 +19,7 @@ type MeteredClient struct {
 }
 
 func NewMeteredClient(c *client.Client) *MeteredClient {
-	metricsMiddleware, err := PromHistograms(PromConfig{
+	metricsMiddleware, err := middleware.PromHistograms(middleware.PromConfig{
 		MessageInflightTime:   clientMetrics.MessageInflightTime,
 		MessageReceivedSize:   clientMetrics.MessageReceivedSize,
 		MessageProcessingTime: clientMetrics.MessageProcessingTime,
