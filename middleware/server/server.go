@@ -42,19 +42,20 @@ func (s *MeteredServer) RegisterHandler(msg proto.Message, handler message.Handl
 	s.s.RegisterHandler(msg, handler)
 }
 
-func (s *MeteredServer) BroadCast(ctx context.Context, msg *message.Message) (int, int, error) {
+func (s *MeteredServer) BroadCast(ctx context.Context, msg *message.Message) (brResult []server.BroadcastResult, err error) {
 	start := time.Now()
-	payloadSize, count, err := s.s.BroadCast(ctx, msg)
+	brResult, err = s.s.BroadCast(ctx, msg)
 	if err != nil {
 		serverMetrics.Errors.Inc()
-		return 0, 0, err
+		return
 	}
 	fqdn := messaging.FQDN(msg.Payload)
 	serverMetrics.MessageBroadcastSentTime.WithLabelValues(fqdn).Observe(time.Since(start).Seconds())
-	for i := 0; i < count; i++ {
-		serverMetrics.MessageSentSize.WithLabelValues(fqdn).Observe(float64(payloadSize))
+	for i := 0; i < len(brResult); i++ {
+		serverMetrics.MessageSentSize.WithLabelValues(fqdn).Observe(float64(brResult[i].Size))
+		serverMetrics.MessageSentTime.WithLabelValues(fqdn).Observe(brResult[i].Duration.Seconds())
 	}
-	return payloadSize, count, err
+	return
 }
 
 func (s *MeteredServer) Run() (err error) {

@@ -90,7 +90,7 @@ func TestServerSendsCloseToAllClients(t *testing.T) {
 func TestServerCannotSendMessagesIfNotRunning(t *testing.T) {
 	s, run := PrepareServer(t)
 
-	_, _, err := s.BroadCast(defaultCtx, defaultMsg)
+	_, err := s.BroadCast(defaultCtx, defaultMsg)
 	assert.ErrorIs(t, err, server.ErrNotRunning, "should not broadcast messages if not connected")
 
 	run()
@@ -98,7 +98,7 @@ func TestServerCannotSendMessagesIfNotRunning(t *testing.T) {
 	err = s.Shutdown(defaultCtx)
 	require.NoError(t, err)
 
-	_, _, err = s.BroadCast(defaultCtx, defaultMsg)
+	_, err = s.BroadCast(defaultCtx, defaultMsg)
 	assert.ErrorIs(t, err, server.ErrNotRunning, "should not broadcast messages on closed status")
 }
 

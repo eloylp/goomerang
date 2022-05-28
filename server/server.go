@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"sync"
 	"sync/atomic"
+	"time"
 
 	"github.com/gorilla/websocket"
 	"github.com/hashicorp/go-multierror"
@@ -92,15 +93,20 @@ func (s *Server) RegisterHandler(msg proto.Message, handler message.Handler) {
 	s.handlerChainer.AppendHandler(fqdn, handler)
 }
 
-func (s *Server) BroadCast(ctx context.Context, msg *message.Message) (payloadSize int, msgCount int, err error) {
+type BroadcastResult struct {
+	Size     int
+	Duration time.Duration
+}
+
+func (s *Server) BroadCast(ctx context.Context, msg *message.Message) (brResult []BroadcastResult, err error) {
 	if s.status() != ws.StatusRunning {
-		return 0, 0, ErrNotRunning
+		return []BroadcastResult{}, ErrNotRunning
 	}
 	ch := make(chan struct{})
 	go func() {
 		defer close(ch)
 		var data []byte
-		payloadSize, data, err = messaging.Pack(msg)
+		payloadSize, data, err := messaging.Pack(msg)
 		if err != nil {
 			return
 		}
@@ -108,19 +114,24 @@ func (s *Server) BroadCast(ctx context.Context, msg *message.Message) (payloadSi
 		var errCount int
 		s.serverL.RLock()
 		defer s.serverL.RUnlock()
+		brResult = make([]BroadcastResult, 0, len(s.connRegistry))
 		for conn := range s.connRegistry {
 			cs := s.connRegistry[conn]
+			start := time.Now()
 			if err := cs.write(data); err != nil && errCount < 100 {
 				errs = append(errs, fmt.Errorf("broadCast: %v", err))
 				errCount++
 			}
-			msgCount++
+			brResult = append(brResult, BroadcastResult{
+				Size:     payloadSize,
+				Duration: time.Since(start),
+			})
 		}
 		err = multierror.Append(err, errs...).ErrorOrNil()
 	}()
 	select {
 	case <-ctx.Done():
-		return 0, 0, ctx.Err()
+		return []BroadcastResult{}, ctx.Err()
 	case <-ch:
 		return
 	}
