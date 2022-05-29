@@ -52,28 +52,28 @@ func TestOnErrorHook(t *testing.T) {
 	arbiter.RequireHappenedInOrder("HOOK_1_EXECUTED_ERROR", "HOOK_2_EXECUTED_ERROR")
 }
 
-func TestOnHandlerStartHook(t *testing.T) {
+func TestOnWorkerStartHook(t *testing.T) {
 	arbiter := test.NewArbiter(t)
 	hooks := &config.Hooks{}
-	hooks.AppendOnHandlerStart(func(kind string) {
-		arbiter.ItsAFactThat("HOOK_1_EXECUTED_" + kind)
+	hooks.AppendOnWorkerStart(func() {
+		arbiter.ItsAFactThat("HOOK_1_EXECUTED")
 	})
-	hooks.AppendOnHandlerStart(func(kind string) {
-		arbiter.ItsAFactThat("HOOK_2_EXECUTED_" + kind)
+	hooks.AppendOnWorkerStart(func() {
+		arbiter.ItsAFactThat("HOOK_2_EXECUTED")
 	})
-	hooks.ExecOnHandlerStart("company.map.Point")
-	arbiter.RequireHappenedInOrder("HOOK_1_EXECUTED_company.map.Point", "HOOK_2_EXECUTED_company.map.Point")
+	hooks.ExecOnWorkerStart()
+	arbiter.RequireHappenedInOrder("HOOK_1_EXECUTED", "HOOK_2_EXECUTED")
 }
 
-func TestOnHandlerEndHook(t *testing.T) {
+func TestOnWorkerEndHook(t *testing.T) {
 	arbiter := test.NewArbiter(t)
 	hooks := &config.Hooks{}
-	hooks.AppendOnHandlerEnd(func(kind string) {
-		arbiter.ItsAFactThat("HOOK_1_EXECUTED_" + kind)
+	hooks.AppendOnWorkerEnd(func() {
+		arbiter.ItsAFactThat("HOOK_1_EXECUTED")
 	})
-	hooks.AppendOnHandlerEnd(func(kind string) {
-		arbiter.ItsAFactThat("HOOK_2_EXECUTED_" + kind)
+	hooks.AppendOnWorkerEnd(func() {
+		arbiter.ItsAFactThat("HOOK_2_EXECUTED")
 	})
-	hooks.ExecOnHandlerEnd("company.map.Point")
-	arbiter.RequireHappenedInOrder("HOOK_1_EXECUTED_company.map.Point", "HOOK_2_EXECUTED_company.map.Point")
+	hooks.ExecOnWorkerEnd()
+	arbiter.RequireHappenedInOrder("HOOK_1_EXECUTED", "HOOK_2_EXECUTED")
 }

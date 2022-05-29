@@ -13,8 +13,8 @@ var (
 	MessageSentSyncResponseTime *prometheus.HistogramVec
 	MessageSentTime             *prometheus.HistogramVec
 	CurrentStatus               prometheus.Gauge
-	ConcurrentHandlers          *prometheus.GaugeVec
-	ConfigMaxConcurrentHandlers prometheus.Gauge
+	ConcurrentWorkers           prometheus.Gauge
+	ConfigMaxConcurrency        prometheus.Gauge
 	Errors                      prometheus.Counter
 )
 
@@ -86,18 +86,18 @@ func Configure(config Config) {
 		Help:      "The current status of the client (0 => New, 1 => Running, 2=> Closing, 3 => closed)",
 	})
 
-	ConcurrentHandlers = promauto.NewGaugeVec(prometheus.GaugeOpts{
+	ConcurrentWorkers = promauto.NewGauge(prometheus.GaugeOpts{
 		Namespace: "goomerang",
 		Subsystem: "client",
-		Name:      "concurrent_handlers",
-		Help:      "The current number of running handlers in the client",
-	}, []string{"type"})
+		Name:      "concurrent_workers",
+		Help:      "The current number of running workers in the client",
+	})
 
-	ConfigMaxConcurrentHandlers = promauto.NewGauge(prometheus.GaugeOpts{
+	ConfigMaxConcurrency = promauto.NewGauge(prometheus.GaugeOpts{
 		Namespace: "goomerang",
 		Subsystem: "client",
 		Name:      "config_max_concurrency",
-		Help:      "The configured maximum number of parallel handlers in the client",
+		Help:      "The configured maximum number of parallel workers in the client",
 	})
 
 	Errors = promauto.NewCounter(prometheus.CounterOpts{

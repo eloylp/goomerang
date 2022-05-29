@@ -32,8 +32,8 @@ func NewMeteredServer(opts ...server.Option) (*MeteredServer, error) {
 	}
 	monitorOpts := []server.Option{
 		server.WithOnStatusChangeHook(StatusMetricHook),
-		server.WithOnHandlerStart(HandlerStartMetricHook),
-		server.WithOnHandlerEnd(HandlerEndMetricHook),
+		server.WithOnHandlerStart(WorkerStartMetricHook),
+		server.WithOnHandlerEnd(WorkerEndMetricHook),
 		server.WithOnConfiguration(ConfigurationMaxConcurrentMetricHook),
 		server.WithOnErrorHook(func(err error) {
 			serverMetrics.Errors.Inc()
@@ -90,14 +90,14 @@ func StatusMetricHook(status uint32) {
 	serverMetrics.CurrentStatus.Set(float64(status))
 }
 
-func HandlerStartMetricHook(kind string) {
-	serverMetrics.ConcurrentHandlers.WithLabelValues(kind).Inc()
+func WorkerStartMetricHook() {
+	serverMetrics.ConcurrentWorkers.Inc()
 }
 
-func HandlerEndMetricHook(kind string) {
-	serverMetrics.ConcurrentHandlers.WithLabelValues(kind).Dec()
+func WorkerEndMetricHook() {
+	serverMetrics.ConcurrentWorkers.Dec()
 }
 
 func ConfigurationMaxConcurrentMetricHook(cfg *server.Cfg) {
-	serverMetrics.ConfigMaxConcurrentHandlers.Set(float64(cfg.MaxConcurrency))
+	serverMetrics.ConfigMaxConcurrency.Set(float64(cfg.MaxConcurrency))
 }

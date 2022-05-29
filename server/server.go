@@ -227,8 +227,6 @@ func (s *Server) processMessage(cs connSlot, data []byte, sOpts message.Sender) 
 	if err != nil {
 		return err
 	}
-	s.hooks.ExecOnHandlerStart(msg.Metadata.Type)
-	defer s.hooks.ExecOnHandlerEnd(msg.Metadata.Type)
 	if msg.Metadata.IsSync {
 		handler.Handle(&SyncSender{cs, msg.Metadata.UUID}, msg)
 		return nil

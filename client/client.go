@@ -125,7 +125,9 @@ func (c *Client) receiver() {
 				continue
 			}
 			c.workerPool.Add()
+			c.hooks.ExecOnWorkerStart()
 			go func() {
+				defer c.hooks.ExecOnWorkerEnd()
 				defer c.workerPool.Done()
 				if err := c.processMessage(data); err != nil {
 					c.hooks.ExecOnError(err)
@@ -151,8 +153,6 @@ func (c *Client) processMessage(data []byte) (err error) {
 	if err != nil {
 		return err
 	}
-	c.hooks.ExecOnHandlerStart(msg.Metadata.Type)
-	defer c.hooks.ExecOnHandlerEnd(msg.Metadata.Type)
 	if msg.Metadata.IsSync {
 		if err := c.receiveSync(msg); err != nil {
 			return err

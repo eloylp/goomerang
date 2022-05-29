@@ -43,15 +43,15 @@ func WithOnConfiguration(h func(cfg *Cfg)) Option {
 	}
 }
 
-func WithOnHandlerStart(h func(kind string)) Option {
+func WithOnWorkerStart(h func()) Option {
 	return func(cfg *Cfg) {
-		cfg.hooks.AppendOnHandlerStart(h)
+		cfg.hooks.AppendOnWorkerStart(h)
 	}
 }
 
-func WithOnHandlerEnd(h func(kind string)) Option {
+func WithOnWorkerEnd(h func()) Option {
 	return func(cfg *Cfg) {
-		cfg.hooks.AppendOnHandlerEnd(h)
+		cfg.hooks.AppendOnWorkerEnd(h)
 	}
 }
 

@@ -6,16 +6,16 @@ import (
 )
 
 var (
-	MessageInflightTime         *prometheus.HistogramVec
-	MessageReceivedSize         *prometheus.HistogramVec
-	MessageSentSize             *prometheus.HistogramVec
-	MessageSentTime             *prometheus.HistogramVec
-	MessageProcessingTime       *prometheus.HistogramVec
-	MessageBroadcastSentTime    *prometheus.HistogramVec
-	CurrentStatus               prometheus.Gauge
-	ConcurrentHandlers          *prometheus.GaugeVec
-	ConfigMaxConcurrentHandlers prometheus.Gauge
-	Errors                      prometheus.Counter
+	MessageInflightTime      *prometheus.HistogramVec
+	MessageReceivedSize      *prometheus.HistogramVec
+	MessageSentSize          *prometheus.HistogramVec
+	MessageSentTime          *prometheus.HistogramVec
+	MessageProcessingTime    *prometheus.HistogramVec
+	MessageBroadcastSentTime *prometheus.HistogramVec
+	CurrentStatus            prometheus.Gauge
+	ConcurrentWorkers        prometheus.Gauge
+	ConfigMaxConcurrency     prometheus.Gauge
+	Errors                   prometheus.Counter
 )
 
 func init() {
@@ -79,18 +79,18 @@ func Configure(c Config) {
 		Buckets:   c.MessageBroadcastSentTimeBuckets,
 	}, []string{"type"})
 
-	ConcurrentHandlers = promauto.NewGaugeVec(prometheus.GaugeOpts{
+	ConcurrentWorkers = promauto.NewGauge(prometheus.GaugeOpts{
 		Namespace: "goomerang",
 		Subsystem: "server",
-		Name:      "concurrent_handlers",
-		Help:      "The current number of running handlers in the server",
-	}, []string{"type"})
+		Name:      "concurrent_workers",
+		Help:      "The current number of running workers in the server",
+	})
 
-	ConfigMaxConcurrentHandlers = promauto.NewGauge(prometheus.GaugeOpts{
+	ConfigMaxConcurrency = promauto.NewGauge(prometheus.GaugeOpts{
 		Namespace: "goomerang",
 		Subsystem: "server",
 		Name:      "config_max_concurrency",
-		Help:      "The configured maximum number of parallel handlers in the server",
+		Help:      "The configured maximum number of parallel workers in the server",
 	})
 
 	CurrentStatus = promauto.NewGauge(prometheus.GaugeOpts{

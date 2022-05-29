@@ -32,8 +32,8 @@ func NewMeteredClient(opts ...client.Option) (*MeteredClient, error) {
 	}
 	monitorOpts := []client.Option{
 		client.WithOnStatusChangeHook(StatusMetricHook),
-		client.WithOnHandlerStart(HandlerStartMetricHook),
-		client.WithOnHandlerEnd(HandlerEndMetricHook),
+		client.WithOnWorkerStart(WorkerStartMetricHook),
+		client.WithOnWorkerEnd(WorkerEndMetricHook),
 		client.WithOnConfiguration(ConfigurationMaxConcurrentMetricHook),
 		client.WithOnErrorHook(func(err error) {
 			clientMetrics.Errors.Inc()
@@ -101,14 +101,14 @@ func StatusMetricHook(status uint32) {
 	clientMetrics.CurrentStatus.Set(float64(status))
 }
 
-func HandlerStartMetricHook(kind string) {
-	clientMetrics.ConcurrentHandlers.WithLabelValues(kind).Inc()
+func WorkerStartMetricHook() {
+	clientMetrics.ConcurrentWorkers.Inc()
 }
 
-func HandlerEndMetricHook(kind string) {
-	clientMetrics.ConcurrentHandlers.WithLabelValues(kind).Dec()
+func WorkerEndMetricHook() {
+	clientMetrics.ConcurrentWorkers.Dec()
 }
 
 func ConfigurationMaxConcurrentMetricHook(cfg *client.Cfg) {
-	clientMetrics.ConfigMaxConcurrentHandlers.Set(float64(cfg.MaxConcurrency))
+	clientMetrics.ConfigMaxConcurrency.Set(float64(cfg.MaxConcurrency))
 }
