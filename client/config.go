@@ -8,30 +8,30 @@ import (
 	"go.eloylp.dev/goomerang/internal/config"
 )
 
-type Config struct {
-	TargetServer      string
-	Hooks             *config.Hooks
-	TLSConfig         *tls.Config
-	MaxConcurrency    int
-	ReadBufferSize    int
-	WriteBufferSize   int
-	HandshakeTimeout  time.Duration
-	EnableCompression bool
-	HeartbeatInterval time.Duration
+type cfg struct {
+	targetServer      string
+	hooks             *config.Hooks
+	tlsConfig         *tls.Config
+	maxConcurrency    int
+	readBufferSize    int
+	writeBufferSize   int
+	handshakeTimeout  time.Duration
+	enableCompression bool
+	heartbeatInterval time.Duration
 }
 
-func defaultConfig() *Config {
-	cfg := &Config{
-		Hooks:             &config.Hooks{},
-		HeartbeatInterval: 5 * time.Second,
-		MaxConcurrency:    10,
+func defaultConfig() *cfg {
+	cfg := &cfg{
+		hooks:             &config.Hooks{},
+		heartbeatInterval: 5 * time.Second,
+		maxConcurrency:    10,
 	}
 	return cfg
 }
 
-func serverURL(cfg *Config) url.URL {
-	if cfg.TLSConfig != nil {
-		return url.URL{Scheme: "wss", Host: cfg.TargetServer, Path: "/wss"}
+func serverURL(cfg *cfg) url.URL {
+	if cfg.tlsConfig != nil {
+		return url.URL{Scheme: "wss", Host: cfg.targetServer, Path: "/wss"}
 	}
-	return url.URL{Scheme: "ws", Host: cfg.TargetServer, Path: "/ws"}
+	return url.URL{Scheme: "ws", Host: cfg.targetServer, Path: "/ws"}
 }

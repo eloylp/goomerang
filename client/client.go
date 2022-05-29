@@ -44,21 +44,21 @@ func NewClient(opts ...Option) (*Client, error) {
 	for _, o := range opts {
 		o(cfg)
 	}
-	wp, err := conc.NewWorkerPool(cfg.MaxConcurrency)
+	wp, err := conc.NewWorkerPool(cfg.maxConcurrency)
 	if err != nil {
 		return nil, fmt.Errorf("goomerang client: %w", err)
 	}
 	c := &Client{
 		ServerURL:         serverURL(cfg),
-		hooks:             cfg.Hooks,
-		heartbeatInterval: cfg.HeartbeatInterval,
+		hooks:             cfg.hooks,
+		heartbeatInterval: cfg.heartbeatInterval,
 		dialer: &websocket.Dialer{
 			Proxy:             http.ProxyFromEnvironment,
-			TLSClientConfig:   cfg.TLSConfig,
-			HandshakeTimeout:  cfg.HandshakeTimeout,
-			ReadBufferSize:    cfg.ReadBufferSize,
-			WriteBufferSize:   cfg.WriteBufferSize,
-			EnableCompression: cfg.EnableCompression,
+			TLSClientConfig:   cfg.tlsConfig,
+			HandshakeTimeout:  cfg.handshakeTimeout,
+			ReadBufferSize:    cfg.readBufferSize,
+			WriteBufferSize:   cfg.writeBufferSize,
+			EnableCompression: cfg.enableCompression,
 		},
 		writeLock:       &sync.Mutex{},
 		wg:              &sync.WaitGroup{},

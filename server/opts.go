@@ -5,82 +5,82 @@ import (
 	"time"
 )
 
-type Option func(cfg *Config)
+type Option func(cfg *cfg)
 
 func WithListenAddr(addr string) Option {
-	return func(cfg *Config) {
-		cfg.ListenURL = addr
+	return func(cfg *cfg) {
+		cfg.listenURL = addr
 	}
 }
 
 func WithOnStatusChangeHook(h func(status uint32)) Option {
-	return func(cfg *Config) {
-		cfg.Hooks.AppendOnStatusChange(h)
+	return func(cfg *cfg) {
+		cfg.hooks.AppendOnStatusChange(h)
 	}
 }
 
 func WithOnCloseHook(h func()) Option {
-	return func(cfg *Config) {
-		cfg.Hooks.AppendOnClose(h)
+	return func(cfg *cfg) {
+		cfg.hooks.AppendOnClose(h)
 	}
 }
 
 func WithOnErrorHook(h func(err error)) Option {
-	return func(cfg *Config) {
-		cfg.Hooks.AppendOnError(h)
+	return func(cfg *cfg) {
+		cfg.hooks.AppendOnError(h)
 	}
 }
 
 func WithMaxConcurrency(n int) Option {
-	return func(cfg *Config) {
-		cfg.MaxConcurrency = n
+	return func(cfg *cfg) {
+		cfg.maxConcurrency = n
 	}
 }
 
 func WithTLSConfig(tlsConfig *tls.Config) Option {
-	return func(cfg *Config) {
-		cfg.TLSConfig = tlsConfig
+	return func(cfg *cfg) {
+		cfg.tlsConfig = tlsConfig
 	}
 }
 
 func WithReadBufferSize(s int) Option {
-	return func(cfg *Config) {
-		cfg.ReadBufferSize = s
+	return func(cfg *cfg) {
+		cfg.readBufferSize = s
 	}
 }
 
 func WithWriteBufferSize(s int) Option {
-	return func(cfg *Config) {
-		cfg.WriteBufferSize = s
+	return func(cfg *cfg) {
+		cfg.writeBufferSize = s
 	}
 }
 
 func WithHTTPWriteTimeout(t time.Duration) Option {
-	return func(cfg *Config) {
-		cfg.HTTPWriteTimeout = t
+	return func(cfg *cfg) {
+		cfg.httpWriteTimeout = t
 	}
 }
 
 func WithHTTPReadTimeout(t time.Duration) Option {
-	return func(cfg *Config) {
-		cfg.HTTPReadTimeout = t
+	return func(cfg *cfg) {
+		cfg.httpReadTimeout = t
 	}
 }
 
 func WithHTTPReadHeaderTimeout(t time.Duration) Option {
-	return func(cfg *Config) {
-		cfg.HTTPReadHeaderTimeout = t
+	return func(cfg *cfg) {
+		cfg.httpReadHeaderTimeout = t
 	}
 }
 
 func WithHandShakeTimeout(d time.Duration) Option {
-	return func(cfg *Config) {
-		cfg.HandshakeTimeout = d
+	return func(cfg *cfg) {
+		cfg.handshakeTimeout = d
 	}
 }
 
 func WithCompressionEnabled(b bool) Option {
-	return func(cfg *Config) {
-		cfg.EnableCompression = b
+	return func(cfg *cfg) {
+		cfg.enableCompression = b
 	}
 }

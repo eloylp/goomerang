@@ -5,70 +5,70 @@ import (
 	"time"
 )
 
-type Option func(cfg *Config)
+type Option func(cfg *cfg)
 
 func WithTargetServer(addr string) Option {
-	return func(cfg *Config) {
-		cfg.TargetServer = addr
+	return func(cfg *cfg) {
+		cfg.targetServer = addr
 	}
 }
 
 func WithOnStatusChangeHook(h func(status uint32)) Option {
-	return func(cfg *Config) {
-		cfg.Hooks.AppendOnStatusChange(h)
+	return func(cfg *cfg) {
+		cfg.hooks.AppendOnStatusChange(h)
 	}
 }
 
 func WithHeartbeatInterval(interval time.Duration) Option {
-	return func(cfg *Config) {
-		cfg.HeartbeatInterval = interval
+	return func(cfg *cfg) {
+		cfg.heartbeatInterval = interval
 	}
 }
 
 func WithOnCloseHook(h func()) Option {
-	return func(cfg *Config) {
-		cfg.Hooks.AppendOnClose(h)
+	return func(cfg *cfg) {
+		cfg.hooks.AppendOnClose(h)
 	}
 }
 
 func WithOnErrorHook(h func(err error)) Option {
-	return func(cfg *Config) {
-		cfg.Hooks.AppendOnError(h)
+	return func(cfg *cfg) {
+		cfg.hooks.AppendOnError(h)
 	}
 }
 
 func WithMaxConcurrency(n int) Option {
-	return func(cfg *Config) {
-		cfg.MaxConcurrency = n
+	return func(cfg *cfg) {
+		cfg.maxConcurrency = n
 	}
 }
 
 func WithWithTLSConfig(tlsCfg *tls.Config) Option {
-	return func(cfg *Config) {
-		cfg.TLSConfig = tlsCfg
+	return func(cfg *cfg) {
+		cfg.tlsConfig = tlsCfg
 	}
 }
 
 func WithReadBufferSize(s int) Option {
-	return func(cfg *Config) {
-		cfg.ReadBufferSize = s
+	return func(cfg *cfg) {
+		cfg.readBufferSize = s
 	}
 }
 
 func WithWriteBufferSize(s int) Option {
-	return func(cfg *Config) {
-		cfg.WriteBufferSize = s
+	return func(cfg *cfg) {
+		cfg.writeBufferSize = s
 	}
 }
 
 func WithCompressionEnabled(b bool) Option {
-	return func(cfg *Config) {
-		cfg.EnableCompression = b
+	return func(cfg *cfg) {
+		cfg.enableCompression = b
 	}
 }
 
 func WithHandShakeTimeout(d time.Duration) Option {
-	return func(cfg *Config) {
-		cfg.HandshakeTimeout = d
+	return func(cfg *cfg) {
+		cfg.handshakeTimeout = d
 	}
 }

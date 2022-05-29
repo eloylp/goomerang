@@ -31,7 +31,7 @@ type Server struct {
 	handlerChainer  *messaging.HandlerChainer
 	messageRegistry messaging.Registry
 	hooks           *config.Hooks
-	cfg             *Config
+	cfg             *cfg
 	workerPool      *conc.WorkerPool
 	currentStatus   uint32
 	chCloseWait     chan struct{}
@@ -43,17 +43,17 @@ func NewServer(opts ...Option) (*Server, error) {
 	for _, o := range opts {
 		o(cfg)
 	}
-	wp, err := conc.NewWorkerPool(cfg.MaxConcurrency)
+	wp, err := conc.NewWorkerPool(cfg.maxConcurrency)
 	if err != nil {
 		return nil, fmt.Errorf("goomerang server: %w", err)
 	}
 	ctx, cancl := context.WithCancel(context.Background())
 	s := &Server{
 		intServer: &http.Server{
-			TLSConfig:         cfg.TLSConfig,
-			ReadHeaderTimeout: cfg.HTTPReadHeaderTimeout,
-			ReadTimeout:       cfg.HTTPReadTimeout,
-			WriteTimeout:      cfg.HTTPWriteTimeout,
+			TLSConfig:         cfg.tlsConfig,
+			ReadHeaderTimeout: cfg.httpReadHeaderTimeout,
+			ReadTimeout:       cfg.httpReadTimeout,
+			WriteTimeout:      cfg.httpWriteTimeout,
 		},
 		connRegistry: map[*websocket.Conn]connSlot{},
 		serverL:      &sync.RWMutex{},
@@ -61,14 +61,14 @@ func NewServer(opts ...Option) (*Server, error) {
 		ctx:          ctx,
 		cancl:        cancl,
 		wsUpgrader: &websocket.Upgrader{
-			HandshakeTimeout:  cfg.HandshakeTimeout,
-			ReadBufferSize:    cfg.ReadBufferSize,
-			WriteBufferSize:   cfg.WriteBufferSize,
-			EnableCompression: cfg.EnableCompression,
+			HandshakeTimeout:  cfg.handshakeTimeout,
+			ReadBufferSize:    cfg.readBufferSize,
+			WriteBufferSize:   cfg.writeBufferSize,
+			EnableCompression: cfg.enableCompression,
 		},
 		handlerChainer:  messaging.NewHandlerChainer(),
 		messageRegistry: messaging.Registry{},
-		hooks:           cfg.Hooks,
+		hooks:           cfg.hooks,
 		cfg:             cfg,
 		workerPool:      wp,
 		chCloseWait:     make(chan struct{}, 1),
@@ -141,7 +141,7 @@ func (s *Server) Run() (err error) {
 	if s.status() == ws.StatusRunning {
 		return ErrAlreadyRunning
 	}
-	s.listener, err = net.Listen("tcp", s.cfg.ListenURL)
+	s.listener, err = net.Listen("tcp", s.cfg.listenURL)
 	if err != nil {
 		return fmt.Errorf("run: %v", err)
 	}
@@ -149,7 +149,7 @@ func (s *Server) Run() (err error) {
 	s.handlerChainer.PrepareChains()
 	defer s.setStatus(ws.StatusClosed)
 
-	if s.cfg.TLSConfig != nil {
+	if s.cfg.tlsConfig != nil {
 		// The "certFile" and "keyFile" params are with "" values, since the server has the certificates already configured.
 		if err := s.intServer.ServeTLS(s.listener, "", ""); err != http.ErrServerClosed {
 			err = fmt.Errorf("run: %v", err)
