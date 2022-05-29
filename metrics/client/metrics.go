@@ -100,13 +100,6 @@ func Configure(config Config) {
 		Help:      "The configured maximum number of parallel handlers in the client",
 	})
 
-	CurrentStatus = promauto.NewGauge(prometheus.GaugeOpts{
-		Namespace: "goomerang",
-		Subsystem: "client",
-		Name:      "status",
-		Help:      "The current status of the client (0 => New, 1 => Running, 2=> Closing, 3 => closed)",
-	})
-
 	Errors = promauto.NewCounter(prometheus.CounterOpts{
 		Namespace: "goomerang",
 		Subsystem: "client",
