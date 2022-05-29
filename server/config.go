@@ -2,15 +2,14 @@ package server
 
 import (
 	"crypto/tls"
-	"log"
 	"time"
+
+	"go.eloylp.dev/goomerang/internal/config"
 )
 
 type Config struct {
 	ListenURL             string
-	OnStatusChangeHook    func(status uint32)
-	OnErrorHook           func(err error)
-	OnCloseHook           func()
+	Hooks                 *config.Hooks
 	TLSConfig             *tls.Config
 	MaxConcurrency        int
 	ReadBufferSize        int
@@ -24,11 +23,7 @@ type Config struct {
 
 func defaultConfig() *Config {
 	cfg := &Config{
-		OnStatusChangeHook: func(status uint32) {},
-		OnErrorHook: func(err error) {
-			log.Printf("goomerang error: %v", err) //nolint:forbidigo
-		},
-		OnCloseHook:    func() {},
+		Hooks:          &config.Hooks{},
 		MaxConcurrency: 10,
 	}
 	return cfg

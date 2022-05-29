@@ -14,29 +14,28 @@ import (
 	"google.golang.org/protobuf/proto"
 
 	"go.eloylp.dev/goomerang/internal/conc"
+	"go.eloylp.dev/goomerang/internal/config"
 	"go.eloylp.dev/goomerang/internal/messaging"
 	"go.eloylp.dev/goomerang/internal/ws"
 	"go.eloylp.dev/goomerang/message"
 )
 
 type Server struct {
-	intServer          *http.Server
-	connRegistry       map[*websocket.Conn]connSlot
-	serverL            *sync.RWMutex
-	wg                 *sync.WaitGroup
-	ctx                context.Context
-	cancl              context.CancelFunc
-	wsUpgrader         *websocket.Upgrader
-	handlerChainer     *messaging.HandlerChainer
-	messageRegistry    messaging.Registry
-	onStatusChangeHook func(status uint32)
-	onErrorHook        func(err error)
-	onCloseHook        func()
-	cfg                *Config
-	workerPool         *conc.WorkerPool
-	currentStatus      uint32
-	chCloseWait        chan struct{}
-	listener           net.Listener
+	intServer       *http.Server
+	connRegistry    map[*websocket.Conn]connSlot
+	serverL         *sync.RWMutex
+	wg              *sync.WaitGroup
+	ctx             context.Context
+	cancl           context.CancelFunc
+	wsUpgrader      *websocket.Upgrader
+	handlerChainer  *messaging.HandlerChainer
+	messageRegistry messaging.Registry
+	hooks           *config.Hooks
+	cfg             *Config
+	workerPool      *conc.WorkerPool
+	currentStatus   uint32
+	chCloseWait     chan struct{}
+	listener        net.Listener
 }
 
 func NewServer(opts ...Option) (*Server, error) {
@@ -67,14 +66,12 @@ func NewServer(opts ...Option) (*Server, error) {
 			WriteBufferSize:   cfg.WriteBufferSize,
 			EnableCompression: cfg.EnableCompression,
 		},
-		handlerChainer:     messaging.NewHandlerChainer(),
-		messageRegistry:    messaging.Registry{},
-		onStatusChangeHook: cfg.OnStatusChangeHook,
-		onErrorHook:        cfg.OnErrorHook,
-		onCloseHook:        cfg.OnCloseHook,
-		cfg:                cfg,
-		workerPool:         wp,
-		chCloseWait:        make(chan struct{}, 1),
+		handlerChainer:  messaging.NewHandlerChainer(),
+		messageRegistry: messaging.Registry{},
+		hooks:           cfg.Hooks,
+		cfg:             cfg,
+		workerPool:      wp,
+		chCloseWait:     make(chan struct{}, 1),
 	}
 	mux := http.NewServeMux()
 	mux.Handle(endpoint(cfg), mainHandler(s))
@@ -182,7 +179,7 @@ func (s *Server) Shutdown(ctx context.Context) (err error) {
 	ch := make(chan struct{})
 	go func() {
 		defer close(ch)
-		defer s.onCloseHook()
+		defer s.hooks.ExecOnclose()
 		s.broadcastClose()
 		s.cancl() // This will finish all connections, as will cancel all receiver goroutines. See uses.
 		err = s.intServer.Shutdown(ctx)
@@ -206,10 +203,10 @@ func (s *Server) broadcastClose() {
 		go func(cs connSlot) {
 			defer wg.Done()
 			if err := cs.sendCloseSignal(); err != nil {
-				s.onErrorHook(err)
+				s.hooks.ExecOnError(err)
 			}
 			if err := cs.waitReceivedClose(); err != nil {
-				s.onErrorHook(err)
+				s.hooks.ExecOnError(err)
 			}
 		}(cs)
 	}
@@ -240,7 +237,7 @@ func (s *Server) processMessage(cs connSlot, data []byte, sOpts message.Sender) 
 
 func (s *Server) setStatus(status uint32) {
 	atomic.StoreUint32(&s.currentStatus, status)
-	s.onStatusChangeHook(status)
+	s.hooks.ExecOnStatusChange(status)
 }
 
 func (s *Server) status() uint32 {

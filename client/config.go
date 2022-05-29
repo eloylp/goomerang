@@ -4,29 +4,27 @@ import (
 	"crypto/tls"
 	"net/url"
 	"time"
+
+	"go.eloylp.dev/goomerang/internal/config"
 )
 
 type Config struct {
-	TargetServer       string
-	OnStatusChangeHook func(status uint32)
-	OnCloseHook        func()
-	OnErrorHook        func(err error)
-	TLSConfig          *tls.Config
-	MaxConcurrency     int
-	ReadBufferSize     int
-	WriteBufferSize    int
-	HandshakeTimeout   time.Duration
-	EnableCompression  bool
-	HeartbeatInterval  time.Duration
+	TargetServer      string
+	Hooks             *config.Hooks
+	TLSConfig         *tls.Config
+	MaxConcurrency    int
+	ReadBufferSize    int
+	WriteBufferSize   int
+	HandshakeTimeout  time.Duration
+	EnableCompression bool
+	HeartbeatInterval time.Duration
 }
 
 func defaultConfig() *Config {
 	cfg := &Config{
-		OnStatusChangeHook: func(status uint32) {},
-		OnErrorHook:        func(err error) {},
-		OnCloseHook:        func() {},
-		HeartbeatInterval:  5 * time.Second,
-		MaxConcurrency:     10,
+		Hooks:             &config.Hooks{},
+		HeartbeatInterval: 5 * time.Second,
+		MaxConcurrency:    10,
 	}
 	return cfg
 }

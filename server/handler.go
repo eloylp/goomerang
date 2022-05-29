@@ -20,14 +20,14 @@ func mainHandler(s *Server) http.HandlerFunc {
 		}
 		c, err := s.wsUpgrader.Upgrade(w, r, nil)
 		if err != nil {
-			s.onErrorHook(err)
+			s.hooks.ExecOnError(err)
 			return
 		}
 		cs := addConnection(s, c)
 		defer removeConnection(s, cs)
 		defer func() {
 			if err := cs.close(); err != nil {
-				s.onErrorHook(err)
+				s.hooks.ExecOnError(err)
 			}
 		}()
 
@@ -44,27 +44,27 @@ func mainHandler(s *Server) http.HandlerFunc {
 						// the close handshake to the client.
 						if s.status() != ws.StatusClosing {
 							if err := cs.sendCloseSignal(); err != nil {
-								s.onErrorHook(err)
+								s.hooks.ExecOnError(err)
 							}
 						}
 						return // will trigger normal connection close at handler, as channel (ch) will be closed.
 					}
 					if websocket.IsCloseError(err, websocket.CloseAbnormalClosure) {
-						s.onErrorHook(err)
+						s.hooks.ExecOnError(err)
 						return
 					}
-					s.onErrorHook(err)
+					s.hooks.ExecOnError(err)
 					continue
 				}
 				if messageType != websocket.BinaryMessage {
-					s.onErrorHook(fmt.Errorf("server: cannot process websocket frame type %v", messageType))
+					s.hooks.ExecOnError(fmt.Errorf("server: cannot process websocket frame type %v", messageType))
 					continue
 				}
 				s.workerPool.Add() // Will block till more processing slots are available.
 				go func() {
 					defer s.workerPool.Done()
 					if err := s.processMessage(cs, data, &stdSender{cs, s}); err != nil {
-						s.onErrorHook(err)
+						s.hooks.ExecOnError(err)
 					}
 				}()
 			}

@@ -15,7 +15,7 @@ func WithTargetServer(addr string) Option {
 
 func WithOnStatusChangeHook(h func(status uint32)) Option {
 	return func(cfg *Config) {
-		cfg.OnStatusChangeHook = h
+		cfg.Hooks.AppendOnStatusChange(h)
 	}
 }
 
@@ -27,13 +27,13 @@ func WithHeartbeatInterval(interval time.Duration) Option {
 
 func WithOnCloseHook(h func()) Option {
 	return func(cfg *Config) {
-		cfg.OnCloseHook = h
+		cfg.Hooks.AppendOnClose(h)
 	}
 }
 
 func WithOnErrorHook(h func(err error)) Option {
 	return func(cfg *Config) {
-		cfg.OnErrorHook = h
+		cfg.Hooks.AppendOnError(h)
 	}
 }
 

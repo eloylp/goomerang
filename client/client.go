@@ -15,29 +15,28 @@ import (
 	"google.golang.org/protobuf/proto"
 
 	"go.eloylp.dev/goomerang/internal/conc"
+	"go.eloylp.dev/goomerang/internal/config"
 	"go.eloylp.dev/goomerang/internal/messaging"
 	"go.eloylp.dev/goomerang/internal/ws"
 	"go.eloylp.dev/goomerang/message"
 )
 
 type Client struct {
-	ServerURL          url.URL
-	handlerChainer     *messaging.HandlerChainer
-	messageRegistry    messaging.Registry
-	writeLock          *sync.Mutex
-	wg                 *sync.WaitGroup
-	conn               *websocket.Conn
-	dialer             *websocket.Dialer
-	ctx                context.Context
-	cancl              context.CancelFunc
-	onStatusChangeHook func(status uint32)
-	onCloseHook        func()
-	onErrorHook        func(err error)
-	requestRegistry    *requestRegistry
-	workerPool         *conc.WorkerPool
-	currentStatus      uint32
-	chCloseWait        chan struct{}
-	heartbeatInterval  time.Duration
+	ServerURL         url.URL
+	handlerChainer    *messaging.HandlerChainer
+	messageRegistry   messaging.Registry
+	writeLock         *sync.Mutex
+	wg                *sync.WaitGroup
+	conn              *websocket.Conn
+	dialer            *websocket.Dialer
+	ctx               context.Context
+	cancl             context.CancelFunc
+	hooks             *config.Hooks
+	requestRegistry   *requestRegistry
+	workerPool        *conc.WorkerPool
+	currentStatus     uint32
+	chCloseWait       chan struct{}
+	heartbeatInterval time.Duration
 }
 
 func NewClient(opts ...Option) (*Client, error) {
@@ -50,11 +49,9 @@ func NewClient(opts ...Option) (*Client, error) {
 		return nil, fmt.Errorf("goomerang client: %w", err)
 	}
 	c := &Client{
-		ServerURL:          serverURL(cfg),
-		onStatusChangeHook: cfg.OnStatusChangeHook,
-		onCloseHook:        cfg.OnCloseHook,
-		onErrorHook:        cfg.OnErrorHook,
-		heartbeatInterval:  cfg.HeartbeatInterval,
+		ServerURL:         serverURL(cfg),
+		hooks:             cfg.Hooks,
+		heartbeatInterval: cfg.HeartbeatInterval,
 		dialer: &websocket.Dialer{
 			Proxy:             http.ProxyFromEnvironment,
 			TLSClientConfig:   cfg.TLSConfig,
@@ -111,7 +108,7 @@ func (c *Client) receiver() {
 					}
 					go func() {
 						if err := c.close(context.Background(), false); err != nil {
-							c.onErrorHook(err)
+							c.hooks.ExecOnError(err)
 						}
 					}()
 					return
@@ -120,18 +117,18 @@ func (c *Client) receiver() {
 					c.setStatus(ws.StatusClosing)
 					go c.forceClose()
 				}
-				c.onErrorHook(err)
+				c.hooks.ExecOnError(err)
 				return
 			}
 			if messageType != websocket.BinaryMessage {
-				c.onErrorHook(fmt.Errorf("protocol: unexpected message type %v", messageType))
+				c.hooks.ExecOnError(fmt.Errorf("protocol: unexpected message type %v", messageType))
 				continue
 			}
 			c.workerPool.Add()
 			go func() {
 				defer c.workerPool.Done()
 				if err := c.processMessage(data); err != nil {
-					c.onErrorHook(err)
+					c.hooks.ExecOnError(err)
 				}
 			}()
 		}
@@ -142,7 +139,7 @@ func (c *Client) forceClose() {
 	c.cancl()
 	c.wg.Wait()
 	c.setStatus(ws.StatusClosed)
-	c.onCloseHook()
+	c.hooks.ExecOnclose()
 }
 
 func (c *Client) processMessage(data []byte) (err error) {
@@ -223,7 +220,7 @@ func (c *Client) close(ctx context.Context, isInitiator bool) (err error) {
 	ch := make(chan struct{})
 	go func() {
 		defer close(ch)
-		defer c.onCloseHook()
+		defer c.hooks.ExecOnclose()
 		defer c.setStatus(ws.StatusClosed)
 		errList := multierror.Append(nil, nil)
 		if err := c.sendClosingSignal(); err != nil {
@@ -300,7 +297,7 @@ func (c *Client) receiveSync(msg *message.Message) error {
 
 func (c *Client) setStatus(status uint32) {
 	atomic.StoreUint32(&c.currentStatus, status)
-	c.onStatusChangeHook(status)
+	c.hooks.ExecOnStatusChange(status)
 }
 
 func (c *Client) status() uint32 {
@@ -337,7 +334,7 @@ func (c *Client) heartbeat() {
 	for {
 		select {
 		case <-ticker.C:
-			c.onErrorHook(pingFn())
+			c.hooks.ExecOnError(pingFn())
 		case <-c.ctx.Done():
 			return
 		}
