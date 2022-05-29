@@ -6,14 +6,16 @@ import (
 )
 
 var (
-	MessageInflightTime      *prometheus.HistogramVec
-	MessageReceivedSize      *prometheus.HistogramVec
-	MessageSentSize          *prometheus.HistogramVec
-	MessageSentTime          *prometheus.HistogramVec
-	MessageProcessingTime    *prometheus.HistogramVec
-	MessageBroadcastSentTime *prometheus.HistogramVec
-	CurrentStatus            prometheus.Gauge
-	Errors                   prometheus.Counter
+	MessageInflightTime         *prometheus.HistogramVec
+	MessageReceivedSize         *prometheus.HistogramVec
+	MessageSentSize             *prometheus.HistogramVec
+	MessageSentTime             *prometheus.HistogramVec
+	MessageProcessingTime       *prometheus.HistogramVec
+	MessageBroadcastSentTime    *prometheus.HistogramVec
+	CurrentStatus               prometheus.Gauge
+	ConcurrentHandlers          *prometheus.GaugeVec
+	ConfigMaxConcurrentHandlers prometheus.Gauge
+	Errors                      prometheus.Counter
 )
 
 func init() {
@@ -76,6 +78,20 @@ func Configure(c Config) {
 		Help:      "The time spent in a broadcast operation",
 		Buckets:   c.MessageBroadcastSentTimeBuckets,
 	}, []string{"type"})
+
+	ConcurrentHandlers = promauto.NewGaugeVec(prometheus.GaugeOpts{
+		Namespace: "goomerang",
+		Subsystem: "server",
+		Name:      "concurrent_handlers",
+		Help:      "The current number of running handlers in the server",
+	}, []string{"type"})
+
+	ConfigMaxConcurrentHandlers = promauto.NewGauge(prometheus.GaugeOpts{
+		Namespace: "goomerang",
+		Subsystem: "server",
+		Name:      "config_max_concurrency",
+		Help:      "The configured maximum number of parallel handlers in the server",
+	})
 
 	CurrentStatus = promauto.NewGauge(prometheus.GaugeOpts{
 		Namespace: "goomerang",

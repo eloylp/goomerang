@@ -32,6 +32,9 @@ func NewMeteredClient(opts ...client.Option) (*MeteredClient, error) {
 	}
 	monitorOpts := []client.Option{
 		client.WithOnStatusChangeHook(StatusMetricHook),
+		client.WithOnHandlerStart(HandlerStartMetricHook),
+		client.WithOnHandlerEnd(HandlerEndMetricHook),
+		client.WithOnConfiguration(ConfigurationMaxConcurrentMetricHook),
 		client.WithOnErrorHook(func(err error) {
 			clientMetrics.Errors.Inc()
 		}),
@@ -96,4 +99,16 @@ func (c *MeteredClient) RegisterMessage(msg proto.Message) {
 
 func StatusMetricHook(status uint32) {
 	clientMetrics.CurrentStatus.Set(float64(status))
+}
+
+func HandlerStartMetricHook(kind string) {
+	clientMetrics.ConcurrentHandlers.WithLabelValues(kind).Inc()
+}
+
+func HandlerEndMetricHook(kind string) {
+	clientMetrics.ConcurrentHandlers.WithLabelValues(kind).Dec()
+}
+
+func ConfigurationMaxConcurrentMetricHook(cfg *client.Cfg) {
+	clientMetrics.ConfigMaxConcurrentHandlers.Set(float64(cfg.MaxConcurrency))
 }
