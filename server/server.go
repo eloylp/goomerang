@@ -38,7 +38,7 @@ type Server struct {
 	listener        net.Listener
 }
 
-func NewServer(opts ...Option) (*Server, error) {
+func New(opts ...Option) (*Server, error) {
 	cfg := defaultConfig()
 	for _, o := range opts {
 		o(cfg)

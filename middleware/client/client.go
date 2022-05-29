@@ -37,7 +37,7 @@ func NewMeteredClient(opts ...client.Option) (*MeteredClient, error) {
 		}),
 	}
 	mergedOpts := append(monitorOpts, opts...)
-	c, err := client.NewClient(mergedOpts...)
+	c, err := client.New(mergedOpts...)
 	if err != nil {
 		return nil, err
 	}

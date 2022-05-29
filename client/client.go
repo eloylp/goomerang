@@ -39,7 +39,7 @@ type Client struct {
 	heartbeatInterval time.Duration
 }
 
-func NewClient(opts ...Option) (*Client, error) {
+func New(opts ...Option) (*Client, error) {
 	cfg := defaultConfig()
 	for _, o := range opts {
 		o(cfg)

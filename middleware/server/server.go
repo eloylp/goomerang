@@ -37,7 +37,7 @@ func NewMeteredServer(opts ...server.Option) (*MeteredServer, error) {
 		}),
 	}
 	mergedOpts := append(monitorOpts, opts...)
-	s, err := server.NewServer(mergedOpts...)
+	s, err := server.New(mergedOpts...)
 	if err != nil {
 		return nil, err
 	}

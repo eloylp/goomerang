@@ -14,7 +14,7 @@ import (
 
 func TestHandlerRegistrationMoment(t *testing.T) {
 	t.Run("Client CAN register multiple handlers BEFORE run", func(t *testing.T) {
-		c, err := client.NewClient()
+		c, err := client.New()
 		require.NoError(t, err)
 		registerClientDumbHandler(c)
 		registerClientDumbHandler(c)
@@ -31,7 +31,7 @@ func TestHandlerRegistrationMoment(t *testing.T) {
 		})
 	})
 	t.Run("Client CAN register multiple middlewares BEFORE run", func(t *testing.T) {
-		c, err := client.NewClient()
+		c, err := client.New()
 		require.NoError(t, err)
 		registerClientDumbMiddleware(c)
 		registerClientDumbMiddleware(c)
@@ -48,7 +48,7 @@ func TestHandlerRegistrationMoment(t *testing.T) {
 		})
 	})
 	t.Run("Server CAN register multiple handlers BEFORE run", func(t *testing.T) {
-		s, err := server.NewServer()
+		s, err := server.New()
 		require.NoError(t, err)
 		registerServerDumbHandler(s)
 		registerServerDumbHandler(s)
@@ -65,7 +65,7 @@ func TestHandlerRegistrationMoment(t *testing.T) {
 		})
 	})
 	t.Run("Server CAN register multiple middlewares BEFORE run", func(t *testing.T) {
-		s, err := server.NewServer()
+		s, err := server.New()
 		require.NoError(t, err)
 		registerServerDumbMiddleware(s)
 		registerServerDumbMiddleware(s)

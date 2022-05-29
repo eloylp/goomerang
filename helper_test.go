@@ -87,7 +87,7 @@ func waitForServer(t *testing.T, is *server.Server) {
 func configureServer(t *testing.T, opts []server.Option) *server.Server {
 	allOpts := []server.Option{server.WithListenAddr(kernelDefinedPort)}
 	allOpts = append(allOpts, opts...)
-	s, err := server.NewServer(allOpts...)
+	s, err := server.New(allOpts...)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -104,7 +104,7 @@ func PrepareTLSServer(t *testing.T, opts ...server.Option) (s *server.Server, ru
 }
 
 func PrepareClient(t *testing.T, opts ...client.Option) (c *client.Client, connect func()) {
-	c, err := client.NewClient(opts...)
+	c, err := client.New(opts...)
 	if err != nil {
 		t.Fatal(err)
 	}
