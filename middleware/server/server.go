@@ -18,7 +18,7 @@ type MeteredServer struct {
 	s *server.Server
 }
 
-func NewMeteredServer(s *server.Server) *MeteredServer {
+func NewMeteredServer(opts ...server.Option) (*MeteredServer, error) {
 	metricsMiddleware, err := middleware.PromHistograms(middleware.PromConfig{
 		MessageInflightTime:   serverMetrics.MessageInflightTime,
 		MessageReceivedSize:   serverMetrics.MessageReceivedSize,
@@ -30,8 +30,19 @@ func NewMeteredServer(s *server.Server) *MeteredServer {
 		serverMetrics.Errors.Inc()
 		panic(fmt.Errorf("goomerang: connect: instrumentation: %v", err))
 	}
+	monitorOpts := []server.Option{
+		server.WithOnStatusChangeHook(StatusMetricHook),
+		server.WithOnErrorHook(func(err error) {
+			serverMetrics.Errors.Inc()
+		}),
+	}
+	mergedOpts := append(monitorOpts, opts...)
+	s, err := server.NewServer(mergedOpts...)
+	if err != nil {
+		return nil, err
+	}
 	s.RegisterMiddleware(metricsMiddleware)
-	return &MeteredServer{s: s}
+	return &MeteredServer{s: s}, nil
 }
 
 func (s *MeteredServer) RegisterMiddleware(m message.Middleware) {

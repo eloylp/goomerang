@@ -18,7 +18,7 @@ type MeteredClient struct {
 	c *client.Client
 }
 
-func NewMeteredClient(c *client.Client) *MeteredClient {
+func NewMeteredClient(opts ...client.Option) (*MeteredClient, error) {
 	metricsMiddleware, err := middleware.PromHistograms(middleware.PromConfig{
 		MessageInflightTime:   clientMetrics.MessageInflightTime,
 		MessageReceivedSize:   clientMetrics.MessageReceivedSize,
@@ -30,8 +30,19 @@ func NewMeteredClient(c *client.Client) *MeteredClient {
 		clientMetrics.Errors.Inc()
 		panic(fmt.Errorf("goomerang: connect: instrumentation: %v", err))
 	}
+	monitorOpts := []client.Option{
+		client.WithOnStatusChangeHook(StatusMetricHook),
+		client.WithOnErrorHook(func(err error) {
+			clientMetrics.Errors.Inc()
+		}),
+	}
+	mergedOpts := append(monitorOpts, opts...)
+	c, err := client.NewClient(mergedOpts...)
+	if err != nil {
+		return nil, err
+	}
 	c.RegisterMiddleware(metricsMiddleware)
-	return &MeteredClient{c: c}
+	return &MeteredClient{c: c}, nil
 }
 
 func (c *MeteredClient) Connect(ctx context.Context) error {
