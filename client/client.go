@@ -15,7 +15,6 @@ import (
 	"google.golang.org/protobuf/proto"
 
 	"go.eloylp.dev/goomerang/internal/conc"
-	"go.eloylp.dev/goomerang/internal/config"
 	"go.eloylp.dev/goomerang/internal/messaging"
 	"go.eloylp.dev/goomerang/internal/ws"
 	"go.eloylp.dev/goomerang/message"
@@ -31,7 +30,7 @@ type Client struct {
 	dialer            *websocket.Dialer
 	ctx               context.Context
 	cancl             context.CancelFunc
-	hooks             *config.Hooks
+	hooks             *hooks
 	requestRegistry   *requestRegistry
 	workerPool        *conc.WorkerPool
 	currentStatus     uint32
@@ -44,21 +43,21 @@ func New(opts ...Option) (*Client, error) {
 	for _, o := range opts {
 		o(cfg)
 	}
-	wp, err := conc.NewWorkerPool(cfg.maxConcurrency)
+	wp, err := conc.NewWorkerPool(cfg.MaxConcurrency)
 	if err != nil {
 		return nil, fmt.Errorf("goomerang client: %w", err)
 	}
 	c := &Client{
 		ServerURL:         serverURL(cfg),
 		hooks:             cfg.hooks,
-		heartbeatInterval: cfg.heartbeatInterval,
+		heartbeatInterval: cfg.HeartbeatInterval,
 		dialer: &websocket.Dialer{
 			Proxy:             http.ProxyFromEnvironment,
-			TLSClientConfig:   cfg.tlsConfig,
-			HandshakeTimeout:  cfg.handshakeTimeout,
-			ReadBufferSize:    cfg.readBufferSize,
-			WriteBufferSize:   cfg.writeBufferSize,
-			EnableCompression: cfg.enableCompression,
+			TLSClientConfig:   cfg.TLSConfig,
+			HandshakeTimeout:  cfg.HandshakeTimeout,
+			ReadBufferSize:    cfg.ReadBufferSize,
+			WriteBufferSize:   cfg.WriteBufferSize,
+			EnableCompression: cfg.EnableCompression,
 		},
 		writeLock:       &sync.Mutex{},
 		wg:              &sync.WaitGroup{},
@@ -68,6 +67,7 @@ func New(opts ...Option) (*Client, error) {
 		workerPool:      wp,
 		chCloseWait:     make(chan struct{}, 1),
 	}
+	c.hooks.ExecOnConfiguration(cfg)
 	c.setStatus(ws.StatusNew)
 	return c, nil
 }
@@ -151,6 +151,8 @@ func (c *Client) processMessage(data []byte) (err error) {
 	if err != nil {
 		return err
 	}
+	c.hooks.ExecOnHandlerStart(msg.Metadata.Type)
+	defer c.hooks.ExecOnHandlerEnd(msg.Metadata.Type)
 	if msg.Metadata.IsSync {
 		if err := c.receiveSync(msg); err != nil {
 			return err

@@ -14,7 +14,6 @@ import (
 	"google.golang.org/protobuf/proto"
 
 	"go.eloylp.dev/goomerang/internal/conc"
-	"go.eloylp.dev/goomerang/internal/config"
 	"go.eloylp.dev/goomerang/internal/messaging"
 	"go.eloylp.dev/goomerang/internal/ws"
 	"go.eloylp.dev/goomerang/message"
@@ -30,8 +29,8 @@ type Server struct {
 	wsUpgrader      *websocket.Upgrader
 	handlerChainer  *messaging.HandlerChainer
 	messageRegistry messaging.Registry
-	hooks           *config.Hooks
-	cfg             *cfg
+	hooks           *hooks
+	cfg             *Cfg
 	workerPool      *conc.WorkerPool
 	currentStatus   uint32
 	chCloseWait     chan struct{}
@@ -43,17 +42,17 @@ func New(opts ...Option) (*Server, error) {
 	for _, o := range opts {
 		o(cfg)
 	}
-	wp, err := conc.NewWorkerPool(cfg.maxConcurrency)
+	wp, err := conc.NewWorkerPool(cfg.MaxConcurrency)
 	if err != nil {
 		return nil, fmt.Errorf("goomerang server: %w", err)
 	}
 	ctx, cancl := context.WithCancel(context.Background())
 	s := &Server{
 		intServer: &http.Server{
-			TLSConfig:         cfg.tlsConfig,
-			ReadHeaderTimeout: cfg.httpReadHeaderTimeout,
-			ReadTimeout:       cfg.httpReadTimeout,
-			WriteTimeout:      cfg.httpWriteTimeout,
+			TLSConfig:         cfg.TLSConfig,
+			ReadHeaderTimeout: cfg.HTTPReadHeaderTimeout,
+			ReadTimeout:       cfg.HTTPReadTimeout,
+			WriteTimeout:      cfg.HTTPWriteTimeout,
 		},
 		connRegistry: map[*websocket.Conn]connSlot{},
 		serverL:      &sync.RWMutex{},
@@ -61,10 +60,10 @@ func New(opts ...Option) (*Server, error) {
 		ctx:          ctx,
 		cancl:        cancl,
 		wsUpgrader: &websocket.Upgrader{
-			HandshakeTimeout:  cfg.handshakeTimeout,
-			ReadBufferSize:    cfg.readBufferSize,
-			WriteBufferSize:   cfg.writeBufferSize,
-			EnableCompression: cfg.enableCompression,
+			HandshakeTimeout:  cfg.HandshakeTimeout,
+			ReadBufferSize:    cfg.ReadBufferSize,
+			WriteBufferSize:   cfg.WriteBufferSize,
+			EnableCompression: cfg.EnableCompression,
 		},
 		handlerChainer:  messaging.NewHandlerChainer(),
 		messageRegistry: messaging.Registry{},
@@ -76,6 +75,7 @@ func New(opts ...Option) (*Server, error) {
 	mux := http.NewServeMux()
 	mux.Handle(endpoint(cfg), mainHandler(s))
 	s.intServer.Handler = mux
+	s.hooks.ExecOnConfiguration(cfg)
 	s.setStatus(ws.StatusNew)
 	return s, nil
 }
@@ -141,7 +141,7 @@ func (s *Server) Run() (err error) {
 	if s.status() == ws.StatusRunning {
 		return ErrAlreadyRunning
 	}
-	s.listener, err = net.Listen("tcp", s.cfg.listenURL)
+	s.listener, err = net.Listen("tcp", s.cfg.ListenURL)
 	if err != nil {
 		return fmt.Errorf("run: %v", err)
 	}
@@ -149,7 +149,7 @@ func (s *Server) Run() (err error) {
 	s.handlerChainer.PrepareChains()
 	defer s.setStatus(ws.StatusClosed)
 
-	if s.cfg.tlsConfig != nil {
+	if s.cfg.TLSConfig != nil {
 		// The "certFile" and "keyFile" params are with "" values, since the server has the certificates already configured.
 		if err := s.intServer.ServeTLS(s.listener, "", ""); err != http.ErrServerClosed {
 			err = fmt.Errorf("run: %v", err)
@@ -227,6 +227,8 @@ func (s *Server) processMessage(cs connSlot, data []byte, sOpts message.Sender) 
 	if err != nil {
 		return err
 	}
+	s.hooks.ExecOnHandlerStart(msg.Metadata.Type)
+	defer s.hooks.ExecOnHandlerEnd(msg.Metadata.Type)
 	if msg.Metadata.IsSync {
 		handler.Handle(&SyncSender{cs, msg.Metadata.UUID}, msg)
 		return nil

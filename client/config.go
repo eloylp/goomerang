@@ -4,34 +4,32 @@ import (
 	"crypto/tls"
 	"net/url"
 	"time"
-
-	"go.eloylp.dev/goomerang/internal/config"
 )
 
-type cfg struct {
-	targetServer      string
-	hooks             *config.Hooks
-	tlsConfig         *tls.Config
-	maxConcurrency    int
-	readBufferSize    int
-	writeBufferSize   int
-	handshakeTimeout  time.Duration
-	enableCompression bool
-	heartbeatInterval time.Duration
+type Cfg struct {
+	TargetServer      string
+	hooks             *hooks
+	TLSConfig         *tls.Config
+	MaxConcurrency    int
+	ReadBufferSize    int
+	WriteBufferSize   int
+	HandshakeTimeout  time.Duration
+	EnableCompression bool
+	HeartbeatInterval time.Duration
 }
 
-func defaultConfig() *cfg {
-	cfg := &cfg{
-		hooks:             &config.Hooks{},
-		heartbeatInterval: 5 * time.Second,
-		maxConcurrency:    10,
+func defaultConfig() *Cfg {
+	cfg := &Cfg{
+		hooks:             &hooks{},
+		HeartbeatInterval: 5 * time.Second,
+		MaxConcurrency:    10,
 	}
 	return cfg
 }
 
-func serverURL(cfg *cfg) url.URL {
-	if cfg.tlsConfig != nil {
-		return url.URL{Scheme: "wss", Host: cfg.targetServer, Path: "/wss"}
+func serverURL(cfg *Cfg) url.URL {
+	if cfg.TLSConfig != nil {
+		return url.URL{Scheme: "wss", Host: cfg.TargetServer, Path: "/wss"}
 	}
-	return url.URL{Scheme: "ws", Host: cfg.targetServer, Path: "/ws"}
+	return url.URL{Scheme: "ws", Host: cfg.TargetServer, Path: "/ws"}
 }
