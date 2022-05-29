@@ -51,3 +51,29 @@ func TestOnErrorHook(t *testing.T) {
 	hooks.ExecOnError(err)
 	arbiter.RequireHappenedInOrder("HOOK_1_EXECUTED_ERROR", "HOOK_2_EXECUTED_ERROR")
 }
+
+func TestOnHandlerStartHook(t *testing.T) {
+	arbiter := test.NewArbiter(t)
+	hooks := &config.Hooks{}
+	hooks.AppendOnHandlerStart(func(kind string) {
+		arbiter.ItsAFactThat("HOOK_1_EXECUTED_" + kind)
+	})
+	hooks.AppendOnHandlerStart(func(kind string) {
+		arbiter.ItsAFactThat("HOOK_2_EXECUTED_" + kind)
+	})
+	hooks.ExecOnHandlerStart("company.map.Point")
+	arbiter.RequireHappenedInOrder("HOOK_1_EXECUTED_company.map.Point", "HOOK_2_EXECUTED_company.map.Point")
+}
+
+func TestOnHandlerEndHook(t *testing.T) {
+	arbiter := test.NewArbiter(t)
+	hooks := &config.Hooks{}
+	hooks.AppendOnHandlerEnd(func(kind string) {
+		arbiter.ItsAFactThat("HOOK_1_EXECUTED_" + kind)
+	})
+	hooks.AppendOnHandlerEnd(func(kind string) {
+		arbiter.ItsAFactThat("HOOK_2_EXECUTED_" + kind)
+	})
+	hooks.ExecOnHandlerEnd("company.map.Point")
+	arbiter.RequireHappenedInOrder("HOOK_1_EXECUTED_company.map.Point", "HOOK_2_EXECUTED_company.map.Point")
+}
