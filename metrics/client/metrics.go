@@ -16,13 +16,14 @@ var (
 	ConcurrentWorkers           prometheus.Gauge
 	ConfigMaxConcurrency        prometheus.Gauge
 	Errors                      prometheus.Counter
+	defBucketsForSizeBytes      = []float64{10, 20, 40, 80, 160, 320, 640, 1280, 2560, 5120, 10240, 50000}
 )
 
 func init() {
 	Configure(Config{
 		MessageInflightTimeBuckets:   prometheus.DefBuckets,
-		ReceivedMessageSizeBuckets:   prometheus.DefBuckets,
-		SentMessageSizeBuckets:       prometheus.DefBuckets,
+		ReceivedMessageSizeBuckets:   defBucketsForSizeBytes,
+		SentMessageSizeBuckets:       defBucketsForSizeBytes,
 		MessageProcessingTimeBuckets: prometheus.DefBuckets,
 		SendSyncResponseTimeBuckets:  prometheus.DefBuckets,
 		SendTimeBuckets:              prometheus.DefBuckets,
