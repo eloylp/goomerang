@@ -32,7 +32,7 @@ func TestRoundTrip(t *testing.T) {
 	s, run := PrepareServer(t)
 	defer s.Shutdown(defaultCtx)
 
-	s.RegisterHandler(&testMessages.MessageV1{}, message.HandlerFunc(func(s message.Sender, msg *message.Message) {
+	s.RegisterHandler(defaultMsg.Payload, message.HandlerFunc(func(s message.Sender, msg *message.Message) {
 		_ = msg.Payload.(*testMessages.MessageV1)
 		if _, err := s.Send(defaultMsg); err != nil {
 			arbiter.ErrorHappened(err)
@@ -43,7 +43,7 @@ func TestRoundTrip(t *testing.T) {
 	c, connect := PrepareClient(t, client.WithTargetServer(s.Addr()))
 	defer c.Close(defaultCtx)
 
-	c.RegisterHandler(&testMessages.MessageV1{}, message.HandlerFunc(func(c message.Sender, msg *message.Message) {
+	c.RegisterHandler(defaultMsg.Payload, message.HandlerFunc(func(c message.Sender, msg *message.Message) {
 		_ = msg.Payload.(*testMessages.MessageV1)
 		arbiter.ItsAFactThat("CLIENT_RECEIVED_REPLY")
 	}))
@@ -66,7 +66,7 @@ func TestSecuredRoundTrip(t *testing.T) {
 	}))
 
 	defer s.Shutdown(defaultCtx)
-	msg := &testMessages.MessageV1{}
+	msg := defaultMsg.Payload
 
 	s.RegisterHandler(msg, message.HandlerFunc(func(s message.Sender, msg *message.Message) {
 		_ = msg.Payload.(*testMessages.MessageV1)
@@ -108,7 +108,7 @@ func TestMiddlewares(t *testing.T) {
 			h.Handle(s, msg)
 		})
 	})
-	s.RegisterHandler(&testMessages.MessageV1{}, message.HandlerFunc(func(s message.Sender, msg *message.Message) {
+	s.RegisterHandler(defaultMsg.Payload, message.HandlerFunc(func(s message.Sender, msg *message.Message) {
 		arbiter.ItsAFactThat("SERVER_HANDLER_EXECUTED")
 		if _, err := s.Send(&message.Message{
 			Payload: msg.Payload,
@@ -127,7 +127,7 @@ func TestMiddlewares(t *testing.T) {
 		})
 	})
 
-	c.RegisterHandler(&testMessages.MessageV1{}, message.HandlerFunc(func(c message.Sender, msg *message.Message) {
+	c.RegisterHandler(defaultMsg.Payload, message.HandlerFunc(func(c message.Sender, msg *message.Message) {
 		arbiter.ItsAFactThat("CLIENT_RECEIVED_REPLY")
 	}))
 	connect()
@@ -147,7 +147,7 @@ func TestHeadersAreSent(t *testing.T) {
 	s, run := PrepareServer(t)
 	defer s.Shutdown(defaultCtx)
 
-	m := &testMessages.MessageV1{}
+	m := defaultMsg.Payload
 	s.RegisterHandler(m, message.HandlerFunc(func(s message.Sender, msg *message.Message) {
 		if msg.Header.Get("h1") == "v1" { //nolint: goconst
 			arbiter.ItsAFactThat("SERVER_RECEIVED_MSG_HEADERS")

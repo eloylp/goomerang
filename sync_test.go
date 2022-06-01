@@ -11,12 +11,12 @@ import (
 	"go.eloylp.dev/goomerang/message"
 )
 
-func TestSync(t *testing.T) {
+func TestSendSync(t *testing.T) {
 	arbiter := test.NewArbiter(t)
 	s, run := PrepareServer(t)
 	defer s.Shutdown(defaultCtx)
 
-	s.RegisterHandler(&testMessages.MessageV1{}, message.HandlerFunc(func(s message.Sender, msg *message.Message) {
+	s.RegisterHandler(defaultMsg.Payload, message.HandlerFunc(func(s message.Sender, msg *message.Message) {
 		m := message.New().SetPayload(&testMessages.MessageV1{Message: "pong !"})
 		if _, err := s.Send(m); err != nil {
 			arbiter.ErrorHappened(err)
@@ -27,7 +27,7 @@ func TestSync(t *testing.T) {
 	connect()
 	defer c.Close(defaultCtx)
 
-	c.RegisterMessage(&testMessages.MessageV1{})
+	c.RegisterMessage(defaultMsg.Payload)
 
 	msg := message.New().SetPayload(&testMessages.MessageV1{Message: "ping"})
 
