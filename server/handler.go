@@ -64,7 +64,7 @@ func mainHandler(s *Server) http.HandlerFunc {
 					if err := s.processMessage(cs, data, &stdSender{cs, s}); err != nil {
 						s.hooks.ExecOnError(err)
 					}
-					return
+					continue
 				}
 				s.workerPool.Add() // Will block till more processing slots are available.
 				s.hooks.ExecOnWorkerStart()

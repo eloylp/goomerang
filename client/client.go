@@ -130,7 +130,7 @@ func (c *Client) receiver() {
 				if err := c.processMessage(data); err != nil {
 					c.hooks.ExecOnError(err)
 				}
-				return
+				continue
 			}
 			c.workerPool.Add()
 			c.hooks.ExecOnWorkerStart()
