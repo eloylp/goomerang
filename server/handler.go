@@ -60,6 +60,12 @@ func mainHandler(s *Server) http.HandlerFunc {
 					s.hooks.ExecOnError(fmt.Errorf("server: cannot process websocket frame type %v", messageType))
 					continue
 				}
+				if s.cfg.MaxConcurrency <= 1 {
+					if err := s.processMessage(cs, data, &stdSender{cs, s}); err != nil {
+						s.hooks.ExecOnError(err)
+					}
+					return
+				}
 				s.workerPool.Add() // Will block till more processing slots are available.
 				s.hooks.ExecOnWorkerStart()
 				go func() {

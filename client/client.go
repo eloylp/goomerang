@@ -21,6 +21,7 @@ import (
 )
 
 type Client struct {
+	cfg               *Cfg
 	ServerURL         url.URL
 	handlerChainer    *messaging.HandlerChainer
 	messageRegistry   messaging.Registry
@@ -49,6 +50,7 @@ func New(opts ...Option) (*Client, error) {
 	}
 	c := &Client{
 		ServerURL:         serverURL(cfg),
+		cfg:               cfg,
 		hooks:             cfg.hooks,
 		heartbeatInterval: cfg.HeartbeatInterval,
 		dialer: &websocket.Dialer{
@@ -123,6 +125,12 @@ func (c *Client) receiver() {
 			if messageType != websocket.BinaryMessage {
 				c.hooks.ExecOnError(fmt.Errorf("protocol: unexpected message type %v", messageType))
 				continue
+			}
+			if c.cfg.MaxConcurrency <= 1 {
+				if err := c.processMessage(data); err != nil {
+					c.hooks.ExecOnError(err)
+				}
+				return
 			}
 			c.workerPool.Add()
 			c.hooks.ExecOnWorkerStart()

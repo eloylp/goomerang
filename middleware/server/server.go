@@ -32,8 +32,8 @@ func NewMeteredServer(opts ...server.Option) (*MeteredServer, error) {
 	}
 	monitorOpts := []server.Option{
 		server.WithOnStatusChangeHook(StatusMetricHook),
-		server.WithOnHandlerStart(WorkerStartMetricHook),
-		server.WithOnHandlerEnd(WorkerEndMetricHook),
+		server.WithOnWorkerStart(WorkerStartMetricHook),
+		server.WithOnWorkerEnd(WorkerEndMetricHook),
 		server.WithOnConfiguration(ConfigurationMaxConcurrentMetricHook),
 		server.WithOnErrorHook(func(err error) {
 			serverMetrics.Errors.Inc()

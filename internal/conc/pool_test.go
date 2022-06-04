@@ -31,6 +31,6 @@ func TestWorkerPool(t *testing.T) {
 }
 
 func TestNewWorkerPool(t *testing.T) {
-	_, err := conc.NewWorkerPool(0)
-	assert.EqualError(t, err, "workerPool: min concurrency should be 1")
+	_, err := conc.NewWorkerPool(-1)
+	assert.EqualError(t, err, "workerPool: min concurrency should be 0")
 }

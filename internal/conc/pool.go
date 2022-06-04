@@ -25,8 +25,8 @@ func (p *WorkerPool) Wait() {
 }
 
 func NewWorkerPool(max int) (*WorkerPool, error) {
-	if max < 1 {
-		return nil, errors.New("workerPool: min concurrency should be 1")
+	if max < 0 {
+		return nil, errors.New("workerPool: min concurrency should be 0")
 	}
 	return &WorkerPool{
 		ch: make(chan struct{}, max),
