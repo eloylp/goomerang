@@ -74,7 +74,7 @@ func (a *Arbiter) RequireHappenedInOrder(events ...string) *Arbiter {
 func (a *Arbiter) RequireHappenedTimes(event string, expectedCount int) *Arbiter {
 	var count int
 	var ok bool
-	require.Eventuallyf(a.t, func() bool {
+	assert.Eventuallyf(a.t, func() bool {
 		a.L.RLock()
 		defer a.L.RUnlock()
 		count, ok = a.evCount[event]
@@ -83,7 +83,7 @@ func (a *Arbiter) RequireHappenedTimes(event string, expectedCount int) *Arbiter
 		}
 		return count == expectedCount
 	}, time.Second, time.Millisecond, "event %s not happened", event)
-	require.Lenf(a.t, count, expectedCount, "event %s expected to happen %v times. Got %v", event, expectedCount, count)
+	require.Equal(a.t, count, expectedCount, "event %s expected to happen %v times. Got %v", event, expectedCount, count)
 	return a
 }
 
