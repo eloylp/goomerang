@@ -15,8 +15,10 @@ import (
 	kitTest "go.eloylp.dev/kit/test"
 
 	"go.eloylp.dev/goomerang/client"
+	testMessages "go.eloylp.dev/goomerang/internal/messaging/test"
 	"go.eloylp.dev/goomerang/internal/test"
 	"go.eloylp.dev/goomerang/internal/ws"
+	"go.eloylp.dev/goomerang/message"
 	"go.eloylp.dev/goomerang/server"
 )
 
@@ -28,6 +30,15 @@ const (
 var (
 	proxyServer *toxiproxy.ApiServer
 	proxyClient *toxiClient.Client
+	defaultCtx  = context.Background()
+	defaultMsg  = message.New().
+			SetPayload(&testMessages.MessageV1{
+			Message: "a message!",
+		})
+	echoHandler = message.HandlerFunc(func(s message.Sender, msg *message.Message) {
+		s.Send(msg)
+	})
+	nilHandler = message.HandlerFunc(func(s message.Sender, msg *message.Message) {})
 )
 
 func init() {

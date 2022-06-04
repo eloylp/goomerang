@@ -1,7 +1,6 @@
 package goomerang_test
 
 import (
-	"context"
 	"crypto/tls"
 	"crypto/x509"
 	"testing"
@@ -15,17 +14,6 @@ import (
 	"go.eloylp.dev/goomerang/message"
 	"go.eloylp.dev/goomerang/server"
 )
-
-var defaultCtx = context.Background()
-
-var defaultMsg = message.New().
-	SetPayload(&testMessages.MessageV1{
-		Message: "a message!",
-	})
-
-var echoHandler = message.HandlerFunc(func(s message.Sender, msg *message.Message) {
-	s.Send(msg)
-})
 
 func TestRoundTrip(t *testing.T) {
 	arbiter := test.NewArbiter(t)
