@@ -119,12 +119,14 @@ func (a *Arbiter) RequireError(errMsg string) {
 }
 
 func (a *Arbiter) RequireErrorIs(err error) {
-	a.L.RLock()
-	defer a.L.RUnlock()
-	for i := range a.errors {
-		if errors.Is(a.errors[i], err) {
-			return
+	require.Eventuallyf(a.t, func() bool {
+		a.L.RLock()
+		defer a.L.RUnlock()
+		for i := range a.errors {
+			if errors.Is(a.errors[i], err) {
+				return true
+			}
 		}
-	}
-	a.t.Errorf("expected error: %q : not found in chain, found: %q", err, a.errors)
+		return false
+	}, time.Second, time.Millisecond, "expected error: %q : not found in chain, found: %q", err, a.errors)
 }
