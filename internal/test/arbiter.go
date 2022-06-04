@@ -130,3 +130,11 @@ func (a *Arbiter) RequireErrorIs(err error) {
 		return false
 	}, time.Second, time.Millisecond, "expected error: %q : not found in chain, found: %q", err, a.errors)
 }
+
+func (a *Arbiter) RequireNoEvents() {
+	require.Eventuallyf(a.t, func() bool {
+		a.L.RLock()
+		defer a.L.RUnlock()
+		return len(a.evSeries) == 0
+	}, time.Second, time.Millisecond, "no events expected, but got %v", len(a.evSeries))
+}
