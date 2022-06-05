@@ -16,7 +16,7 @@ services:
       - PPROF_LISTEN_ADDR=0.0.0.0:6060
       - METRICS_LISTEN_ADDR=0.0.0.0:9971
       - MESSAGE_SIZE_BYTES=1000
-      - HANDLER_CONCURRENCY=3
+      - HANDLER_CONCURRENCY=200
     expose:
       - 8080 # serving port
       - 9971 # metrics
@@ -56,7 +56,7 @@ services:
       - PPROF_LISTEN_ADDR=0.0.0.0:6060
       - METRICS_LISTEN_ADDR=0.0.0.0:9971
       - MESSAGE_SIZE_BYTES=1000
-      - HANDLER_CONCURRENCY=3
+      - HANDLER_CONCURRENCY=200
     depends_on:
       - prometheus
       - grafana

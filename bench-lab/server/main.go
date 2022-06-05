@@ -9,6 +9,7 @@ import (
 	"os/signal"
 	"strconv"
 	"syscall"
+	"time"
 
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/sirupsen/logrus"
@@ -48,7 +49,7 @@ func main() {
 		}),
 	)
 	ms.RegisterHandler(&model.Point{}, message.HandlerFunc(func(s message.Sender, msg *message.Message) {
-		//time.Sleep(30 * time.Millisecond)
+		time.Sleep(20 * time.Millisecond)
 		//logrus.Printf("server: received message : %s \n", msg.Metadata.Type)
 	}))
 	if err != nil {

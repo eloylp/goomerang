@@ -25,7 +25,7 @@ import (
 var (
 	PprofListenAddr    = os.Getenv("PPROF_LISTEN_ADDR")
 	MetricsListenAddr  = os.Getenv("METRICS_LISTEN_ADDR")
-	ProxyAddr          = os.Getenv("SERVER_ADDR")
+	TargetAddr         = os.Getenv("TARGET_ADDR")
 	MessageSizeBytes   = os.Getenv("MESSAGE_SIZE_BYTES")
 	HandlerConcurrency = os.Getenv("HANDLER_CONCURRENCY")
 )
@@ -43,7 +43,7 @@ func main() {
 		panic(err)
 	}
 	mc, err := clientMiddleware.NewMeteredClient(
-		client.WithTargetServer(ProxyAddr),
+		client.WithTargetServer(TargetAddr),
 		client.WithMaxConcurrency(concurrency),
 		client.WithOnErrorHook(func(err error) {
 			logrus.WithError(err).Error("internal client error detected")
@@ -53,11 +53,11 @@ func main() {
 		log.Fatal(err)
 	}
 	mc.RegisterHandler(&model.Point{}, message.HandlerFunc(func(s message.Sender, msg *message.Message) {
-		// time.Sleep(30 * time.Millisecond)
+		time.Sleep(20 * time.Millisecond)
 		// logrus.Printf("client: received message : %s \n", msg.Metadata.Type)
 	}))
 	logrus.Infoln("starting client ...")
-	mustWaitTCPService(ProxyAddr, 100*time.Millisecond, 5*time.Second)
+	mustWaitTCPService(TargetAddr, 100*time.Millisecond, 5*time.Second)
 	go func() {
 		if err := mc.Connect(context.Background()); err != nil {
 			logrus.WithError(err).Fatal("error connecting client")
