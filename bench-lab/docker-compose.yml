@@ -15,8 +15,8 @@ services:
       - LISTEN_ADDR=0.0.0.0:8080
       - PPROF_LISTEN_ADDR=0.0.0.0:6060
       - METRICS_LISTEN_ADDR=0.0.0.0:9971
-      - MESSAGE_SIZE_BYTES=100000
-      - HANDLER_CONCURRENCY=10
+      - MESSAGE_SIZE_BYTES=1000
+      - HANDLER_CONCURRENCY=3
     expose:
       - 8080 # serving port
       - 9971 # metrics
@@ -52,11 +52,11 @@ services:
     volumes:
       - ./client/client:/app/client:z
     environment:
-      - PROXY_ADDR=proxy:8081
+      - TARGET_ADDR=server:8080
       - PPROF_LISTEN_ADDR=0.0.0.0:6060
       - METRICS_LISTEN_ADDR=0.0.0.0:9971
-      - MESSAGE_SIZE_BYTES=100000
-      - HANDLER_CONCURRENCY=10
+      - MESSAGE_SIZE_BYTES=1000
+      - HANDLER_CONCURRENCY=3
     depends_on:
       - prometheus
       - grafana

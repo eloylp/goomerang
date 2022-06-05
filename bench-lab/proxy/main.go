@@ -30,8 +30,8 @@ func main() {
 	if err != nil {
 		logrus.Fatal(err)
 	}
-	_, err = proxy.AddToxic("network-latency", "latency", "upstream", 1, toxiClient.Attributes{
-		"latency": 20,
+	_, err = proxy.AddToxic("network-latency", "latency", "upstream", 0, toxiClient.Attributes{
+		"latency": 50,
 	})
 	if err != nil {
 		logrus.Fatal(err)

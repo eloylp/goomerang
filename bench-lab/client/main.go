@@ -19,14 +19,13 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"go.eloylp.dev/goomerang/client"
-	metrics "go.eloylp.dev/goomerang/metrics/client"
-	"go.eloylp.dev/goomerang/middleware"
+	clientMiddleware "go.eloylp.dev/goomerang/middleware/client"
 )
 
 var (
 	PprofListenAddr    = os.Getenv("PPROF_LISTEN_ADDR")
 	MetricsListenAddr  = os.Getenv("METRICS_LISTEN_ADDR")
-	ProxyAddr          = os.Getenv("PROXY_ADDR")
+	ProxyAddr          = os.Getenv("SERVER_ADDR")
 	MessageSizeBytes   = os.Getenv("MESSAGE_SIZE_BYTES")
 	HandlerConcurrency = os.Getenv("HANDLER_CONCURRENCY")
 )
@@ -43,21 +42,19 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	c, err := client.NewClient( /// todo rename this to simply New()
+	mc, err := clientMiddleware.NewMeteredClient(
 		client.WithTargetServer(ProxyAddr),
 		client.WithMaxConcurrency(concurrency),
-		client.WithOnStatusChangeHook(middleware.ClientStatusMetricHook),
 		client.WithOnErrorHook(func(err error) {
-			metrics.Errors.Inc()
 			logrus.WithError(err).Error("internal client error detected")
 		}),
 	)
-	mc := middleware.NewMeteredClient(c)
 	if err != nil {
 		log.Fatal(err)
 	}
-	c.RegisterHandler(&model.Point{}, message.HandlerFunc(func(s message.Sender, msg *message.Message) {
-		logrus.Printf("client: received message : %s \n", msg.Metadata.Type)
+	mc.RegisterHandler(&model.Point{}, message.HandlerFunc(func(s message.Sender, msg *message.Message) {
+		// time.Sleep(30 * time.Millisecond)
+		// logrus.Printf("client: received message : %s \n", msg.Metadata.Type)
 	}))
 	logrus.Infoln("starting client ...")
 	mustWaitTCPService(ProxyAddr, 100*time.Millisecond, 5*time.Second)
@@ -82,7 +79,7 @@ func main() {
 	logrus.Infoln("shutting down client ...")
 }
 
-func interactions(ctx context.Context, c *middleware.MeteredClient) {
+func interactions(ctx context.Context, c *clientMiddleware.MeteredClient) {
 	messageSize, err := strconv.Atoi(MessageSizeBytes)
 	if err != nil {
 		panic(err)
@@ -92,7 +89,7 @@ func interactions(ctx context.Context, c *middleware.MeteredClient) {
 	go sendSyncMessages(ctx, c, bytes)
 }
 
-func sendMessages(ctx context.Context, c *middleware.MeteredClient, bytes []byte) {
+func sendMessages(ctx context.Context, c *clientMiddleware.MeteredClient, bytes []byte) {
 	for {
 		select {
 		case <-ctx.Done():
@@ -107,12 +104,11 @@ func sendMessages(ctx context.Context, c *middleware.MeteredClient, bytes []byte
 			if err != nil {
 				logrus.WithError(err).Error("error sending message")
 			}
-			time.Sleep(100 * time.Millisecond)
 		}
 	}
 }
 
-func sendSyncMessages(ctx context.Context, c *middleware.MeteredClient, bytes []byte) {
+func sendSyncMessages(ctx context.Context, c *clientMiddleware.MeteredClient, bytes []byte) {
 	for {
 		select {
 		case <-ctx.Done():
@@ -127,7 +123,6 @@ func sendSyncMessages(ctx context.Context, c *middleware.MeteredClient, bytes []
 			if err != nil {
 				logrus.WithError(err).Error("error sending sync message")
 			}
-			time.Sleep(100 * time.Millisecond)
 		}
 	}
 }

@@ -9,7 +9,6 @@ import (
 	"os/signal"
 	"strconv"
 	"syscall"
-	"time"
 
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/sirupsen/logrus"
@@ -17,8 +16,7 @@ import (
 	"go.eloylp.dev/goomerang/message"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	metrics "go.eloylp.dev/goomerang/metrics/server"
-	"go.eloylp.dev/goomerang/middleware"
+	serverMiddleware "go.eloylp.dev/goomerang/middleware/server"
 	"go.eloylp.dev/goomerang/server"
 )
 
@@ -41,18 +39,17 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	s, err := server.NewServer(
+
+	ms, err := serverMiddleware.NewMeteredServer(
 		server.WithListenAddr(ListenAddr),
 		server.WithMaxConcurrency(concurrency),
-		server.WithOnStatusChangeHook(middleware.ServerStatusMetricHook),
 		server.WithOnErrorHook(func(err error) {
-			metrics.Errors.Inc()
 			logrus.WithError(err).Error("internal server error detected")
 		}),
 	)
-	ms := middleware.NewMeteredServer(s)
 	ms.RegisterHandler(&model.Point{}, message.HandlerFunc(func(s message.Sender, msg *message.Message) {
-		logrus.Printf("server: received message : %s \n", msg.Metadata.Type)
+		//time.Sleep(30 * time.Millisecond)
+		//logrus.Printf("server: received message : %s \n", msg.Metadata.Type)
 	}))
 	if err != nil {
 		log.Fatal(err)
@@ -78,7 +75,7 @@ func main() {
 	logrus.Infoln("shutting down server ...")
 }
 
-func interactions(ctx context.Context, s *middleware.MeteredServer) {
+func interactions(ctx context.Context, s *serverMiddleware.MeteredServer) {
 	messageSize, err := strconv.Atoi(MessageSizeBytes)
 	if err != nil {
 		panic(err)
@@ -89,7 +86,7 @@ func interactions(ctx context.Context, s *middleware.MeteredServer) {
 		case <-ctx.Done():
 			return
 		default:
-			_, _, err := s.BroadCast(context.Background(), message.New().SetPayload(&model.Point{
+			_, err := s.BroadCast(context.Background(), message.New().SetPayload(&model.Point{
 				X:          34.45,
 				Y:          89.12,
 				Time:       timestamppb.Now(),
@@ -98,7 +95,6 @@ func interactions(ctx context.Context, s *middleware.MeteredServer) {
 			if err != nil {
 				logrus.WithError(err).Error("error broadcasting message")
 			}
-			time.Sleep(100 * time.Millisecond)
 		}
 	}
 }

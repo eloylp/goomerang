@@ -1,6 +1,6 @@
 
 .PHONY: bench-lab
-bench-lab-up: bench-lab-update
+bench-lab-up:
 	CGO_ENABLED=0 go build -trimpath -tags timetzdata -o ./server/server server/main.go
 	CGO_ENABLED=0 go build -trimpath -tags timetzdata -o ./proxy/proxy proxy/main.go
 	CGO_ENABLED=0 go build -trimpath -tags timetzdata -o ./client/client client/main.go
@@ -13,6 +13,10 @@ bench-lab-up: bench-lab-update
 .PHONY: bench-lab-down
 bench-lab-down:
 	docker-compose down
+
+.PHONY: bench-lab-logs
+bench-lab-logs:
+	docker-compose logs -f
 
 .PHONY: bench-lab-update
 bench-lab-update:
