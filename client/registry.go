@@ -48,7 +48,9 @@ func (r *requestRegistry) resultFor(ctx context.Context, id string) (*message.Me
 	case <-ctx.Done():
 		return nil, fmt.Errorf("request registry: %w", ctx.Err())
 	case reply := <-ch:
+		r.l.Lock()
 		delete(r.r, id)
+		r.l.Unlock()
 		return reply, nil
 	}
 }

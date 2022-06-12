@@ -367,6 +367,8 @@ github.com/yuin/goldmark v1.1.27/go.mod h1:3hX8gzYuyVAZsxl0MRgGTJEmQBFcNTphYh9de
 github.com/yuin/goldmark v1.1.32/go.mod h1:3hX8gzYuyVAZsxl0MRgGTJEmQBFcNTphYh9decYSb74=
 go.eloylp.dev/kit v0.0.0-20220115120522-4c990176492d h1:EdZ7lU5UULiNk2i79D75vKkNh74GO59c5kjArer9jjQ=
 go.eloylp.dev/kit v0.0.0-20220115120522-4c990176492d/go.mod h1:cFjhXsMdRGvaUOf9v/+gmKmDePnJzpHq4gs0aSq1PD0=
+go.eloylp.dev/kit v0.0.0-20220611185037-377c3e0b4294 h1:KDpueWENUFQzsZ+6BcWiSyOpDZOAuRzEbLlhNCOZIgY=
+go.eloylp.dev/kit v0.0.0-20220611185037-377c3e0b4294/go.mod h1:cFjhXsMdRGvaUOf9v/+gmKmDePnJzpHq4gs0aSq1PD0=
 go.etcd.io/bbolt v1.3.3/go.mod h1:IbVyRI1SCnLcuJnV2u8VeU0CEYM7e686BmAb1XKL+uU=
 go.etcd.io/etcd v0.0.0-20191023171146-3cf2f69b5738/go.mod h1:dnLIgRNXwCJa5e+c6mIZCrds/GIG4ncV9HhK5PX7jPg=
 go.opencensus.io v0.20.1/go.mod h1:6WKK9ahsWS3RSO+PY9ZHZUfv2irvY6gN279GOPZjmmk=

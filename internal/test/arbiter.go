@@ -16,7 +16,7 @@ type Arbiter struct {
 	t        *testing.T
 	evCount  map[string]int
 	evSeries []string
-	L        sync.RWMutex
+	l        sync.RWMutex
 	errors   []error
 }
 
@@ -28,17 +28,37 @@ func NewArbiter(t *testing.T) *Arbiter {
 	}
 }
 
+func (a *Arbiter) EvCount() map[string]int {
+	a.l.Lock()
+	defer a.l.Unlock()
+	snapshot := make(map[string]int, len(a.evCount))
+	for k, v := range a.evCount {
+		snapshot[k] = v
+	}
+	return snapshot
+}
+
+func (a *Arbiter) Errors() []error {
+	a.l.Lock()
+	defer a.l.Unlock()
+	snapshot := make([]error, len(a.errors))
+	for i := 0; i < len(a.errors); i++ {
+		snapshot[i] = a.errors[i]
+	}
+	return a.errors
+}
+
 func (a *Arbiter) ItsAFactThat(event string) {
-	a.L.Lock()
-	defer a.L.Unlock()
+	a.l.Lock()
+	defer a.l.Unlock()
 	a.evCount[event]++
 	a.evSeries = append(a.evSeries, event)
 }
 
 func (a *Arbiter) RequireHappened(event string) *Arbiter {
 	require.Eventuallyf(a.t, func() bool {
-		a.L.RLock()
-		defer a.L.RUnlock()
+		a.l.RLock()
+		defer a.l.RUnlock()
 		_, ok := a.evCount[event]
 		return ok
 	}, time.Second, time.Millisecond, "event %s not happened", event)
@@ -47,8 +67,8 @@ func (a *Arbiter) RequireHappened(event string) *Arbiter {
 
 func (a *Arbiter) RequireHappenedInOrder(events ...string) *Arbiter {
 	assert.Eventually(a.t, func() bool {
-		a.L.RLock()
-		defer a.L.RUnlock()
+		a.l.RLock()
+		defer a.l.RUnlock()
 
 		if len(a.evSeries) < len(events) {
 			return false
@@ -75,8 +95,8 @@ func (a *Arbiter) RequireHappenedTimes(event string, expectedCount int) *Arbiter
 	var count int
 	var ok bool
 	assert.Eventuallyf(a.t, func() bool {
-		a.L.RLock()
-		defer a.L.RUnlock()
+		a.l.RLock()
+		defer a.l.RUnlock()
 		count, ok = a.evCount[event]
 		if !ok {
 			return false
@@ -88,14 +108,16 @@ func (a *Arbiter) RequireHappenedTimes(event string, expectedCount int) *Arbiter
 }
 
 func (a *Arbiter) ErrorHappened(err error) {
-	a.L.Lock()
-	defer a.L.Unlock()
-	a.errors = append(a.errors, err)
+	if err != nil {
+		a.l.Lock()
+		defer a.l.Unlock()
+		a.errors = append(a.errors, err)
+	}
 }
 
 func (a *Arbiter) RequireNoErrors() {
-	a.L.RLock()
-	defer a.L.RUnlock()
+	a.l.RLock()
+	defer a.l.RUnlock()
 	var msg strings.Builder
 	for i, err := range a.errors {
 		msg.WriteString(fmt.Sprintf("error %v: type %T: %v \n", i, err, err))
@@ -105,8 +127,8 @@ func (a *Arbiter) RequireNoErrors() {
 
 func (a *Arbiter) RequireError(errMsg string) {
 	require.Eventuallyf(a.t, func() bool {
-		a.L.RLock()
-		defer a.L.RUnlock()
+		a.l.RLock()
+		defer a.l.RUnlock()
 		for _, err := range a.errors {
 			if strings.Contains(err.Error(), errMsg) {
 				return true
@@ -114,14 +136,14 @@ func (a *Arbiter) RequireError(errMsg string) {
 		}
 		return false
 	}, time.Second, time.Millisecond, "expected error %q not happened in expected time.", errMsg)
-	a.L.RLock()
-	defer a.L.RUnlock()
+	a.l.RLock()
+	defer a.l.RUnlock()
 }
 
 func (a *Arbiter) RequireErrorIs(err error) {
 	require.Eventuallyf(a.t, func() bool {
-		a.L.RLock()
-		defer a.L.RUnlock()
+		a.l.RLock()
+		defer a.l.RUnlock()
 		for i := range a.errors {
 			if errors.Is(a.errors[i], err) {
 				return true
@@ -133,8 +155,8 @@ func (a *Arbiter) RequireErrorIs(err error) {
 
 func (a *Arbiter) RequireNoEvents() {
 	require.Eventuallyf(a.t, func() bool {
-		a.L.RLock()
-		defer a.L.RUnlock()
+		a.l.RLock()
+		defer a.l.RUnlock()
 		return len(a.evSeries) == 0
 	}, time.Second, time.Millisecond, "no events expected, but got %v", len(a.evSeries))
 }
