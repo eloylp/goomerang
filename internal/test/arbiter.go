@@ -66,7 +66,7 @@ func (a *Arbiter) RequireHappened(event string) *Arbiter {
 }
 
 func (a *Arbiter) RequireHappenedInOrder(events ...string) *Arbiter {
-	assert.Eventually(a.t, func() bool {
+	passed := assert.Eventually(a.t, func() bool {
 		a.l.RLock()
 		defer a.l.RUnlock()
 
@@ -75,7 +75,8 @@ func (a *Arbiter) RequireHappenedInOrder(events ...string) *Arbiter {
 		}
 		// Iterate over all events in the store,
 		// searching the expected chain of events is
-		// contained in the happened one.
+		// contained in the happened one. It allows
+		// other events interleaving.
 		var current int
 		for i := 0; i < len(a.evSeries); i++ {
 			if len(events)-1 == current {
@@ -87,7 +88,9 @@ func (a *Arbiter) RequireHappenedInOrder(events ...string) *Arbiter {
 		}
 		return current == len(events)-1
 	}, time.Second, time.Millisecond)
-	require.Equal(a.t, events, a.evSeries, "expected event series is not contained in the event store")
+	if !passed {
+		a.t.Logf("expected event series: %v, its not contained in the event store: %v", events, a.evSeries)
+	}
 	return a
 }
 
