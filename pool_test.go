@@ -56,6 +56,8 @@ func WorkerPoolTest(maxConcurrency int, shouldBeActive bool) func(t *testing.T) 
 			arbiter.RequireHappenedInOrder(
 				"SERVER_POOL_WORKER_STARTED",
 				"SERVER_POOL_WORKER_ENDED",
+			)
+			arbiter.RequireHappenedInOrder(
 				"CLIENT_POOL_WORKER_STARTED",
 				"CLIENT_POOL_WORKER_ENDED",
 			)
