@@ -2,8 +2,8 @@ package server
 
 import (
 	"go.eloylp.dev/goomerang/internal/messaging"
-	"go.eloylp.dev/goomerang/internal/ws"
 	"go.eloylp.dev/goomerang/message"
+	"go.eloylp.dev/goomerang/ws"
 )
 
 type stdSender struct {

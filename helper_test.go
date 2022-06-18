@@ -17,9 +17,9 @@ import (
 	"go.eloylp.dev/goomerang/client"
 	testMessages "go.eloylp.dev/goomerang/internal/messaging/test"
 	"go.eloylp.dev/goomerang/internal/test"
-	"go.eloylp.dev/goomerang/internal/ws"
 	"go.eloylp.dev/goomerang/message"
 	"go.eloylp.dev/goomerang/server"
+	"go.eloylp.dev/goomerang/ws"
 )
 
 const (

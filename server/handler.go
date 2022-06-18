@@ -6,7 +6,7 @@ import (
 
 	"github.com/gorilla/websocket"
 
-	"go.eloylp.dev/goomerang/internal/ws"
+	"go.eloylp.dev/goomerang/ws"
 )
 
 func mainHandler(s *Server) http.HandlerFunc {
