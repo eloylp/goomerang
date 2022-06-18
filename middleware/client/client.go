@@ -44,7 +44,7 @@ func NewMeteredClient(opts ...client.Option) (*MeteredClient, error) {
 	if err != nil {
 		return nil, err
 	}
-	c.RegisterMiddleware(metricsMiddleware)
+	c.Middleware(metricsMiddleware)
 	return &MeteredClient{c: c}, nil
 }
 
@@ -86,11 +86,11 @@ func (c *MeteredClient) Close(ctx context.Context) (err error) {
 }
 
 func (c *MeteredClient) RegisterMiddleware(m message.Middleware) {
-	c.c.RegisterMiddleware(m)
+	c.c.Middleware(m)
 }
 
 func (c *MeteredClient) RegisterHandler(msg proto.Message, h message.Handler) {
-	c.c.RegisterHandler(msg, h)
+	c.c.Handle(msg, h)
 }
 
 func (c *MeteredClient) RegisterMessage(msg proto.Message) {

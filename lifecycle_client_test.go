@@ -27,7 +27,7 @@ func TestShutdownProcedureClientSideInit(t *testing.T) {
 	run()
 
 	c, connect := PrepareClient(t,
-		client.WithTargetServer(s.Addr()),
+		client.WithServerAddr(s.Addr()),
 		client.WithOnCloseHook(func() {
 			clientArbiter.ItsAFactThat("CLIENT_PROPERLY_CLOSED")
 		}),
@@ -65,7 +65,7 @@ func TestClientNormalClose(t *testing.T) {
 	s, run := PrepareServer(t)
 	defer s.Shutdown(defaultCtx)
 	run()
-	c, connect := PrepareClient(t, client.WithTargetServer(s.Addr()))
+	c, connect := PrepareClient(t, client.WithServerAddr(s.Addr()))
 	connect()
 	require.NoError(t, c.Close(defaultCtx))
 }
@@ -73,7 +73,7 @@ func TestClientNormalClose(t *testing.T) {
 func TestClientShouldBeClosedWhenServerCloses(t *testing.T) {
 	s, run := PrepareServer(t)
 	run()
-	c, connect := PrepareClient(t, client.WithTargetServer(s.Addr()))
+	c, connect := PrepareClient(t, client.WithServerAddr(s.Addr()))
 	connect()
 	err := s.Shutdown(defaultCtx)
 	require.NoError(t, err)
@@ -87,7 +87,7 @@ func TestClientCanBeResumed(t *testing.T) {
 	defer s.Shutdown(defaultCtx)
 	run()
 
-	c, connect := PrepareClient(t, client.WithTargetServer(s.Addr()))
+	c, connect := PrepareClient(t, client.WithServerAddr(s.Addr()))
 	connect()
 
 	require.NoError(t, c.Close(defaultCtx))
@@ -100,7 +100,7 @@ func TestClientCannotConnectForSecondTime(t *testing.T) {
 	defer s.Shutdown(defaultCtx)
 	run()
 
-	c, connect := PrepareClient(t, client.WithTargetServer(s.Addr()))
+	c, connect := PrepareClient(t, client.WithServerAddr(s.Addr()))
 	connect()
 	defer c.Close(defaultCtx)
 
@@ -113,7 +113,7 @@ func TestClientCannotSendMessagesIfNotRunning(t *testing.T) {
 	run()
 
 	// Cannot send if not connected
-	c, connect := PrepareClient(t, client.WithTargetServer(s.Addr()))
+	c, connect := PrepareClient(t, client.WithServerAddr(s.Addr()))
 	_, err := c.Send(defaultMsg)
 	assert.ErrorIs(t, err, client.ErrNotRunning, "should not send messages if not connected")
 
@@ -138,7 +138,7 @@ func TestClientCannotShutdownIfNotRunning(t *testing.T) {
 	run()
 	defer s.Shutdown(defaultCtx)
 
-	c, connect := PrepareClient(t, client.WithTargetServer(s.Addr()))
+	c, connect := PrepareClient(t, client.WithServerAddr(s.Addr()))
 	assert.ErrorIs(t, c.Close(defaultCtx), client.ErrNotRunning, "should not shutdown if not running")
 	connect()
 	require.NoError(t, c.Close(defaultCtx))
@@ -151,8 +151,8 @@ func TestClientHandlerCannotSendIfClosed(t *testing.T) {
 	s, run := PrepareServer(t)
 	run()
 	defer s.Shutdown(defaultCtx)
-	c, connect := PrepareClient(t, client.WithTargetServer(s.Addr()))
-	c.RegisterHandler(defaultMsg.Payload, message.HandlerFunc(func(s message.Sender, msg *message.Message) {
+	c, connect := PrepareClient(t, client.WithServerAddr(s.Addr()))
+	c.Handle(defaultMsg.Payload, message.HandlerFunc(func(s message.Sender, msg *message.Message) {
 		// Let's wait the close before sending.
 		// We expect an error here.
 		time.Sleep(50 * time.Millisecond)

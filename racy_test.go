@@ -27,16 +27,16 @@ func TestNoRaces(t *testing.T) {
 
 	// Bring up 2 clients and one server.
 	s, run := PrepareServer(t)
-	s.RegisterHandler(defaultMsg.Payload, echoHandler)
+	s.Handle(defaultMsg.Payload, echoHandler)
 	run()
 
-	c, connect := PrepareClient(t, client.WithTargetServer(s.Addr()))
-	c.RegisterHandler(defaultMsg.Payload, nilHandler)
+	c, connect := PrepareClient(t, client.WithServerAddr(s.Addr()))
+	c.Handle(defaultMsg.Payload, nilHandler)
 
 	connect()
 
-	c2, connect2 := PrepareClient(t, client.WithTargetServer(s.Addr()))
-	c2.RegisterHandler(defaultMsg.Payload, nilHandler)
+	c2, connect2 := PrepareClient(t, client.WithServerAddr(s.Addr()))
+	c2.Handle(defaultMsg.Payload, nilHandler)
 	connect2()
 
 	// Set test duration of 10 seconds.

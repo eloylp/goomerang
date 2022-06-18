@@ -25,7 +25,7 @@ func TestShutdownProcedureServerSideInit(t *testing.T) {
 	)
 	run()
 	_, connect := PrepareClient(t,
-		client.WithTargetServer(s.Addr()),
+		client.WithServerAddr(s.Addr()),
 		client.WithOnCloseHook(func() {
 			clientArbiter.ItsAFactThat("CLIENT_PROPERLY_CLOSED")
 		}),
@@ -65,7 +65,7 @@ func TestServerSendsCloseToAllClients(t *testing.T) {
 	run()
 
 	_, connect1 := PrepareClient(t,
-		client.WithTargetServer(s.Addr()),
+		client.WithServerAddr(s.Addr()),
 		client.WithOnErrorHook(errHook),
 		client.WithOnCloseHook(func() {
 			arbiter.ItsAFactThat("CLIENT1_RECEIVED_CLOSE")
@@ -73,7 +73,7 @@ func TestServerSendsCloseToAllClients(t *testing.T) {
 	connect1()
 
 	_, connect2 := PrepareClient(t,
-		client.WithTargetServer(s.Addr()),
+		client.WithServerAddr(s.Addr()),
 		client.WithOnErrorHook(errHook),
 		client.WithOnCloseHook(func() {
 			arbiter.ItsAFactThat("CLIENT2_RECEIVED_CLOSE")
@@ -128,7 +128,7 @@ func TestServerCannotRunIfAlreadyRunning(t *testing.T) {
 func TestServerHandlerCannotSendIfClosed(t *testing.T) {
 	arbiter := test.NewArbiter(t)
 	s, run := PrepareServer(t)
-	s.RegisterHandler(defaultMsg.Payload, message.HandlerFunc(func(s message.Sender, msg *message.Message) {
+	s.Handle(defaultMsg.Payload, message.HandlerFunc(func(s message.Sender, msg *message.Message) {
 		// We wait for the closed state to send,
 		// as we expect an error.
 		time.Sleep(50 * time.Millisecond)
@@ -137,7 +137,7 @@ func TestServerHandlerCannotSendIfClosed(t *testing.T) {
 		}
 	}))
 	run()
-	c, connect := PrepareClient(t, client.WithTargetServer(s.Addr()))
+	c, connect := PrepareClient(t, client.WithServerAddr(s.Addr()))
 	connect()
 	defer c.Close(defaultCtx)
 	// We send the message, in order to invoke the handler.

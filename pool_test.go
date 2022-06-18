@@ -30,12 +30,12 @@ func WorkerPoolTest(maxConcurrency int, shouldBeActive bool) func(t *testing.T) 
 				arbiter.ItsAFactThat("SERVER_POOL_WORKER_ENDED")
 
 			}))
-		s.RegisterHandler(defaultMsg.Payload, nilHandler)
+		s.Handle(defaultMsg.Payload, nilHandler)
 		run()
 		defer s.Shutdown(defaultCtx)
 
 		c, connect := PrepareClient(t,
-			client.WithTargetServer(s.Addr()),
+			client.WithServerAddr(s.Addr()),
 			client.WithMaxConcurrency(maxConcurrency),
 			client.WithOnWorkerStart(func() {
 				arbiter.ItsAFactThat("CLIENT_POOL_WORKER_STARTED")
@@ -44,7 +44,7 @@ func WorkerPoolTest(maxConcurrency int, shouldBeActive bool) func(t *testing.T) 
 				arbiter.ItsAFactThat("CLIENT_POOL_WORKER_ENDED")
 			}),
 		)
-		c.RegisterHandler(defaultMsg.Payload, nilHandler)
+		c.Handle(defaultMsg.Payload, nilHandler)
 		connect()
 		defer c.Close(defaultCtx)
 
@@ -72,18 +72,18 @@ func TestSendVariousMessagesWithNoConcurrency(t *testing.T) {
 	s, run := PrepareServer(t, server.WithMaxConcurrency(0))
 	defer s.Shutdown(defaultCtx)
 
-	s.RegisterHandler(defaultMsg.Payload, message.HandlerFunc(func(s message.Sender, msg *message.Message) {
+	s.Handle(defaultMsg.Payload, message.HandlerFunc(func(s message.Sender, msg *message.Message) {
 		arbiter.ItsAFactThat("SERVER_RECEIVED_MSG")
 		_, _ = s.Send(msg)
 	}))
 	run()
 	c, connect := PrepareClient(t,
-		client.WithTargetServer(s.Addr()),
+		client.WithServerAddr(s.Addr()),
 		client.WithMaxConcurrency(0),
 	)
 	defer c.Close(defaultCtx)
 
-	c.RegisterHandler(defaultMsg.Payload, message.HandlerFunc(func(c message.Sender, msg *message.Message) {
+	c.Handle(defaultMsg.Payload, message.HandlerFunc(func(c message.Sender, msg *message.Message) {
 		arbiter.ItsAFactThat("CLIENT_RECEIVED_MSG")
 	}))
 	connect()

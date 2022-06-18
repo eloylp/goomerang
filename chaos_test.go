@@ -13,7 +13,7 @@ func TestClientReturnsKnownErrOnConnFailure(t *testing.T) {
 	arbiter := test.NewArbiter(t)
 
 	s, run := PrepareServer(t)
-	s.RegisterHandler(defaultMsg.Payload, echoHandler)
+	s.Handle(defaultMsg.Payload, echoHandler)
 	run()
 	defer s.Shutdown(defaultCtx)
 
@@ -22,8 +22,8 @@ func TestClientReturnsKnownErrOnConnFailure(t *testing.T) {
 	defer goomerangProxy.Delete()
 
 	c, connect := PrepareClient(t,
-		client.WithTargetServer(s.Addr()),
-		client.WithTargetServer(goomerangProxy.Listen),
+		client.WithServerAddr(s.Addr()),
+		client.WithServerAddr(goomerangProxy.Listen),
 		client.WithOnCloseHook(func() {
 			arbiter.ItsAFactThat("CLIENT_ONCLOSE_HOOK")
 		}),

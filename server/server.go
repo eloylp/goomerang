@@ -80,11 +80,11 @@ func New(opts ...Option) (*Server, error) {
 	return s, nil
 }
 
-func (s *Server) RegisterMiddleware(m message.Middleware) {
+func (s *Server) Middleware(m message.Middleware) {
 	s.handlerChainer.AppendMiddleware(m)
 }
 
-func (s *Server) RegisterHandler(msg proto.Message, handler message.Handler) {
+func (s *Server) Handle(msg proto.Message, handler message.Handler) {
 	fqdn := messaging.FQDN(msg)
 	s.messageRegistry.Register(fqdn, msg)
 	s.handlerChainer.AppendHandler(fqdn, handler)

@@ -20,7 +20,7 @@ func TestRoundTrip(t *testing.T) {
 	s, run := PrepareServer(t)
 	defer s.Shutdown(defaultCtx)
 
-	s.RegisterHandler(defaultMsg.Payload, message.HandlerFunc(func(s message.Sender, msg *message.Message) {
+	s.Handle(defaultMsg.Payload, message.HandlerFunc(func(s message.Sender, msg *message.Message) {
 		_ = msg.Payload.(*testMessages.MessageV1)
 		if _, err := s.Send(defaultMsg); err != nil {
 			arbiter.ErrorHappened(err)
@@ -28,10 +28,10 @@ func TestRoundTrip(t *testing.T) {
 		arbiter.ItsAFactThat("SERVER_RECEIVED_MSG")
 	}))
 	run()
-	c, connect := PrepareClient(t, client.WithTargetServer(s.Addr()))
+	c, connect := PrepareClient(t, client.WithServerAddr(s.Addr()))
 	defer c.Close(defaultCtx)
 
-	c.RegisterHandler(defaultMsg.Payload, message.HandlerFunc(func(c message.Sender, msg *message.Message) {
+	c.Handle(defaultMsg.Payload, message.HandlerFunc(func(c message.Sender, msg *message.Message) {
 		_ = msg.Payload.(*testMessages.MessageV1)
 		arbiter.ItsAFactThat("CLIENT_RECEIVED_REPLY")
 	}))
@@ -56,7 +56,7 @@ func TestSecuredRoundTrip(t *testing.T) {
 	defer s.Shutdown(defaultCtx)
 	msg := defaultMsg.Payload
 
-	s.RegisterHandler(msg, message.HandlerFunc(func(s message.Sender, msg *message.Message) {
+	s.Handle(msg, message.HandlerFunc(func(s message.Sender, msg *message.Message) {
 		_ = msg.Payload.(*testMessages.MessageV1)
 		if _, err := s.Send(defaultMsg); err != nil {
 			arbiter.ErrorHappened(err)
@@ -67,13 +67,13 @@ func TestSecuredRoundTrip(t *testing.T) {
 	certPool := x509.NewCertPool()
 	certPool.AddCert(certificate.Leaf)
 	c, connect := PrepareClient(t,
-		client.WithTargetServer(s.Addr()),
+		client.WithServerAddr(s.Addr()),
 		client.WithWithTLSConfig(&tls.Config{
 			RootCAs: certPool,
 		}))
 	defer c.Close(defaultCtx)
 
-	c.RegisterHandler(msg, message.HandlerFunc(func(c message.Sender, msg *message.Message) {
+	c.Handle(msg, message.HandlerFunc(func(c message.Sender, msg *message.Message) {
 		_ = msg.Payload.(*testMessages.MessageV1)
 		arbiter.ItsAFactThat("CLIENT_RECEIVED_REPLY")
 	}))
@@ -90,13 +90,13 @@ func TestMiddlewares(t *testing.T) {
 	arbiter := test.NewArbiter(t)
 	s, run := PrepareServer(t)
 	defer s.Shutdown(defaultCtx)
-	s.RegisterMiddleware(func(h message.Handler) message.Handler {
+	s.Middleware(func(h message.Handler) message.Handler {
 		return message.HandlerFunc(func(s message.Sender, msg *message.Message) {
 			arbiter.ItsAFactThat("SERVER_MIDDLEWARE_EXECUTED")
 			h.Handle(s, msg)
 		})
 	})
-	s.RegisterHandler(defaultMsg.Payload, message.HandlerFunc(func(s message.Sender, msg *message.Message) {
+	s.Handle(defaultMsg.Payload, message.HandlerFunc(func(s message.Sender, msg *message.Message) {
 		arbiter.ItsAFactThat("SERVER_HANDLER_EXECUTED")
 		if _, err := s.Send(&message.Message{
 			Payload: msg.Payload,
@@ -105,17 +105,17 @@ func TestMiddlewares(t *testing.T) {
 		}
 	}))
 	run()
-	c, connect := PrepareClient(t, client.WithTargetServer(s.Addr()))
+	c, connect := PrepareClient(t, client.WithServerAddr(s.Addr()))
 	defer c.Close(defaultCtx)
 
-	c.RegisterMiddleware(func(h message.Handler) message.Handler {
+	c.Middleware(func(h message.Handler) message.Handler {
 		return message.HandlerFunc(func(s message.Sender, msg *message.Message) {
 			arbiter.ItsAFactThat("CLIENT_MIDDLEWARE_EXECUTED")
 			h.Handle(s, msg)
 		})
 	})
 
-	c.RegisterHandler(defaultMsg.Payload, message.HandlerFunc(func(c message.Sender, msg *message.Message) {
+	c.Handle(defaultMsg.Payload, message.HandlerFunc(func(c message.Sender, msg *message.Message) {
 		arbiter.ItsAFactThat("CLIENT_RECEIVED_REPLY")
 	}))
 	connect()
@@ -136,7 +136,7 @@ func TestHeadersAreSent(t *testing.T) {
 	defer s.Shutdown(defaultCtx)
 
 	m := defaultMsg.Payload
-	s.RegisterHandler(m, message.HandlerFunc(func(s message.Sender, msg *message.Message) {
+	s.Handle(m, message.HandlerFunc(func(s message.Sender, msg *message.Message) {
 		if msg.Header.Get("h1") == "v1" { //nolint: goconst
 			arbiter.ItsAFactThat("SERVER_RECEIVED_MSG_HEADERS")
 		}
@@ -146,10 +146,10 @@ func TestHeadersAreSent(t *testing.T) {
 	}))
 	run()
 
-	c, connect := PrepareClient(t, client.WithTargetServer(s.Addr()))
+	c, connect := PrepareClient(t, client.WithServerAddr(s.Addr()))
 	defer c.Close(defaultCtx)
 
-	c.RegisterHandler(m, message.HandlerFunc(func(sender message.Sender, msg *message.Message) {
+	c.Handle(m, message.HandlerFunc(func(sender message.Sender, msg *message.Message) {
 		if msg.Header.Get("h1") == "v1" {
 			arbiter.ItsAFactThat("CLIENT_RECEIVED_MSG_HEADERS")
 		}

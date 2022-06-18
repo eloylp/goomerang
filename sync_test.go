@@ -16,14 +16,14 @@ func TestSendSync(t *testing.T) {
 	s, run := PrepareServer(t)
 	defer s.Shutdown(defaultCtx)
 
-	s.RegisterHandler(defaultMsg.Payload, message.HandlerFunc(func(s message.Sender, msg *message.Message) {
+	s.Handle(defaultMsg.Payload, message.HandlerFunc(func(s message.Sender, msg *message.Message) {
 		m := message.New().SetPayload(&testMessages.MessageV1{Message: "pong !"})
 		if _, err := s.Send(m); err != nil {
 			arbiter.ErrorHappened(err)
 		}
 	}))
 	run()
-	c, connect := PrepareClient(t, client.WithTargetServer(s.Addr()))
+	c, connect := PrepareClient(t, client.WithServerAddr(s.Addr()))
 	connect()
 	defer c.Close(defaultCtx)
 

@@ -23,7 +23,7 @@ func TestHandlerRegistrationMoment(t *testing.T) {
 		s, run := PrepareServer(t)
 		run()
 		defer s.Shutdown(defaultCtx)
-		c, connect := PrepareClient(t, client.WithTargetServer(s.Addr()))
+		c, connect := PrepareClient(t, client.WithServerAddr(s.Addr()))
 		connect()
 		defer c.Close(defaultCtx)
 		assert.Panics(t, func() {
@@ -40,7 +40,7 @@ func TestHandlerRegistrationMoment(t *testing.T) {
 		s, run := PrepareServer(t)
 		run()
 		defer s.Shutdown(defaultCtx)
-		c, connect := PrepareClient(t, client.WithTargetServer(s.Addr()))
+		c, connect := PrepareClient(t, client.WithServerAddr(s.Addr()))
 		connect()
 		defer c.Close(defaultCtx)
 		assert.Panics(t, func() {
@@ -57,7 +57,7 @@ func TestHandlerRegistrationMoment(t *testing.T) {
 		s, run := PrepareServer(t)
 		run()
 		defer s.Shutdown(defaultCtx)
-		c, connect := PrepareClient(t, client.WithTargetServer(s.Addr()))
+		c, connect := PrepareClient(t, client.WithServerAddr(s.Addr()))
 		connect()
 		defer c.Close(defaultCtx)
 		assert.Panics(t, func() {
@@ -74,7 +74,7 @@ func TestHandlerRegistrationMoment(t *testing.T) {
 		s, run := PrepareServer(t)
 		run()
 		defer s.Shutdown(defaultCtx)
-		c, connect := PrepareClient(t, client.WithTargetServer(s.Addr()))
+		c, connect := PrepareClient(t, client.WithServerAddr(s.Addr()))
 		connect()
 		defer c.Close(defaultCtx)
 		assert.Panics(t, func() {
@@ -84,21 +84,21 @@ func TestHandlerRegistrationMoment(t *testing.T) {
 }
 
 func registerClientDumbHandler(c *client.Client) {
-	c.RegisterHandler(&test.MessageV1{}, message.HandlerFunc(func(s message.Sender, w *message.Message) {}))
+	c.Handle(&test.MessageV1{}, message.HandlerFunc(func(s message.Sender, w *message.Message) {}))
 }
 
 func registerClientDumbMiddleware(c *client.Client) {
-	c.RegisterMiddleware(func(h message.Handler) message.Handler {
+	c.Middleware(func(h message.Handler) message.Handler {
 		return message.HandlerFunc(func(s message.Sender, w *message.Message) {})
 	})
 }
 
 func registerServerDumbHandler(s *server.Server) {
-	s.RegisterHandler(&test.MessageV1{}, message.HandlerFunc(func(s message.Sender, w *message.Message) {}))
+	s.Handle(&test.MessageV1{}, message.HandlerFunc(func(s message.Sender, w *message.Message) {}))
 }
 
 func registerServerDumbMiddleware(s *server.Server) {
-	s.RegisterMiddleware(func(h message.Handler) message.Handler {
+	s.Middleware(func(h message.Handler) message.Handler {
 		return message.HandlerFunc(func(s message.Sender, w *message.Message) {})
 	})
 }

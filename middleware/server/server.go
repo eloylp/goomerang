@@ -44,16 +44,16 @@ func NewMeteredServer(opts ...server.Option) (*MeteredServer, error) {
 	if err != nil {
 		return nil, err
 	}
-	s.RegisterMiddleware(metricsMiddleware)
+	s.Middleware(metricsMiddleware)
 	return &MeteredServer{s: s}, nil
 }
 
 func (s *MeteredServer) RegisterMiddleware(m message.Middleware) {
-	s.s.RegisterMiddleware(m)
+	s.s.Middleware(m)
 }
 
 func (s *MeteredServer) RegisterHandler(msg proto.Message, handler message.Handler) {
-	s.s.RegisterHandler(msg, handler)
+	s.s.Handle(msg, handler)
 }
 
 func (s *MeteredServer) BroadCast(ctx context.Context, msg *message.Message) (brResult []server.BroadcastResult, err error) {

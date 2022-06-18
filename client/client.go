@@ -265,11 +265,11 @@ func (c *Client) close(ctx context.Context, isInitiator bool) (err error) {
 	}
 }
 
-func (c *Client) RegisterMiddleware(m message.Middleware) {
+func (c *Client) Middleware(m message.Middleware) {
 	c.handlerChainer.AppendMiddleware(m)
 }
 
-func (c *Client) RegisterHandler(msg proto.Message, h message.Handler) {
+func (c *Client) Handle(msg proto.Message, h message.Handler) {
 	fqdn := messaging.FQDN(msg)
 	c.messageRegistry.Register(fqdn, msg)
 	c.handlerChainer.AppendHandler(fqdn, h)

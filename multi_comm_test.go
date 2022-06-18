@@ -19,15 +19,15 @@ func TestServerCanBroadCastMessages(t *testing.T) {
 	waitAndRun()
 	defer s.Shutdown(defaultCtx)
 
-	c1, connect1 := PrepareClient(t, client.WithTargetServer(s.Addr()))
+	c1, connect1 := PrepareClient(t, client.WithServerAddr(s.Addr()))
 	defer c1.Close(defaultCtx)
-	c1.RegisterHandler(defaultMsg.Payload, message.HandlerFunc(func(ops message.Sender, msg *message.Message) {
+	c1.Handle(defaultMsg.Payload, message.HandlerFunc(func(ops message.Sender, msg *message.Message) {
 		arbiter.ItsAFactThat("CLIENT1_RECEIVED_SERVER_GREET")
 	}))
 	connect1()
-	c2, connect2 := PrepareClient(t, client.WithTargetServer(s.Addr()))
+	c2, connect2 := PrepareClient(t, client.WithServerAddr(s.Addr()))
 	defer c2.Close(defaultCtx)
-	c2.RegisterHandler(defaultMsg.Payload, message.HandlerFunc(func(ops message.Sender, msg *message.Message) {
+	c2.Handle(defaultMsg.Payload, message.HandlerFunc(func(ops message.Sender, msg *message.Message) {
 		arbiter.ItsAFactThat("CLIENT2_RECEIVED_SERVER_GREET")
 	}))
 	connect2()
@@ -45,10 +45,10 @@ func TestServerCanBroadCastMessages(t *testing.T) {
 func TestClientsCanInterceptClosedConnection(t *testing.T) {
 	s, run := PrepareServer(t)
 	run()
-	c1, connect1 := PrepareClient(t, client.WithTargetServer(s.Addr()))
+	c1, connect1 := PrepareClient(t, client.WithServerAddr(s.Addr()))
 	defer c1.Close(defaultCtx)
 	connect1()
-	c2, connect2 := PrepareClient(t, client.WithTargetServer(s.Addr()))
+	c2, connect2 := PrepareClient(t, client.WithServerAddr(s.Addr()))
 	defer c2.Close(defaultCtx)
 	connect2()
 	s.Shutdown(defaultCtx)
@@ -64,7 +64,7 @@ func TestServerSupportMultipleClients(t *testing.T) {
 	s, run := PrepareServer(t, server.WithOnErrorHook(func(err error) {
 		arbiter.ErrorHappened(err)
 	}))
-	s.RegisterHandler(defaultMsg.Payload, message.HandlerFunc(func(ops message.Sender, msg *message.Message) {
+	s.Handle(defaultMsg.Payload, message.HandlerFunc(func(ops message.Sender, msg *message.Message) {
 		pingMsg, ok := msg.Payload.(*testMessages.MessageV1)
 		if !ok {
 			arbiter.ErrorHappened(errors.New("cannot type assert message"))
@@ -81,8 +81,8 @@ func TestServerSupportMultipleClients(t *testing.T) {
 	run()
 	defer s.Shutdown(defaultCtx)
 
-	c1, connect1 := PrepareClient(t, client.WithTargetServer(s.Addr()))
-	c1.RegisterHandler(defaultMsg.Payload, message.HandlerFunc(func(ops message.Sender, msg *message.Message) {
+	c1, connect1 := PrepareClient(t, client.WithServerAddr(s.Addr()))
+	c1.Handle(defaultMsg.Payload, message.HandlerFunc(func(ops message.Sender, msg *message.Message) {
 		pongMsg, ok := msg.Payload.(*testMessages.MessageV1)
 		if !ok {
 			arbiter.ErrorHappened(errors.New("cannot type assert message"))
@@ -92,8 +92,8 @@ func TestServerSupportMultipleClients(t *testing.T) {
 	}))
 	connect1()
 	defer c1.Close(defaultCtx)
-	c2, connect2 := PrepareClient(t, client.WithTargetServer(s.Addr()))
-	c2.RegisterHandler(defaultMsg.Payload, message.HandlerFunc(func(ops message.Sender, msg *message.Message) {
+	c2, connect2 := PrepareClient(t, client.WithServerAddr(s.Addr()))
+	c2.Handle(defaultMsg.Payload, message.HandlerFunc(func(ops message.Sender, msg *message.Message) {
 		pongMsg, ok := msg.Payload.(*testMessages.MessageV1)
 		if !ok {
 			arbiter.ErrorHappened(errors.New("cannot type assert message"))

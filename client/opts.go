@@ -7,7 +7,7 @@ import (
 
 type Option func(cfg *Cfg)
 
-func WithTargetServer(addr string) Option {
+func WithServerAddr(addr string) Option {
 	return func(cfg *Cfg) {
 		cfg.TargetServer = addr
 	}
