@@ -68,7 +68,7 @@ func TestSecuredRoundTrip(t *testing.T) {
 	certPool.AddCert(certificate.Leaf)
 	c, connect := PrepareClient(t,
 		client.WithServerAddr(s.Addr()),
-		client.WithWithTLSConfig(&tls.Config{
+		client.WithTLSConfig(&tls.Config{
 			RootCAs: certPool,
 		}))
 	defer c.Close(defaultCtx)

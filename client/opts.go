@@ -105,10 +105,10 @@ func WithMaxConcurrency(n int) Option {
 	}
 }
 
-// WithWithTLSConfig allows the user to pass a *tls.Config
+// WithTLSConfig allows the user to pass a *tls.Config
 // full setup to the client, in which encryption and authentication
 // could be configured, by setting up a PKI (public key infrastructure).
-func WithWithTLSConfig(tlsCfg *tls.Config) Option {
+func WithTLSConfig(tlsCfg *tls.Config) Option {
 	return func(cfg *Cfg) {
 		cfg.TLSConfig = tlsCfg
 	}
