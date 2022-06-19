@@ -147,7 +147,6 @@ func (s *Server) Run() (err error) {
 	}
 	s.setStatus(ws.StatusRunning)
 	s.handlerChainer.PrepareChains()
-	defer s.setStatus(ws.StatusClosed)
 
 	if s.cfg.TLSConfig != nil {
 		// The "certFile" and "keyFile" params are with "" values, since the server has the certificates already configured.
@@ -176,10 +175,12 @@ func (s *Server) Shutdown(ctx context.Context) (err error) {
 		return ErrNotRunning
 	}
 	s.setStatus(ws.StatusClosing)
+	defer s.setStatus(ws.StatusClosed)
 	ch := make(chan struct{})
 	go func() {
 		defer close(ch)
 		defer s.hooks.ExecOnclose()
+
 		s.broadcastClose()
 		s.cancl() // This will finish all connections, as will cancel all receiver goroutines. See uses.
 		err = s.intServer.Shutdown(ctx)
