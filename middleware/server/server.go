@@ -46,7 +46,7 @@ func NewMeteredServer(m *serverMetrics.Metrics, opts ...server.Option) (*Metered
 		return nil, err
 	}
 	s.Middleware(metricsMiddleware)
-	return &MeteredServer{s: s}, nil
+	return &MeteredServer{s: s, metrics: m}, nil
 }
 
 func (s *MeteredServer) RegisterMiddleware(m message.Middleware) {
