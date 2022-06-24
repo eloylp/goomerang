@@ -68,12 +68,15 @@ services:
     networks:
       - bench-lab
 
-  #  We could add more clients here (just keeping this close), copying the first one.
-  #  We must REMEMBER to add it into the targets config, located at ./prometheus/prometheus.yml.
-  #  Just uncomment and replica the following lines:
-  #
-  #  client2:
-  #    <<: *client
+#    We could add more clients here (just keeping this close), copying the first one.
+#    We must REMEMBER to add it into the targets config, located at ./prometheus/prometheus.yml.
+#    Just uncomment and replica the following lines:
+
+  client2:
+    container_name: client2
+    <<: *client
+    ports:
+      - "127.0.0.1:6062:6060" ## Go pprof
 
   prometheus:
     image: prom/prometheus:v2.35.0

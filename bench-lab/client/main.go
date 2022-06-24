@@ -12,10 +12,12 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/sirupsen/logrus"
 	"go.eloylp.dev/goomerang/bench-lab/model"
 	"go.eloylp.dev/goomerang/message"
+	clientMetrics "go.eloylp.dev/goomerang/metrics/client"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"go.eloylp.dev/goomerang/client"
@@ -42,8 +44,13 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
+
+	metrics := clientMetrics.NewMetrics(clientMetrics.DefaultConfig())
+	metrics.Register(prometheus.DefaultRegisterer)
+
 	mc, err := clientMiddleware.NewMeteredClient(
-		client.WithTargetServer(TargetAddr),
+		metrics,
+		client.WithServerAddr(TargetAddr),
 		client.WithMaxConcurrency(concurrency),
 		client.WithOnErrorHook(func(err error) {
 			logrus.WithError(err).Error("internal client error detected")

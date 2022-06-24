@@ -11,10 +11,12 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/sirupsen/logrus"
 	"go.eloylp.dev/goomerang/bench-lab/model"
 	"go.eloylp.dev/goomerang/message"
+	serverMetrics "go.eloylp.dev/goomerang/metrics/server"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	serverMiddleware "go.eloylp.dev/goomerang/middleware/server"
@@ -40,8 +42,10 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-
+	metrics := serverMetrics.NewMetrics(serverMetrics.DefaultConfig())
+	metrics.Register(prometheus.DefaultRegisterer)
 	ms, err := serverMiddleware.NewMeteredServer(
+		metrics,
 		server.WithListenAddr(ListenAddr),
 		server.WithMaxConcurrency(concurrency),
 		server.WithOnErrorHook(func(err error) {

@@ -16,3 +16,7 @@ scrape_configs:
   - job_name: 'client'
     static_configs:
       - targets: [ 'client:9971' ]
+
+  - job_name: 'client2'
+    static_configs:
+      - targets: [ 'client2:9971' ]

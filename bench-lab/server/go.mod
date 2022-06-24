@@ -5,7 +5,7 @@ go 1.18
 require (
 	github.com/prometheus/client_golang v1.12.2
 	github.com/sirupsen/logrus v1.8.1
-	go.eloylp.dev/goomerang v0.0.0-20220604210231-09f13953d3b4
+	go.eloylp.dev/goomerang v0.0.0-20220624162434-a78187b442a5
 	google.golang.org/protobuf v1.28.0
 )
 
