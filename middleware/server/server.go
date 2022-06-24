@@ -15,28 +15,29 @@ import (
 )
 
 type MeteredServer struct {
-	s *server.Server
+	s       *server.Server
+	metrics *serverMetrics.Metrics
 }
 
-func NewMeteredServer(opts ...server.Option) (*MeteredServer, error) {
+func NewMeteredServer(m *serverMetrics.Metrics, opts ...server.Option) (*MeteredServer, error) {
 	metricsMiddleware, err := middleware.PromHistograms(middleware.PromConfig{
-		MessageInflightTime:   serverMetrics.MessageInflightTime,
-		MessageReceivedSize:   serverMetrics.MessageReceivedSize,
-		MessageProcessingTime: serverMetrics.MessageProcessingTime,
-		MessageSentSize:       serverMetrics.MessageSentSize,
-		MessageSentTime:       serverMetrics.MessageSentTime,
+		MessageInflightTime:   m.MessageInflightTime,
+		MessageReceivedSize:   m.MessageReceivedSize,
+		MessageProcessingTime: m.MessageProcessingTime,
+		MessageSentSize:       m.MessageSentSize,
+		MessageSentTime:       m.MessageSentTime,
 	})
 	if err != nil {
-		serverMetrics.Errors.Inc()
+		m.Errors.Inc()
 		panic(fmt.Errorf("goomerang: connect: instrumentation: %v", err))
 	}
 	monitorOpts := []server.Option{
-		server.WithOnStatusChangeHook(StatusMetricHook),
-		server.WithOnWorkerStart(WorkerStartMetricHook),
-		server.WithOnWorkerEnd(WorkerEndMetricHook),
-		server.WithOnConfiguration(ConfigurationMaxConcurrentMetricHook),
+		server.WithOnStatusChangeHook(StatusMetricHook(m)),
+		server.WithOnWorkerStart(WorkerStartMetricHook(m)),
+		server.WithOnWorkerEnd(WorkerEndMetricHook(m)),
+		server.WithOnConfiguration(ConfigurationMaxConcurrentMetricHook(m)),
 		server.WithOnErrorHook(func(err error) {
-			serverMetrics.Errors.Inc()
+			m.Errors.Inc()
 		}),
 	}
 	mergedOpts := append(monitorOpts, opts...)
@@ -60,44 +61,52 @@ func (s *MeteredServer) BroadCast(ctx context.Context, msg *message.Message) (br
 	start := time.Now()
 	brResult, err = s.s.BroadCast(ctx, msg)
 	if err != nil {
-		serverMetrics.Errors.Inc()
+		s.metrics.Errors.Inc()
 		return
 	}
 	fqdn := messaging.FQDN(msg.Payload)
-	serverMetrics.MessageBroadcastSentTime.WithLabelValues(fqdn).Observe(time.Since(start).Seconds())
+	s.metrics.MessageBroadcastSentTime.WithLabelValues(fqdn).Observe(time.Since(start).Seconds())
 	for i := 0; i < len(brResult); i++ {
-		serverMetrics.MessageSentSize.WithLabelValues(fqdn).Observe(float64(brResult[i].Size))
-		serverMetrics.MessageSentTime.WithLabelValues(fqdn).Observe(brResult[i].Duration.Seconds())
+		s.metrics.MessageSentSize.WithLabelValues(fqdn).Observe(float64(brResult[i].Size))
+		s.metrics.MessageSentTime.WithLabelValues(fqdn).Observe(brResult[i].Duration.Seconds())
 	}
 	return
 }
 
 func (s *MeteredServer) Run() (err error) {
 	if err = s.s.Run(); err != nil {
-		serverMetrics.Errors.Inc()
+		s.metrics.Errors.Inc()
 	}
 	return
 }
 
 func (s *MeteredServer) Shutdown(ctx context.Context) (err error) {
 	if err = s.s.Shutdown(ctx); err != nil {
-		serverMetrics.Errors.Inc()
+		s.metrics.Errors.Inc()
 	}
 	return
 }
 
-func StatusMetricHook(status uint32) {
-	serverMetrics.CurrentStatus.Set(float64(status))
+func StatusMetricHook(m *serverMetrics.Metrics) func(status uint32) {
+	return func(status uint32) {
+		m.CurrentStatus.Set(float64(status))
+	}
 }
 
-func WorkerStartMetricHook() {
-	serverMetrics.ConcurrentWorkers.Inc()
+func WorkerStartMetricHook(m *serverMetrics.Metrics) func() {
+	return func() {
+		m.ConcurrentWorkers.Inc()
+	}
 }
 
-func WorkerEndMetricHook() {
-	serverMetrics.ConcurrentWorkers.Dec()
+func WorkerEndMetricHook(m *serverMetrics.Metrics) func() {
+	return func() {
+		m.ConcurrentWorkers.Dec()
+	}
 }
 
-func ConfigurationMaxConcurrentMetricHook(cfg *server.Cfg) {
-	serverMetrics.ConfigMaxConcurrency.Set(float64(cfg.MaxConcurrency))
+func ConfigurationMaxConcurrentMetricHook(m *serverMetrics.Metrics) func(cfg *server.Cfg) {
+	return func(cfg *server.Cfg) {
+		m.ConfigMaxConcurrency.Set(float64(cfg.MaxConcurrency))
+	}
 }
