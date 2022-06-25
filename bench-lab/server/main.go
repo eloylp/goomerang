@@ -16,8 +16,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"go.eloylp.dev/goomerang/bench-lab/model"
 	"go.eloylp.dev/goomerang/message"
-	serverMetrics "go.eloylp.dev/goomerang/metrics/server"
-	serverMiddleware "go.eloylp.dev/goomerang/middleware/server"
+	"go.eloylp.dev/goomerang/metrics"
 	"go.eloylp.dev/goomerang/server"
 )
 
@@ -40,10 +39,10 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	metrics := serverMetrics.NewMetrics(serverMetrics.DefaultConfig())
-	metrics.Register(prometheus.DefaultRegisterer)
-	ms, err := serverMiddleware.NewMeteredServer(
-		metrics,
+	met := metrics.NewServerMetrics(metrics.DefaultServerConfig())
+	met.Register(prometheus.DefaultRegisterer)
+	ms, err := server.NewMetered(
+		met,
 		server.WithListenAddr(ListenAddr),
 		server.WithMaxConcurrency(concurrency),
 		server.WithOnErrorHook(func(err error) {
@@ -83,7 +82,7 @@ func main() {
 	logrus.Infoln("shutting down server ...")
 }
 
-func interactions(ctx context.Context, s *serverMiddleware.MeteredServer) {
+func interactions(ctx context.Context, s *server.MeteredServer) {
 	messageSize, err := strconv.Atoi(MessageSizeBytes)
 	if err != nil {
 		panic(err)

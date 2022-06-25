@@ -17,11 +17,10 @@ import (
 	"github.com/sirupsen/logrus"
 	"go.eloylp.dev/goomerang/bench-lab/model"
 	"go.eloylp.dev/goomerang/message"
-	clientMetrics "go.eloylp.dev/goomerang/metrics/client"
+	"go.eloylp.dev/goomerang/metrics"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"go.eloylp.dev/goomerang/client"
-	clientMiddleware "go.eloylp.dev/goomerang/middleware/client"
 )
 
 var (
@@ -45,11 +44,11 @@ func main() {
 		panic(err)
 	}
 
-	metrics := clientMetrics.NewMetrics(clientMetrics.DefaultConfig())
-	metrics.Register(prometheus.DefaultRegisterer)
+	met := metrics.NewClientMetrics(metrics.DefaultClientConfig())
+	met.Register(prometheus.DefaultRegisterer)
 
-	mc, err := clientMiddleware.NewMeteredClient(
-		metrics,
+	mc, err := client.NewMetered(
+		met,
 		client.WithServerAddr(TargetAddr),
 		client.WithMaxConcurrency(concurrency),
 		client.WithOnErrorHook(func(err error) {
@@ -88,7 +87,7 @@ func main() {
 	logrus.Infoln("shutting down client ...")
 }
 
-func interactions(ctx context.Context, c *clientMiddleware.MeteredClient) {
+func interactions(ctx context.Context, c *client.MeteredClient) {
 	messageSize, err := strconv.Atoi(MessageSizeBytes)
 	if err != nil {
 		panic(err)
@@ -98,7 +97,7 @@ func interactions(ctx context.Context, c *clientMiddleware.MeteredClient) {
 	go sendSyncMessages(ctx, c, bytes)
 }
 
-func sendMessages(ctx context.Context, c *clientMiddleware.MeteredClient, bytes []byte) {
+func sendMessages(ctx context.Context, c *client.MeteredClient, bytes []byte) {
 	for {
 		select {
 		case <-ctx.Done():
@@ -117,7 +116,7 @@ func sendMessages(ctx context.Context, c *clientMiddleware.MeteredClient, bytes 
 	}
 }
 
-func sendSyncMessages(ctx context.Context, c *clientMiddleware.MeteredClient, bytes []byte) {
+func sendSyncMessages(ctx context.Context, c *client.MeteredClient, bytes []byte) {
 	for {
 		select {
 		case <-ctx.Done():
