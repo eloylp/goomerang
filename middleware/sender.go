@@ -3,6 +3,7 @@ package middleware
 import (
 	"time"
 
+	"go.eloylp.dev/goomerang/internal/messaging"
 	"go.eloylp.dev/goomerang/message"
 )
 
@@ -57,7 +58,7 @@ func (s *MeteredSender) Send(msg *message.Message) (int, error) {
 	start := time.Now()
 	w, err := s.sender.Send(msg)
 	if err == nil {
-		s.promConfig.MessageSentTime.WithLabelValues(msg.Metadata.Kind).Observe(time.Since(start).Seconds())
+		s.promConfig.MessageSentTime.WithLabelValues(messaging.FQDN(msg.Payload)).Observe(time.Since(start).Seconds())
 	}
 	s.msg = msg
 	s.bytes = w
