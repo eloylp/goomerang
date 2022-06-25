@@ -200,8 +200,8 @@ func (s *Server) Shutdown(ctx context.Context) (err error) {
 }
 
 func (s *Server) broadcastClose() {
-	s.serverL.Lock()
-	defer s.serverL.Unlock()
+	s.serverL.RLock()
+	defer s.serverL.RUnlock()
 	wg := sync.WaitGroup{}
 	for _, cs := range s.connRegistry {
 		wg.Add(1)
