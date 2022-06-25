@@ -18,4 +18,5 @@ message PointReplyV1 {
 
 message BroadcastV1 {
   string message = 1;
+  bytes data = 4;
 }
