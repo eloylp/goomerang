@@ -534,5 +534,7 @@ S->>S: Return to user
 
 ## Prometheus metrics
 
+This library provides an easy way to quickly instrument your servers and clients. By default, this library assumes no monitoring. In order to enable it  
 
+![img.png](docs/grafana-dashboard.png)
 
