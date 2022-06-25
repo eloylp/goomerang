@@ -3,7 +3,10 @@
     "list": [
       {
         "builtIn": 1,
-        "datasource": "-- Grafana --",
+        "datasource": {
+          "type": "datasource",
+          "uid": "grafana"
+        },
         "enable": true,
         "hide": true,
         "iconColor": "rgba(0, 211, 255, 1)",
@@ -19,18 +22,17 @@
     ]
   },
   "editable": true,
-  "gnetId": null,
+  "fiscalYearStartMonth": 0,
   "graphTooltip": 0,
-  "id": 9,
-  "iteration": 1656179655000,
+  "iteration": 1656182754499,
   "links": [],
+  "liveNow": false,
   "panels": [
     {
       "collapsed": false,
-      "datasource": null,
-      "fieldConfig": {
-        "defaults": {},
-        "overrides": []
+      "datasource": {
+        "type": "prometheus",
+        "uid": "PBFA97CFB590B2093"
       },
       "gridPos": {
         "h": 1,
@@ -44,7 +46,10 @@
       "type": "row"
     },
     {
-      "datasource": null,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "PBFA97CFB590B2093"
+      },
       "description": "**go_info** – Provides information about the runtime, like version. Its a gauge.",
       "fieldConfig": {
         "defaults": {
@@ -87,17 +92,15 @@
         "text": {},
         "textMode": "name"
       },
-      "pluginVersion": "8.1.5",
+      "pluginVersion": "8.5.3",
       "targets": [
         {
-          "expr": "go_info{app=\"$app\",kubernetes_pod_name=~\"$instance\"}",
+          "expr": "go_info{instance=\"$instance\"}",
           "interval": "",
           "legendFormat": "{{ version }}",
           "refId": "A"
         }
       ],
-      "timeFrom": null,
-      "timeShift": null,
       "title": "Go version",
       "transparent": true,
       "type": "stat"
@@ -107,7 +110,10 @@
       "bars": true,
       "dashLength": 10,
       "dashes": false,
-      "datasource": null,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "PBFA97CFB590B2093"
+      },
       "description": "**process_cpu_seconds_total** Total user and system CPU time spent in seconds.",
       "fill": 0,
       "fillGradient": 0,
@@ -135,7 +141,7 @@
         "alertThreshold": true
       },
       "percentage": false,
-      "pluginVersion": "8.1.5",
+      "pluginVersion": "8.5.3",
       "pointradius": 1,
       "points": false,
       "renderer": "flot",
@@ -145,16 +151,18 @@
       "steppedLine": false,
       "targets": [
         {
-          "expr": "rate(process_cpu_seconds_total{app=\"$app\",kubernetes_pod_name=~\"$instance\"}[5m])",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "PBFA97CFB590B2093"
+          },
+          "expr": "rate(process_cpu_seconds_total{instance=\"$instance\"}[5m])",
           "interval": "",
           "legendFormat": "value",
           "refId": "A"
         }
       ],
       "thresholds": [],
-      "timeFrom": null,
       "timeRegions": [],
-      "timeShift": null,
       "title": "CPU seconds total",
       "tooltip": {
         "shared": true,
@@ -164,33 +172,25 @@
       "transparent": true,
       "type": "graph",
       "xaxis": {
-        "buckets": null,
         "mode": "time",
-        "name": null,
         "show": true,
         "values": []
       },
       "yaxes": [
         {
           "format": "s",
-          "label": null,
           "logBase": 1,
-          "max": null,
           "min": "0",
           "show": true
         },
         {
           "format": "short",
-          "label": null,
           "logBase": 1,
-          "max": null,
-          "min": null,
           "show": true
         }
       ],
       "yaxis": {
-        "align": false,
-        "alignLevel": null
+        "align": false
       }
     },
     {
@@ -202,7 +202,10 @@
       "bars": false,
       "dashLength": 10,
       "dashes": false,
-      "datasource": null,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "PBFA97CFB590B2093"
+      },
       "description": "**process_open_fds** Number of open file descriptors.\n\n**process_max_fds** Maximum number of open file descriptors.",
       "fill": 10,
       "fillGradient": 0,
@@ -230,7 +233,7 @@
         "alertThreshold": true
       },
       "percentage": false,
-      "pluginVersion": "8.1.5",
+      "pluginVersion": "8.5.3",
       "pointradius": 1,
       "points": false,
       "renderer": "flot",
@@ -248,14 +251,14 @@
       "steppedLine": false,
       "targets": [
         {
-          "expr": "process_open_fds{app=\"$app\",kubernetes_pod_name=~\"$instance\"}",
+          "expr": "process_open_fds{instance=\"$instance\"}",
           "hide": false,
           "interval": "",
           "legendFormat": "current",
           "refId": "A"
         },
         {
-          "expr": "process_max_fds{app=\"$app\",kubernetes_pod_name=~\"$instance\"}",
+          "expr": "process_max_fds{instance=\"$instance\"}",
           "hide": false,
           "interval": "",
           "legendFormat": "max",
@@ -263,9 +266,7 @@
         }
       ],
       "thresholds": [],
-      "timeFrom": null,
       "timeRegions": [],
-      "timeShift": null,
       "title": "Open FDs VS Limit",
       "tooltip": {
         "shared": true,
@@ -275,33 +276,25 @@
       "transparent": true,
       "type": "graph",
       "xaxis": {
-        "buckets": null,
         "mode": "time",
-        "name": null,
         "show": true,
         "values": []
       },
       "yaxes": [
         {
           "format": "short",
-          "label": null,
           "logBase": 32,
-          "max": null,
           "min": "0",
           "show": true
         },
         {
           "format": "decbytes",
-          "label": null,
           "logBase": 1,
-          "max": null,
-          "min": null,
           "show": false
         }
       ],
       "yaxis": {
-        "align": false,
-        "alignLevel": null
+        "align": false
       }
     },
     {
@@ -312,7 +305,10 @@
       "bars": false,
       "dashLength": 10,
       "dashes": false,
-      "datasource": null,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "PBFA97CFB590B2093"
+      },
       "description": "**process_virtual_memory_bytes**  Virtual memory size in bytes.",
       "fill": 0,
       "fillGradient": 0,
@@ -340,7 +336,7 @@
         "alertThreshold": true
       },
       "percentage": false,
-      "pluginVersion": "8.1.5",
+      "pluginVersion": "8.5.3",
       "pointradius": 1,
       "points": false,
       "renderer": "flot",
@@ -350,16 +346,14 @@
       "steppedLine": false,
       "targets": [
         {
-          "expr": "process_virtual_memory_bytes{app=\"$app\",kubernetes_pod_name=~\"$instance\"}",
+          "expr": "process_virtual_memory_bytes{instance=\"$instance\"}",
           "interval": "",
           "legendFormat": "value",
           "refId": "A"
         }
       ],
       "thresholds": [],
-      "timeFrom": null,
       "timeRegions": [],
-      "timeShift": null,
       "title": "Memory virtual",
       "tooltip": {
         "shared": true,
@@ -369,33 +363,25 @@
       "transparent": true,
       "type": "graph",
       "xaxis": {
-        "buckets": null,
         "mode": "time",
-        "name": null,
         "show": true,
         "values": []
       },
       "yaxes": [
         {
           "format": "decbytes",
-          "label": null,
           "logBase": 1,
-          "max": null,
           "min": "0",
           "show": true
         },
         {
           "format": "decbytes",
-          "label": null,
           "logBase": 1,
-          "max": null,
-          "min": null,
           "show": true
         }
       ],
       "yaxis": {
-        "align": false,
-        "alignLevel": null
+        "align": false
       }
     },
     {
@@ -406,7 +392,10 @@
       "bars": false,
       "dashLength": 10,
       "dashes": false,
-      "datasource": null,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "PBFA97CFB590B2093"
+      },
       "description": "**process_resident_memory_bytes** Resident memory size in bytes.",
       "fill": 0,
       "fillGradient": 0,
@@ -434,7 +423,7 @@
         "alertThreshold": true
       },
       "percentage": false,
-      "pluginVersion": "8.1.5",
+      "pluginVersion": "8.5.3",
       "pointradius": 1,
       "points": false,
       "renderer": "flot",
@@ -444,16 +433,14 @@
       "steppedLine": false,
       "targets": [
         {
-          "expr": "process_resident_memory_bytes{app=\"$app\",kubernetes_pod_name=~\"$instance\"}",
+          "expr": "process_resident_memory_bytes{instance=\"$instance\"}",
           "interval": "",
           "legendFormat": "value",
           "refId": "A"
         }
       ],
       "thresholds": [],
-      "timeFrom": null,
       "timeRegions": [],
-      "timeShift": null,
       "title": "Memory RSS",
       "tooltip": {
         "shared": true,
@@ -463,33 +450,25 @@
       "transparent": true,
       "type": "graph",
       "xaxis": {
-        "buckets": null,
         "mode": "time",
-        "name": null,
         "show": true,
         "values": []
       },
       "yaxes": [
         {
           "format": "decbytes",
-          "label": null,
           "logBase": 1,
-          "max": null,
           "min": "0",
           "show": true
         },
         {
           "format": "decbytes",
-          "label": null,
           "logBase": 1,
-          "max": null,
-          "min": null,
           "show": true
         }
       ],
       "yaxis": {
-        "align": false,
-        "alignLevel": null
+        "align": false
       }
     },
     {
@@ -497,7 +476,10 @@
       "bars": false,
       "dashLength": 10,
       "dashes": false,
-      "datasource": null,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "PBFA97CFB590B2093"
+      },
       "decimals": 0,
       "description": "**go_threads** – Number of OS threads created.",
       "fill": 0,
@@ -527,7 +509,7 @@
         "alertThreshold": true
       },
       "percentage": false,
-      "pluginVersion": "8.1.5",
+      "pluginVersion": "8.5.3",
       "pointradius": 0.5,
       "points": false,
       "renderer": "flot",
@@ -537,16 +519,14 @@
       "steppedLine": false,
       "targets": [
         {
-          "expr": "go_threads{app=\"$app\", kubernetes_pod_name=~\"$instance\"}",
+          "expr": "go_threads{instance=\"$instance\"}",
           "interval": "",
           "legendFormat": "value",
           "refId": "A"
         }
       ],
       "thresholds": [],
-      "timeFrom": null,
       "timeRegions": [],
-      "timeShift": null,
       "title": "Thread count",
       "tooltip": {
         "shared": true,
@@ -556,9 +536,7 @@
       "transparent": true,
       "type": "graph",
       "xaxis": {
-        "buckets": null,
         "mode": "time",
-        "name": null,
         "show": true,
         "values": []
       },
@@ -566,24 +544,18 @@
         {
           "decimals": 0,
           "format": "short",
-          "label": null,
           "logBase": 1,
-          "max": null,
           "min": "0",
           "show": true
         },
         {
           "format": "short",
-          "label": null,
           "logBase": 1,
-          "max": null,
-          "min": null,
           "show": true
         }
       ],
       "yaxis": {
-        "align": false,
-        "alignLevel": null
+        "align": false
       }
     },
     {
@@ -591,7 +563,10 @@
       "bars": false,
       "dashLength": 10,
       "dashes": false,
-      "datasource": null,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "PBFA97CFB590B2093"
+      },
       "decimals": 0,
       "description": "**go_goroutines** - Number of goroutines that currently exist.",
       "fill": 0,
@@ -621,7 +596,7 @@
         "alertThreshold": true
       },
       "percentage": false,
-      "pluginVersion": "8.1.5",
+      "pluginVersion": "8.5.3",
       "pointradius": 0.5,
       "points": false,
       "renderer": "flot",
@@ -631,16 +606,14 @@
       "steppedLine": false,
       "targets": [
         {
-          "expr": "go_goroutines{app=\"$app\", kubernetes_pod_name=~\"$instance\"}",
+          "expr": "go_goroutines{instance=\"$instance\"}",
           "interval": "",
           "legendFormat": "value",
           "refId": "A"
         }
       ],
       "thresholds": [],
-      "timeFrom": null,
       "timeRegions": [],
-      "timeShift": null,
       "title": "Goroutines count",
       "tooltip": {
         "shared": true,
@@ -650,9 +623,7 @@
       "transparent": true,
       "type": "graph",
       "xaxis": {
-        "buckets": null,
         "mode": "time",
-        "name": null,
         "show": true,
         "values": []
       },
@@ -660,32 +631,25 @@
         {
           "decimals": 0,
           "format": "short",
-          "label": null,
           "logBase": 1,
-          "max": null,
           "min": "0",
           "show": true
         },
         {
           "format": "short",
-          "label": null,
           "logBase": 1,
-          "max": null,
-          "min": null,
           "show": true
         }
       ],
       "yaxis": {
-        "align": false,
-        "alignLevel": null
+        "align": false
       }
     },
     {
       "collapsed": true,
-      "datasource": null,
-      "fieldConfig": {
-        "defaults": {},
-        "overrides": []
+      "datasource": {
+        "type": "prometheus",
+        "uid": "PBFA97CFB590B2093"
       },
       "gridPos": {
         "h": 1,
@@ -696,7 +660,10 @@
       "id": 10,
       "panels": [
         {
-          "datasource": null,
+          "datasource": {
+            "type": "prometheus",
+            "uid": "PBFA97CFB590B2093"
+          },
           "description": "**go_memstats_last_gc_time_seconds** – Number of seconds since 1970 of last garbage collection.",
           "fieldConfig": {
             "defaults": {
@@ -706,8 +673,7 @@
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "green",
-                    "value": null
+                    "color": "green"
                   },
                   {
                     "color": "red",
@@ -742,14 +708,12 @@
           "pluginVersion": "7.3.4",
           "targets": [
             {
-              "expr": "go_memstats_last_gc_time_seconds{app=\"$app\", kubernetes_pod_name=~\"$instance\"}",
+              "expr": "go_memstats_last_gc_time_seconds{instance=\"$instance\"}",
               "interval": "",
               "legendFormat": "",
               "refId": "A"
             }
           ],
-          "timeFrom": null,
-          "timeShift": null,
           "title": "Last GC time",
           "type": "stat"
         },
@@ -758,7 +722,10 @@
           "bars": false,
           "dashLength": 10,
           "dashes": false,
-          "datasource": null,
+          "datasource": {
+            "type": "prometheus",
+            "uid": "PBFA97CFB590B2093"
+          },
           "description": "**go_memstats_next_gc_bytes** – Number of heap bytes when next garbage collection will take place.",
           "fieldConfig": {
             "defaults": {
@@ -802,7 +769,7 @@
           "steppedLine": false,
           "targets": [
             {
-              "expr": "go_memstats_next_gc_bytes{app=\"$app\", kubernetes_pod_name=~\"$instance\"}",
+              "expr": "go_memstats_next_gc_bytes{instance=\"$instance\"}",
               "interval": "",
               "intervalFactor": 1,
               "legendFormat": "value",
@@ -810,9 +777,7 @@
             }
           ],
           "thresholds": [],
-          "timeFrom": null,
           "timeRegions": [],
-          "timeShift": null,
           "title": "Next GC heap target",
           "tooltip": {
             "shared": true,
@@ -822,9 +787,7 @@
           "transparent": true,
           "type": "graph",
           "xaxis": {
-            "buckets": null,
             "mode": "time",
-            "name": null,
             "show": true,
             "values": []
           },
@@ -833,22 +796,17 @@
               "format": "decbytes",
               "label": "",
               "logBase": 1,
-              "max": null,
               "min": "0",
               "show": true
             },
             {
               "format": "s",
-              "label": null,
               "logBase": 1,
-              "max": null,
-              "min": null,
               "show": false
             }
           ],
           "yaxis": {
-            "align": false,
-            "alignLevel": null
+            "align": false
           }
         },
         {
@@ -856,7 +814,10 @@
           "bars": false,
           "dashLength": 10,
           "dashes": false,
-          "datasource": null,
+          "datasource": {
+            "type": "prometheus",
+            "uid": "PBFA97CFB590B2093"
+          },
           "description": "**go_gc_duration_seconds** – A summary of the pause duration of garbage collection cycles.",
           "fieldConfig": {
             "defaults": {
@@ -900,16 +861,14 @@
           "steppedLine": false,
           "targets": [
             {
-              "expr": "go_gc_duration_seconds{app=\"$app\", kubernetes_pod_name=~\"$instance\"}",
+              "expr": "go_gc_duration_seconds{instance=\"$instance\"}",
               "interval": "",
               "legendFormat": "quantile - {{quantile}}",
               "refId": "A"
             }
           ],
           "thresholds": [],
-          "timeFrom": null,
           "timeRegions": [],
-          "timeShift": null,
           "title": "GC pauses (quantiles) ",
           "tooltip": {
             "shared": true,
@@ -919,9 +878,7 @@
           "transparent": true,
           "type": "graph",
           "xaxis": {
-            "buckets": null,
             "mode": "time",
-            "name": null,
             "show": true,
             "values": []
           },
@@ -930,22 +887,17 @@
               "format": "s",
               "label": "",
               "logBase": 1,
-              "max": null,
               "min": "0",
               "show": true
             },
             {
               "format": "s",
-              "label": null,
               "logBase": 1,
-              "max": null,
-              "min": null,
               "show": false
             }
           ],
           "yaxis": {
-            "align": false,
-            "alignLevel": null
+            "align": false
           }
         },
         {
@@ -953,7 +905,10 @@
           "bars": true,
           "dashLength": 10,
           "dashes": false,
-          "datasource": null,
+          "datasource": {
+            "type": "prometheus",
+            "uid": "PBFA97CFB590B2093"
+          },
           "description": "**go_memstats_last_gc_cpu_fraction** – The fraction of this program's available CPU time used by the GC since the program started.",
           "fieldConfig": {
             "defaults": {
@@ -997,16 +952,14 @@
           "steppedLine": false,
           "targets": [
             {
-              "expr": "go_memstats_last_gc_cpu_fraction{app=\"$app\", kubernetes_pod_name=~\"$instance\"}",
+              "expr": "go_memstats_last_gc_cpu_fraction{instance=\"$instance\"}",
               "interval": "",
               "legendFormat": "quantile - {{quantile}}",
               "refId": "A"
             }
           ],
           "thresholds": [],
-          "timeFrom": null,
           "timeRegions": [],
-          "timeShift": null,
           "title": "CPU fraction",
           "tooltip": {
             "shared": true,
@@ -1016,9 +969,7 @@
           "transparent": true,
           "type": "graph",
           "xaxis": {
-            "buckets": null,
             "mode": "time",
-            "name": null,
             "show": true,
             "values": []
           },
@@ -1027,22 +978,17 @@
               "format": "s",
               "label": "",
               "logBase": 1,
-              "max": null,
               "min": "0",
               "show": true
             },
             {
               "format": "s",
-              "label": null,
               "logBase": 1,
-              "max": null,
-              "min": null,
               "show": false
             }
           ],
           "yaxis": {
-            "align": false,
-            "alignLevel": null
+            "align": false
           }
         }
       ],
@@ -1051,10 +997,9 @@
     },
     {
       "collapsed": true,
-      "datasource": null,
-      "fieldConfig": {
-        "defaults": {},
-        "overrides": []
+      "datasource": {
+        "type": "prometheus",
+        "uid": "PBFA97CFB590B2093"
       },
       "gridPos": {
         "h": 1,
@@ -1069,21 +1014,18 @@
           "bars": false,
           "dashLength": 10,
           "dashes": false,
-          "datasource": null,
-          "description": "**go_memstats_sys_bytes** - Number of heap bytes obtained from system. It sums all the sys metrics:\n\n**go_memstats_heap_sys_bytes** – Number of heap bytes obtained from system.\n\n**go_memstats_stack_sys_bytes** – Number of bytes obtained from system for stack allocator.\n\n**go_memstats_mspan_sys_bytes** – Number of bytes used for mspan structures obtained from system.\n\n**go_memstats_mcache_sys_bytes** – Number of bytes used for mcache structures obtained from system.\n\n**go_memstats_buck_hash_sys_bytes** – Number of bytes used by the profiling bucket hash table.\n\n**go_memstats_gc_sys_bytes** – Number of bytes used for garbage collection system metadata.\n\n**go_memstats_other_sys_bytes** Number of bytes used for other system allocations.",
-          "fieldConfig": {
-            "defaults": {
-              "custom": {}
-            },
-            "overrides": []
+          "datasource": {
+            "type": "prometheus",
+            "uid": "PBFA97CFB590B2093"
           },
+          "description": "**go_memstats_sys_bytes** - Number of heap bytes obtained from system. It sums all the sys metrics:\n\n**go_memstats_heap_sys_bytes** – Number of heap bytes obtained from system.\n\n**go_memstats_stack_sys_bytes** – Number of bytes obtained from system for stack allocator.\n\n**go_memstats_mspan_sys_bytes** – Number of bytes used for mspan structures obtained from system.\n\n**go_memstats_mcache_sys_bytes** – Number of bytes used for mcache structures obtained from system.\n\n**go_memstats_buck_hash_sys_bytes** – Number of bytes used by the profiling bucket hash table.\n\n**go_memstats_gc_sys_bytes** – Number of bytes used for garbage collection system metadata.\n\n**go_memstats_other_sys_bytes** Number of bytes used for other system allocations.",
           "fill": 7,
           "fillGradient": 0,
           "gridPos": {
             "h": 23,
             "w": 8,
             "x": 0,
-            "y": 3
+            "y": 21
           },
           "hiddenSeries": false,
           "id": 22,
@@ -1104,7 +1046,7 @@
             "alertThreshold": true
           },
           "percentage": false,
-          "pluginVersion": "7.3.4",
+          "pluginVersion": "8.5.3",
           "pointradius": 2,
           "points": false,
           "renderer": "flot",
@@ -1121,14 +1063,14 @@
           "steppedLine": false,
           "targets": [
             {
-              "expr": "go_memstats_sys_bytes{app=\"$app\", kubernetes_pod_name=~\"$instance\"}",
+              "expr": "go_memstats_sys_bytes{instance=\"$instance\"}",
               "interval": "",
               "intervalFactor": 1,
               "legendFormat": "total from OS ",
               "refId": "A"
             },
             {
-              "expr": "go_memstats_heap_sys_bytes{app=\"$app\", kubernetes_pod_name=~\"$instance\"}",
+              "expr": "go_memstats_heap_sys_bytes{instance=\"$instance\"}",
               "format": "time_series",
               "hide": false,
               "instant": false,
@@ -1137,46 +1079,44 @@
               "refId": "B"
             },
             {
-              "expr": "go_memstats_stack_sys_bytes{app=\"$app\", kubernetes_pod_name=~\"$instance\"}",
+              "expr": "go_memstats_stack_sys_bytes{instance=\"$instance\"}",
               "interval": "",
               "legendFormat": "stack",
               "refId": "C"
             },
             {
-              "expr": "go_memstats_mspan_sys_bytes{app=\"$app\", kubernetes_pod_name=~\"$instance\"}",
+              "expr": "go_memstats_mspan_sys_bytes{instance=\"$instance\"}",
               "interval": "",
               "legendFormat": "spans",
               "refId": "D"
             },
             {
-              "expr": "go_memstats_mcache_sys_bytes{app=\"$app\", kubernetes_pod_name=~\"$instance\"}",
+              "expr": "go_memstats_mcache_sys_bytes{instance=\"$instance\"}",
               "interval": "",
               "legendFormat": "cache",
               "refId": "E"
             },
             {
-              "expr": "go_memstats_buck_hash_sys_bytes{app=\"$app\", kubernetes_pod_name=~\"$instance\"}",
+              "expr": "go_memstats_buck_hash_sys_bytes{instance=\"$instance\"}",
               "interval": "",
               "legendFormat": "ProfBuckhash",
               "refId": "F"
             },
             {
-              "expr": "go_memstats_gc_sys_bytes{app=\"$app\", kubernetes_pod_name=~\"$instance\"}",
+              "expr": "go_memstats_gc_sys_bytes{instance=\"$instance\"}",
               "interval": "",
               "legendFormat": "GCMeta",
               "refId": "G"
             },
             {
-              "expr": "go_memstats_other_sys_bytes{app=\"$app\", kubernetes_pod_name=~\"$instance\"}",
+              "expr": "go_memstats_other_sys_bytes{instance=\"$instance\"}",
               "interval": "",
               "legendFormat": "Other",
               "refId": "H"
             }
           ],
           "thresholds": [],
-          "timeFrom": null,
           "timeRegions": [],
-          "timeShift": null,
           "title": "Memory distribution",
           "tooltip": {
             "shared": true,
@@ -1186,9 +1126,7 @@
           "transparent": true,
           "type": "graph",
           "xaxis": {
-            "buckets": null,
             "mode": "time",
-            "name": null,
             "show": true,
             "values": []
           },
@@ -1197,22 +1135,17 @@
               "format": "decbytes",
               "label": "",
               "logBase": 1,
-              "max": null,
               "min": "0",
               "show": true
             },
             {
               "format": "s",
-              "label": null,
               "logBase": 1,
-              "max": null,
-              "min": null,
               "show": false
             }
           ],
           "yaxis": {
-            "align": false,
-            "alignLevel": null
+            "align": false
           }
         },
         {
@@ -1220,21 +1153,18 @@
           "bars": false,
           "dashLength": 10,
           "dashes": false,
-          "datasource": null,
-          "description": "**go_memstats_alloc_bytes** - Number of bytes allocated and still in use.",
-          "fieldConfig": {
-            "defaults": {
-              "custom": {}
-            },
-            "overrides": []
+          "datasource": {
+            "type": "prometheus",
+            "uid": "PBFA97CFB590B2093"
           },
+          "description": "**go_memstats_alloc_bytes** - Number of bytes allocated and still in use.",
           "fill": 0,
           "fillGradient": 0,
           "gridPos": {
             "h": 9,
             "w": 8,
             "x": 8,
-            "y": 3
+            "y": 21
           },
           "hiddenSeries": false,
           "id": 5,
@@ -1254,7 +1184,7 @@
             "alertThreshold": true
           },
           "percentage": false,
-          "pluginVersion": "7.3.4",
+          "pluginVersion": "8.5.3",
           "pointradius": 2,
           "points": false,
           "renderer": "flot",
@@ -1264,7 +1194,7 @@
           "steppedLine": false,
           "targets": [
             {
-              "expr": "go_memstats_alloc_bytes{app=\"$app\", kubernetes_pod_name=~\"$instance\"}",
+              "expr": "go_memstats_alloc_bytes{instance=\"$instance\"}",
               "interval": "",
               "intervalFactor": 1,
               "legendFormat": "value",
@@ -1272,9 +1202,7 @@
             }
           ],
           "thresholds": [],
-          "timeFrom": null,
           "timeRegions": [],
-          "timeShift": null,
           "title": "Allocated bytes at heap in use",
           "tooltip": {
             "shared": true,
@@ -1284,9 +1212,7 @@
           "transparent": true,
           "type": "graph",
           "xaxis": {
-            "buckets": null,
             "mode": "time",
-            "name": null,
             "show": true,
             "values": []
           },
@@ -1295,22 +1221,17 @@
               "format": "decbytes",
               "label": "",
               "logBase": 1,
-              "max": null,
               "min": "0",
               "show": true
             },
             {
               "format": "s",
-              "label": null,
               "logBase": 1,
-              "max": null,
-              "min": null,
               "show": false
             }
           ],
           "yaxis": {
-            "align": false,
-            "alignLevel": null
+            "align": false
           }
         },
         {
@@ -1318,21 +1239,18 @@
           "bars": false,
           "dashLength": 10,
           "dashes": false,
-          "datasource": null,
-          "description": "**go_memstats_heap_objects** – Number of allocated objects.",
-          "fieldConfig": {
-            "defaults": {
-              "custom": {}
-            },
-            "overrides": []
+          "datasource": {
+            "type": "prometheus",
+            "uid": "PBFA97CFB590B2093"
           },
+          "description": "**go_memstats_heap_objects** – Number of allocated objects.",
           "fill": 0,
           "fillGradient": 0,
           "gridPos": {
             "h": 9,
             "w": 8,
             "x": 16,
-            "y": 3
+            "y": 21
           },
           "hiddenSeries": false,
           "id": 28,
@@ -1352,7 +1270,7 @@
             "alertThreshold": true
           },
           "percentage": false,
-          "pluginVersion": "7.3.4",
+          "pluginVersion": "8.5.3",
           "pointradius": 2,
           "points": false,
           "renderer": "flot",
@@ -1362,7 +1280,7 @@
           "steppedLine": false,
           "targets": [
             {
-              "expr": "go_memstats_heap_objects{app=\"$app\", kubernetes_pod_name=~\"$instance\"}",
+              "expr": "go_memstats_heap_objects{instance=\"$instance\"}",
               "interval": "",
               "intervalFactor": 1,
               "legendFormat": "value",
@@ -1370,9 +1288,7 @@
             }
           ],
           "thresholds": [],
-          "timeFrom": null,
           "timeRegions": [],
-          "timeShift": null,
           "title": "Heap live objects count",
           "tooltip": {
             "shared": true,
@@ -1382,9 +1298,7 @@
           "transparent": true,
           "type": "graph",
           "xaxis": {
-            "buckets": null,
             "mode": "time",
-            "name": null,
             "show": true,
             "values": []
           },
@@ -1393,22 +1307,17 @@
               "format": "short",
               "label": "",
               "logBase": 1,
-              "max": null,
               "min": "0",
               "show": true
             },
             {
               "format": "s",
-              "label": null,
               "logBase": 1,
-              "max": null,
-              "min": null,
               "show": false
             }
           ],
           "yaxis": {
-            "align": false,
-            "alignLevel": null
+            "align": false
           }
         },
         {
@@ -1416,21 +1325,18 @@
           "bars": false,
           "dashLength": 10,
           "dashes": false,
-          "datasource": null,
-          "description": "**go_memstats_mallocs_total** – Total number of mallocs.",
-          "fieldConfig": {
-            "defaults": {
-              "custom": {}
-            },
-            "overrides": []
+          "datasource": {
+            "type": "prometheus",
+            "uid": "PBFA97CFB590B2093"
           },
+          "description": "**go_memstats_mallocs_total** – Total number of mallocs.",
           "fill": 0,
           "fillGradient": 0,
           "gridPos": {
             "h": 8,
             "w": 8,
             "x": 8,
-            "y": 12
+            "y": 30
           },
           "hiddenSeries": false,
           "id": 27,
@@ -1450,7 +1356,7 @@
             "alertThreshold": true
           },
           "percentage": false,
-          "pluginVersion": "7.3.4",
+          "pluginVersion": "8.5.3",
           "pointradius": 2,
           "points": false,
           "renderer": "flot",
@@ -1460,7 +1366,7 @@
           "steppedLine": false,
           "targets": [
             {
-              "expr": "rate(go_memstats_mallocs_total{app=\"$app\", kubernetes_pod_name=~\"$instance\"}[2m])",
+              "expr": "rate(go_memstats_mallocs_total{instance=\"$instance\"}[2m])",
               "interval": "",
               "intervalFactor": 1,
               "legendFormat": "value",
@@ -1468,9 +1374,7 @@
             }
           ],
           "thresholds": [],
-          "timeFrom": null,
           "timeRegions": [],
-          "timeShift": null,
           "title": "Allocations per second",
           "tooltip": {
             "shared": true,
@@ -1480,9 +1384,7 @@
           "transparent": true,
           "type": "graph",
           "xaxis": {
-            "buckets": null,
             "mode": "time",
-            "name": null,
             "show": true,
             "values": []
           },
@@ -1492,22 +1394,17 @@
               "format": "short",
               "label": "",
               "logBase": 1,
-              "max": null,
               "min": "0",
               "show": true
             },
             {
               "format": "s",
-              "label": null,
               "logBase": 1,
-              "max": null,
-              "min": null,
               "show": false
             }
           ],
           "yaxis": {
-            "align": false,
-            "alignLevel": null
+            "align": false
           }
         },
         {
@@ -1515,21 +1412,18 @@
           "bars": false,
           "dashLength": 10,
           "dashes": false,
-          "datasource": null,
-          "description": "**go_memstats_lookups_total** – Total number of pointer lookups.",
-          "fieldConfig": {
-            "defaults": {
-              "custom": {}
-            },
-            "overrides": []
+          "datasource": {
+            "type": "prometheus",
+            "uid": "PBFA97CFB590B2093"
           },
+          "description": "**go_memstats_lookups_total** – Total number of pointer lookups.",
           "fill": 0,
           "fillGradient": 0,
           "gridPos": {
             "h": 8,
             "w": 8,
             "x": 16,
-            "y": 12
+            "y": 30
           },
           "hiddenSeries": false,
           "id": 26,
@@ -1549,7 +1443,7 @@
             "alertThreshold": true
           },
           "percentage": false,
-          "pluginVersion": "7.3.4",
+          "pluginVersion": "8.5.3",
           "pointradius": 2,
           "points": false,
           "renderer": "flot",
@@ -1559,7 +1453,7 @@
           "steppedLine": false,
           "targets": [
             {
-              "expr": "rate(go_memstats_lookups_total{app=\"$app\", kubernetes_pod_name=~\"$instance\"}[2m])",
+              "expr": "rate(go_memstats_lookups_total{instance=\"$instance\"}[2m])",
               "interval": "",
               "intervalFactor": 1,
               "legendFormat": "value",
@@ -1567,9 +1461,7 @@
             }
           ],
           "thresholds": [],
-          "timeFrom": null,
           "timeRegions": [],
-          "timeShift": null,
           "title": "Lookups/dereferences per second",
           "tooltip": {
             "shared": true,
@@ -1579,9 +1471,7 @@
           "transparent": true,
           "type": "graph",
           "xaxis": {
-            "buckets": null,
             "mode": "time",
-            "name": null,
             "show": true,
             "values": []
           },
@@ -1591,22 +1481,17 @@
               "format": "short",
               "label": "",
               "logBase": 1,
-              "max": null,
               "min": "0",
               "show": true
             },
             {
               "format": "s",
-              "label": null,
               "logBase": 1,
-              "max": null,
-              "min": null,
               "show": false
             }
           ],
           "yaxis": {
-            "align": false,
-            "alignLevel": null
+            "align": false
           }
         },
         {
@@ -1614,21 +1499,18 @@
           "bars": false,
           "dashLength": 10,
           "dashes": false,
-          "datasource": null,
-          "description": "**go_memstats_frees_total** – Total number of frees.",
-          "fieldConfig": {
-            "defaults": {
-              "custom": {}
-            },
-            "overrides": []
+          "datasource": {
+            "type": "prometheus",
+            "uid": "PBFA97CFB590B2093"
           },
+          "description": "**go_memstats_frees_total** – Total number of frees.",
           "fill": 0,
           "fillGradient": 0,
           "gridPos": {
             "h": 6,
             "w": 8,
             "x": 8,
-            "y": 20
+            "y": 38
           },
           "hiddenSeries": false,
           "id": 8,
@@ -1648,7 +1530,7 @@
             "alertThreshold": true
           },
           "percentage": false,
-          "pluginVersion": "7.3.4",
+          "pluginVersion": "8.5.3",
           "pointradius": 2,
           "points": false,
           "renderer": "flot",
@@ -1658,7 +1540,7 @@
           "steppedLine": false,
           "targets": [
             {
-              "expr": "rate(go_memstats_frees_total{app=\"$app\", kubernetes_pod_name=~\"$instance\"}[2m])",
+              "expr": "rate(go_memstats_frees_total{instance=\"$instance\"}[2m])",
               "interval": "",
               "intervalFactor": 1,
               "legendFormat": "value",
@@ -1666,9 +1548,7 @@
             }
           ],
           "thresholds": [],
-          "timeFrom": null,
           "timeRegions": [],
-          "timeShift": null,
           "title": "Memory frees per second",
           "tooltip": {
             "shared": true,
@@ -1678,9 +1558,7 @@
           "transparent": true,
           "type": "graph",
           "xaxis": {
-            "buckets": null,
             "mode": "time",
-            "name": null,
             "show": true,
             "values": []
           },
@@ -1689,22 +1567,17 @@
               "format": "short",
               "label": "",
               "logBase": 1,
-              "max": null,
               "min": "0",
               "show": true
             },
             {
               "format": "s",
-              "label": null,
               "logBase": 1,
-              "max": null,
-              "min": null,
               "show": false
             }
           ],
           "yaxis": {
-            "align": false,
-            "alignLevel": null
+            "align": false
           }
         },
         {
@@ -1712,21 +1585,18 @@
           "bars": false,
           "dashLength": 10,
           "dashes": false,
-          "datasource": null,
-          "description": "**go_memstats_alloc_bytes_total** - Total number of bytes allocated, even if freed.",
-          "fieldConfig": {
-            "defaults": {
-              "custom": {}
-            },
-            "overrides": []
+          "datasource": {
+            "type": "prometheus",
+            "uid": "PBFA97CFB590B2093"
           },
+          "description": "**go_memstats_alloc_bytes_total** - Total number of bytes allocated, even if freed.",
           "fill": 0,
           "fillGradient": 0,
           "gridPos": {
             "h": 6,
             "w": 8,
             "x": 16,
-            "y": 20
+            "y": 38
           },
           "hiddenSeries": false,
           "id": 6,
@@ -1746,7 +1616,7 @@
             "alertThreshold": true
           },
           "percentage": false,
-          "pluginVersion": "7.3.4",
+          "pluginVersion": "8.5.3",
           "pointradius": 2,
           "points": false,
           "renderer": "flot",
@@ -1756,7 +1626,7 @@
           "steppedLine": false,
           "targets": [
             {
-              "expr": "rate(go_memstats_alloc_bytes_total{app=\"$app\", kubernetes_pod_name=~\"$instance\"}[5m])",
+              "expr": "rate(go_memstats_alloc_bytes_total{instance=\"$instance\"}[5m])",
               "interval": "",
               "intervalFactor": 1,
               "legendFormat": "value",
@@ -1764,9 +1634,7 @@
             }
           ],
           "thresholds": [],
-          "timeFrom": null,
           "timeRegions": [],
-          "timeShift": null,
           "title": "Allocated bytes total (even if freed) per second",
           "tooltip": {
             "shared": true,
@@ -1776,9 +1644,7 @@
           "transparent": true,
           "type": "graph",
           "xaxis": {
-            "buckets": null,
             "mode": "time",
-            "name": null,
             "show": true,
             "values": []
           },
@@ -1787,22 +1653,17 @@
               "format": "decbytes",
               "label": "",
               "logBase": 1,
-              "max": null,
               "min": "0",
               "show": true
             },
             {
               "format": "s",
-              "label": null,
               "logBase": 1,
-              "max": null,
-              "min": null,
               "show": false
             }
           ],
           "yaxis": {
-            "align": false,
-            "alignLevel": null
+            "align": false
           }
         }
       ],
@@ -1811,10 +1672,9 @@
     },
     {
       "collapsed": true,
-      "datasource": null,
-      "fieldConfig": {
-        "defaults": {},
-        "overrides": []
+      "datasource": {
+        "type": "prometheus",
+        "uid": "PBFA97CFB590B2093"
       },
       "gridPos": {
         "h": 1,
@@ -1829,7 +1689,10 @@
           "bars": false,
           "dashLength": 10,
           "dashes": false,
-          "datasource": null,
+          "datasource": {
+            "type": "prometheus",
+            "uid": "PBFA97CFB590B2093"
+          },
           "description": "**go_memstats_heap_inuse_bytes** – Number of heap bytes that are in use.",
           "fieldConfig": {
             "defaults": {
@@ -1873,16 +1736,14 @@
           "steppedLine": false,
           "targets": [
             {
-              "expr": "go_memstats_heap_inuse_bytes{app=\"$app\", kubernetes_pod_name=~\"$instance\"}",
+              "expr": "go_memstats_heap_inuse_bytes{instance=\"$instance\"}",
               "interval": "",
               "legendFormat": "value",
               "refId": "A"
             }
           ],
           "thresholds": [],
-          "timeFrom": null,
           "timeRegions": [],
-          "timeShift": null,
           "title": "Currrent bytes INUSE spans",
           "tooltip": {
             "shared": true,
@@ -1892,33 +1753,25 @@
           "transparent": true,
           "type": "graph",
           "xaxis": {
-            "buckets": null,
             "mode": "time",
-            "name": null,
             "show": true,
             "values": []
           },
           "yaxes": [
             {
               "format": "decbytes",
-              "label": null,
               "logBase": 1,
-              "max": null,
               "min": "0",
               "show": true
             },
             {
               "format": "short",
-              "label": null,
               "logBase": 1,
-              "max": null,
-              "min": null,
               "show": true
             }
           ],
           "yaxis": {
-            "align": false,
-            "alignLevel": null
+            "align": false
           }
         },
         {
@@ -1926,7 +1779,10 @@
           "bars": false,
           "dashLength": 10,
           "dashes": false,
-          "datasource": null,
+          "datasource": {
+            "type": "prometheus",
+            "uid": "PBFA97CFB590B2093"
+          },
           "description": "**go_memstats_heap_idle_bytes** – Number of heap bytes waiting to be used.",
           "fieldConfig": {
             "defaults": {
@@ -1970,16 +1826,14 @@
           "steppedLine": false,
           "targets": [
             {
-              "expr": "go_memstats_heap_idle_bytes{app=\"$app\", kubernetes_pod_name=~\"$instance\"}",
+              "expr": "go_memstats_heap_idle_bytes{instance=\"$instance\"}",
               "interval": "",
               "legendFormat": "value",
               "refId": "A"
             }
           ],
           "thresholds": [],
-          "timeFrom": null,
           "timeRegions": [],
-          "timeShift": null,
           "title": "Currrent bytes in IDLE spans",
           "tooltip": {
             "shared": true,
@@ -1989,33 +1843,25 @@
           "transparent": true,
           "type": "graph",
           "xaxis": {
-            "buckets": null,
             "mode": "time",
-            "name": null,
             "show": true,
             "values": []
           },
           "yaxes": [
             {
               "format": "decbytes",
-              "label": null,
               "logBase": 1,
-              "max": null,
               "min": "0",
               "show": true
             },
             {
               "format": "short",
-              "label": null,
               "logBase": 1,
-              "max": null,
-              "min": null,
               "show": true
             }
           ],
           "yaxis": {
-            "align": false,
-            "alignLevel": null
+            "align": false
           }
         },
         {
@@ -2023,7 +1869,10 @@
           "bars": false,
           "dashLength": 10,
           "dashes": false,
-          "datasource": null,
+          "datasource": {
+            "type": "prometheus",
+            "uid": "PBFA97CFB590B2093"
+          },
           "description": "**go_memstats_heap_inuse_bytes** minus **go_memstats_heap_alloc_bytes** shows how many bytes of memory has been allocated for the heap, but not currently used.",
           "fieldConfig": {
             "defaults": {
@@ -2067,16 +1916,14 @@
           "steppedLine": false,
           "targets": [
             {
-              "expr": "go_memstats_heap_inuse_bytes{app=\"$app\", kubernetes_pod_name=~\"$instance\"} - go_memstats_heap_alloc_bytes{app=\"$app\", kubernetes_pod_name=~\"$instance\"}",
+              "expr": "go_memstats_heap_inuse_bytes{instance=\"$instance\"} - go_memstats_heap_alloc_bytes{instance=\"$instance\"}",
               "interval": "",
               "legendFormat": "value",
               "refId": "A"
             }
           ],
           "thresholds": [],
-          "timeFrom": null,
           "timeRegions": [],
-          "timeShift": null,
           "title": "Memory allocated but not used",
           "tooltip": {
             "shared": true,
@@ -2086,33 +1933,25 @@
           "transparent": true,
           "type": "graph",
           "xaxis": {
-            "buckets": null,
             "mode": "time",
-            "name": null,
             "show": true,
             "values": []
           },
           "yaxes": [
             {
               "format": "decbytes",
-              "label": null,
               "logBase": 1,
-              "max": null,
               "min": "0",
               "show": true
             },
             {
               "format": "short",
-              "label": null,
               "logBase": 1,
-              "max": null,
-              "min": null,
               "show": true
             }
           ],
           "yaxis": {
-            "align": false,
-            "alignLevel": null
+            "align": false
           }
         },
         {
@@ -2120,7 +1959,10 @@
           "bars": false,
           "dashLength": 10,
           "dashes": false,
-          "datasource": null,
+          "datasource": {
+            "type": "prometheus",
+            "uid": "PBFA97CFB590B2093"
+          },
           "description": "**go_memstats_heap_idle_bytes** minus **go_memstats_heap_released_bytes** this is memory that the runtime retains in order to not require more from the OS , so avoid such costly operation.",
           "fieldConfig": {
             "defaults": {
@@ -2164,16 +2006,14 @@
           "steppedLine": false,
           "targets": [
             {
-              "expr": "go_memstats_heap_idle_bytes{app=\"$app\", kubernetes_pod_name=~\"$instance\"} - go_memstats_heap_released_bytes{app=\"$app\", kubernetes_pod_name=~\"$instance\"}",
+              "expr": "go_memstats_heap_idle_bytes{instance=\"$instance\"} - go_memstats_heap_released_bytes{instance=\"$instance\"}",
               "interval": "",
               "legendFormat": "value",
               "refId": "A"
             }
           ],
           "thresholds": [],
-          "timeFrom": null,
           "timeRegions": [],
-          "timeShift": null,
           "title": "Memory that could be returned to OS",
           "tooltip": {
             "shared": true,
@@ -2183,33 +2023,25 @@
           "transparent": true,
           "type": "graph",
           "xaxis": {
-            "buckets": null,
             "mode": "time",
-            "name": null,
             "show": true,
             "values": []
           },
           "yaxes": [
             {
               "format": "decbytes",
-              "label": null,
               "logBase": 1,
-              "max": null,
               "min": "0",
               "show": true
             },
             {
               "format": "short",
-              "label": null,
               "logBase": 1,
-              "max": null,
-              "min": null,
               "show": true
             }
           ],
           "yaxis": {
-            "align": false,
-            "alignLevel": null
+            "align": false
           }
         },
         {
@@ -2217,7 +2049,10 @@
           "bars": false,
           "dashLength": 10,
           "dashes": false,
-          "datasource": null,
+          "datasource": {
+            "type": "prometheus",
+            "uid": "PBFA97CFB590B2093"
+          },
           "description": "**go_memstats_heap_released_bytes** – Number of heap bytes released to OS.",
           "fieldConfig": {
             "defaults": {
@@ -2261,16 +2096,14 @@
           "steppedLine": false,
           "targets": [
             {
-              "expr": "go_memstats_heap_released_bytes{app=\"$app\", kubernetes_pod_name=~\"$instance\"}",
+              "expr": "go_memstats_heap_released_bytes{instance=\"$instance\"}",
               "interval": "",
               "legendFormat": "value",
               "refId": "A"
             }
           ],
           "thresholds": [],
-          "timeFrom": null,
           "timeRegions": [],
-          "timeShift": null,
           "title": "Returned bytes of IDLE spans to the OS",
           "tooltip": {
             "shared": true,
@@ -2280,33 +2113,25 @@
           "transparent": true,
           "type": "graph",
           "xaxis": {
-            "buckets": null,
             "mode": "time",
-            "name": null,
             "show": true,
             "values": []
           },
           "yaxes": [
             {
               "format": "decbytes",
-              "label": null,
               "logBase": 1,
-              "max": null,
               "min": "0",
               "show": true
             },
             {
               "format": "short",
-              "label": null,
               "logBase": 1,
-              "max": null,
-              "min": null,
               "show": true
             }
           ],
           "yaxis": {
-            "align": false,
-            "alignLevel": null
+            "align": false
           }
         }
       ],
@@ -2315,10 +2140,9 @@
     },
     {
       "collapsed": true,
-      "datasource": null,
-      "fieldConfig": {
-        "defaults": {},
-        "overrides": []
+      "datasource": {
+        "type": "prometheus",
+        "uid": "PBFA97CFB590B2093"
       },
       "gridPos": {
         "h": 1,
@@ -2333,7 +2157,10 @@
           "bars": false,
           "dashLength": 10,
           "dashes": false,
-          "datasource": null,
+          "datasource": {
+            "type": "prometheus",
+            "uid": "PBFA97CFB590B2093"
+          },
           "description": "**go_memstats_stack_inuse_bytes** – Number of bytes in use by the stack allocator.",
           "fieldConfig": {
             "defaults": {
@@ -2377,16 +2204,14 @@
           "steppedLine": false,
           "targets": [
             {
-              "expr": "go_memstats_stack_inuse_bytes{app=\"$app\", kubernetes_pod_name=~\"$instance\"}",
+              "expr": "go_memstats_stack_inuse_bytes{instance=\"$instance\"}",
               "interval": "",
               "legendFormat": "value",
               "refId": "A"
             }
           ],
           "thresholds": [],
-          "timeFrom": null,
           "timeRegions": [],
-          "timeShift": null,
           "title": "Current in use bytes (stack spans)",
           "tooltip": {
             "shared": true,
@@ -2396,33 +2221,25 @@
           "transparent": true,
           "type": "graph",
           "xaxis": {
-            "buckets": null,
             "mode": "time",
-            "name": null,
             "show": true,
             "values": []
           },
           "yaxes": [
             {
               "format": "decbytes",
-              "label": null,
               "logBase": 1,
-              "max": null,
               "min": "0",
               "show": true
             },
             {
               "format": "short",
-              "label": null,
               "logBase": 1,
-              "max": null,
-              "min": null,
               "show": true
             }
           ],
           "yaxis": {
-            "align": false,
-            "alignLevel": null
+            "align": false
           }
         },
         {
@@ -2430,7 +2247,10 @@
           "bars": false,
           "dashLength": 10,
           "dashes": false,
-          "datasource": null,
+          "datasource": {
+            "type": "prometheus",
+            "uid": "PBFA97CFB590B2093"
+          },
           "description": "**go_memstats_stack_inuse_bytes** – Number of bytes obtained from system for stack allocator.",
           "fieldConfig": {
             "defaults": {
@@ -2474,16 +2294,14 @@
           "steppedLine": false,
           "targets": [
             {
-              "expr": "go_memstats_stack_sys_bytes{app=\"$app\", kubernetes_pod_name=~\"$instance\"}",
+              "expr": "go_memstats_stack_sys_bytes{instance=\"$instance\"}",
               "interval": "",
               "legendFormat": "value",
               "refId": "A"
             }
           ],
           "thresholds": [],
-          "timeFrom": null,
           "timeRegions": [],
-          "timeShift": null,
           "title": "Stack memory obtained from OS",
           "tooltip": {
             "shared": true,
@@ -2493,33 +2311,25 @@
           "transparent": true,
           "type": "graph",
           "xaxis": {
-            "buckets": null,
             "mode": "time",
-            "name": null,
             "show": true,
             "values": []
           },
           "yaxes": [
             {
               "format": "decbytes",
-              "label": null,
               "logBase": 1,
-              "max": null,
               "min": "0",
               "show": true
             },
             {
               "format": "short",
-              "label": null,
               "logBase": 1,
-              "max": null,
-              "min": null,
               "show": true
             }
           ],
           "yaxis": {
-            "align": false,
-            "alignLevel": null
+            "align": false
           }
         }
       ],
@@ -2528,10 +2338,9 @@
     },
     {
       "collapsed": true,
-      "datasource": null,
-      "fieldConfig": {
-        "defaults": {},
-        "overrides": []
+      "datasource": {
+        "type": "prometheus",
+        "uid": "PBFA97CFB590B2093"
       },
       "gridPos": {
         "h": 1,
@@ -2546,7 +2355,10 @@
           "bars": false,
           "dashLength": 10,
           "dashes": false,
-          "datasource": null,
+          "datasource": {
+            "type": "prometheus",
+            "uid": "PBFA97CFB590B2093"
+          },
           "description": "**go_memstats_mcache_sys_bytes** – Number of bytes used for mcache structures obtained from system.",
           "fieldConfig": {
             "defaults": {
@@ -2590,16 +2402,14 @@
           "steppedLine": false,
           "targets": [
             {
-              "expr": "go_memstats_mcache_sys_bytes{app=\"$app\", kubernetes_pod_name=~\"$instance\"}",
+              "expr": "go_memstats_mcache_sys_bytes{instance=\"$instance\"}",
               "interval": "",
               "legendFormat": "value",
               "refId": "A"
             }
           ],
           "thresholds": [],
-          "timeFrom": null,
           "timeRegions": [],
-          "timeShift": null,
           "title": "From OS mscache bytes",
           "tooltip": {
             "shared": true,
@@ -2609,33 +2419,25 @@
           "transparent": true,
           "type": "graph",
           "xaxis": {
-            "buckets": null,
             "mode": "time",
-            "name": null,
             "show": true,
             "values": []
           },
           "yaxes": [
             {
               "format": "decbytes",
-              "label": null,
               "logBase": 1,
-              "max": null,
               "min": "0",
               "show": true
             },
             {
               "format": "short",
-              "label": null,
               "logBase": 1,
-              "max": null,
-              "min": null,
               "show": true
             }
           ],
           "yaxis": {
-            "align": false,
-            "alignLevel": null
+            "align": false
           }
         },
         {
@@ -2643,7 +2445,10 @@
           "bars": false,
           "dashLength": 10,
           "dashes": false,
-          "datasource": null,
+          "datasource": {
+            "type": "prometheus",
+            "uid": "PBFA97CFB590B2093"
+          },
           "description": "**go_memstats_mspan_sys_bytes** – Number of bytes used for mspan structures obtained from system.",
           "fieldConfig": {
             "defaults": {
@@ -2687,16 +2492,14 @@
           "steppedLine": false,
           "targets": [
             {
-              "expr": "go_memstats_mspan_sys_bytes{app=\"$app\", kubernetes_pod_name=~\"$instance\"}",
+              "expr": "go_memstats_mspan_sys_bytes{instance=\"$instance\"}",
               "interval": "",
               "legendFormat": "value",
               "refId": "A"
             }
           ],
           "thresholds": [],
-          "timeFrom": null,
           "timeRegions": [],
-          "timeShift": null,
           "title": "From OS mspan bytes",
           "tooltip": {
             "shared": true,
@@ -2706,33 +2509,25 @@
           "transparent": true,
           "type": "graph",
           "xaxis": {
-            "buckets": null,
             "mode": "time",
-            "name": null,
             "show": true,
             "values": []
           },
           "yaxes": [
             {
               "format": "decbytes",
-              "label": null,
               "logBase": 1,
-              "max": null,
               "min": "0",
               "show": true
             },
             {
               "format": "short",
-              "label": null,
               "logBase": 1,
-              "max": null,
-              "min": null,
               "show": true
             }
           ],
           "yaxis": {
-            "align": false,
-            "alignLevel": null
+            "align": false
           }
         },
         {
@@ -2740,7 +2535,10 @@
           "bars": false,
           "dashLength": 10,
           "dashes": false,
-          "datasource": null,
+          "datasource": {
+            "type": "prometheus",
+            "uid": "PBFA97CFB590B2093"
+          },
           "description": "**go_memstats_mspan_inuse_bytes** – Number of bytes in use by mspan structures.",
           "fieldConfig": {
             "defaults": {
@@ -2784,16 +2582,14 @@
           "steppedLine": false,
           "targets": [
             {
-              "expr": "go_memstats_mspan_inuse_bytes{app=\"$app\", kubernetes_pod_name=~\"$instance\"}",
+              "expr": "go_memstats_mspan_inuse_bytes{instance=\"$instance\"}",
               "interval": "",
               "legendFormat": "value",
               "refId": "A"
             }
           ],
           "thresholds": [],
-          "timeFrom": null,
           "timeRegions": [],
-          "timeShift": null,
           "title": "In use mspan bytes",
           "tooltip": {
             "shared": true,
@@ -2803,33 +2599,25 @@
           "transparent": true,
           "type": "graph",
           "xaxis": {
-            "buckets": null,
             "mode": "time",
-            "name": null,
             "show": true,
             "values": []
           },
           "yaxes": [
             {
               "format": "decbytes",
-              "label": null,
               "logBase": 1,
-              "max": null,
               "min": "0",
               "show": true
             },
             {
               "format": "short",
-              "label": null,
               "logBase": 1,
-              "max": null,
-              "min": null,
               "show": true
             }
           ],
           "yaxis": {
-            "align": false,
-            "alignLevel": null
+            "align": false
           }
         },
         {
@@ -2837,7 +2625,10 @@
           "bars": false,
           "dashLength": 10,
           "dashes": false,
-          "datasource": null,
+          "datasource": {
+            "type": "prometheus",
+            "uid": "PBFA97CFB590B2093"
+          },
           "description": "**go_memstats_mcache_inuse_bytes** – Number of bytes in use by mcache structures.",
           "fieldConfig": {
             "defaults": {
@@ -2881,16 +2672,14 @@
           "steppedLine": false,
           "targets": [
             {
-              "expr": "go_memstats_mcache_inuse_bytes{app=\"$app\", kubernetes_pod_name=~\"$instance\"}",
+              "expr": "go_memstats_mcache_inuse_bytes{instance=\"$instance\"}",
               "interval": "",
               "legendFormat": "value",
               "refId": "A"
             }
           ],
           "thresholds": [],
-          "timeFrom": null,
           "timeRegions": [],
-          "timeShift": null,
           "title": "mspan cache bytes",
           "tooltip": {
             "shared": true,
@@ -2900,33 +2689,25 @@
           "transparent": true,
           "type": "graph",
           "xaxis": {
-            "buckets": null,
             "mode": "time",
-            "name": null,
             "show": true,
             "values": []
           },
           "yaxes": [
             {
               "format": "decbytes",
-              "label": null,
               "logBase": 1,
-              "max": null,
               "min": "0",
               "show": true
             },
             {
               "format": "short",
-              "label": null,
               "logBase": 1,
-              "max": null,
-              "min": null,
               "show": true
             }
           ],
           "yaxis": {
-            "align": false,
-            "alignLevel": null
+            "align": false
           }
         },
         {
@@ -2934,7 +2715,10 @@
           "bars": false,
           "dashLength": 10,
           "dashes": false,
-          "datasource": null,
+          "datasource": {
+            "type": "prometheus",
+            "uid": "PBFA97CFB590B2093"
+          },
           "description": "**go_memstats_gc_sys_bytes** – Number of bytes used for garbage collection system metadata.",
           "fieldConfig": {
             "defaults": {
@@ -2978,16 +2762,14 @@
           "steppedLine": false,
           "targets": [
             {
-              "expr": "go_memstats_gc_sys_bytes{app=\"$app\", kubernetes_pod_name=~\"$instance\"}",
+              "expr": "go_memstats_gc_sys_bytes{instance=\"$instance\"}",
               "interval": "",
               "legendFormat": "value",
               "refId": "A"
             }
           ],
           "thresholds": [],
-          "timeFrom": null,
           "timeRegions": [],
-          "timeShift": null,
           "title": "Current GC metadata bytes",
           "tooltip": {
             "shared": true,
@@ -2997,33 +2779,25 @@
           "transparent": true,
           "type": "graph",
           "xaxis": {
-            "buckets": null,
             "mode": "time",
-            "name": null,
             "show": true,
             "values": []
           },
           "yaxes": [
             {
               "format": "decbytes",
-              "label": null,
               "logBase": 1,
-              "max": null,
               "min": "0",
               "show": true
             },
             {
               "format": "short",
-              "label": null,
               "logBase": 1,
-              "max": null,
-              "min": null,
               "show": true
             }
           ],
           "yaxis": {
-            "align": false,
-            "alignLevel": null
+            "align": false
           }
         },
         {
@@ -3031,7 +2805,10 @@
           "bars": false,
           "dashLength": 10,
           "dashes": false,
-          "datasource": null,
+          "datasource": {
+            "type": "prometheus",
+            "uid": "PBFA97CFB590B2093"
+          },
           "description": "**go_memstats_buck_hash_sys_bytes** – Number of bytes used by the profiling bucket hash table.",
           "fieldConfig": {
             "defaults": {
@@ -3075,16 +2852,14 @@
           "steppedLine": false,
           "targets": [
             {
-              "expr": "go_memstats_buck_hash_sys_bytes{app=\"$app\", kubernetes_pod_name=~\"$instance\"}",
+              "expr": "go_memstats_buck_hash_sys_bytes{instance=\"$instance\"}",
               "interval": "",
               "legendFormat": "value",
               "refId": "A"
             }
           ],
           "thresholds": [],
-          "timeFrom": null,
           "timeRegions": [],
-          "timeShift": null,
           "title": "Current bucket hash tables bytes",
           "tooltip": {
             "shared": true,
@@ -3094,33 +2869,25 @@
           "transparent": true,
           "type": "graph",
           "xaxis": {
-            "buckets": null,
             "mode": "time",
-            "name": null,
             "show": true,
             "values": []
           },
           "yaxes": [
             {
               "format": "decbytes",
-              "label": null,
               "logBase": 1,
-              "max": null,
               "min": "0",
               "show": true
             },
             {
               "format": "short",
-              "label": null,
               "logBase": 1,
-              "max": null,
-              "min": null,
               "show": true
             }
           ],
           "yaxis": {
-            "align": false,
-            "alignLevel": null
+            "align": false
           }
         }
       ],
@@ -3129,52 +2896,22 @@
     }
   ],
   "refresh": "5s",
-  "schemaVersion": 30,
+  "schemaVersion": 36,
   "style": "dark",
   "tags": [],
   "templating": {
     "list": [
       {
-        "allValue": null,
         "current": {
           "selected": false,
-          "text": "go-serve",
-          "value": "go-serve"
+          "text": "client2:9971",
+          "value": "client2:9971"
         },
-        "datasource": "Prometheus",
-        "definition": "label_values(go_info, app)",
-        "description": null,
-        "error": null,
-        "hide": 0,
-        "includeAll": false,
-        "label": "app",
-        "multi": false,
-        "name": "app",
-        "options": [],
-        "query": {
-          "query": "label_values(go_info, app)",
-          "refId": "Prometheus-app-Variable-Query"
+        "datasource": {
+          "type": "prometheus",
+          "uid": "PBFA97CFB590B2093"
         },
-        "refresh": 2,
-        "regex": "",
-        "skipUrlSync": false,
-        "sort": 1,
-        "tagValuesQuery": "",
-        "tagsQuery": "",
-        "type": "query",
-        "useTags": false
-      },
-      {
-        "allValue": ".*",
-        "current": {
-          "selected": false,
-          "text": "go-serve-0",
-          "value": "go-serve-0"
-        },
-        "datasource": "Prometheus",
-        "definition": "label_values(go_info{app=\"$app\"}, kubernetes_pod_name)",
-        "description": null,
-        "error": null,
+        "definition": "label_values(go_info, instance)",
         "hide": 0,
         "includeAll": false,
         "label": "instance",
@@ -3182,13 +2919,13 @@
         "name": "instance",
         "options": [],
         "query": {
-          "query": "label_values(go_info{app=\"$app\"}, kubernetes_pod_name)",
-          "refId": "Prometheus-instance-Variable-Query"
+          "query": "label_values(go_info, instance)",
+          "refId": "StandardVariableQuery"
         },
-        "refresh": 1,
+        "refresh": 2,
         "regex": "",
         "skipUrlSync": false,
-        "sort": 0,
+        "sort": 1,
         "tagValuesQuery": "",
         "tagsQuery": "",
         "type": "query",
@@ -3204,5 +2941,6 @@
   "timezone": "",
   "title": "Go runtime",
   "uid": "mNEuJuV7k",
-  "version": 52
+  "version": 1,
+  "weekStart": ""
 }
