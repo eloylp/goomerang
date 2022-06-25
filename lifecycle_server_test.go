@@ -125,6 +125,14 @@ func TestServerCannotRunIfAlreadyRunning(t *testing.T) {
 	assert.ErrorIs(t, err, server.ErrAlreadyRunning, "should not run if already running")
 }
 
+func TestServerCannotRunIfAlreadyClosed(t *testing.T) {
+	s, run := PrepareServer(t)
+	run()
+	require.NoError(t, s.Shutdown(defaultCtx))
+	err := s.Run()
+	assert.ErrorIs(t, err, server.ErrClosed, "should not run if already closed")
+}
+
 func TestServerHandlerCannotSendIfClosed(t *testing.T) {
 	arbiter := test.NewArbiter(t)
 	s, run := PrepareServer(t)

@@ -136,6 +136,9 @@ func (s *Server) BroadCast(ctx context.Context, msg *message.Message) (brResult 
 }
 
 func (s *Server) Run() (err error) {
+	if s.status() == ws.StatusClosed {
+		return ErrClosed
+	}
 	if s.status() == ws.StatusClosing {
 		return ErrClosing
 	}
