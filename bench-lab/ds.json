@@ -25,7 +25,7 @@
   "fiscalYearStartMonth": 0,
   "graphTooltip": 0,
   "id": 1,
-  "iteration": 1654451309667,
+  "iteration": 1656169395320,
   "links": [],
   "liveNow": false,
   "panels": [
@@ -890,7 +890,7 @@
         "type": "prometheus",
         "uid": "PBFA97CFB590B2093"
       },
-      "description": "The sent message sizes distribution per message type.",
+      "description": "The sent message sizes distribution per message kind.",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -946,10 +946,10 @@
           },
           "editorMode": "code",
           "exemplar": false,
-          "expr": "sum by (type)(rate(goomerang_server_message_sent_size_bytes_sum{instance=~\"$servers\"}[$__rate_interval])) /\nsum by (type)(rate(goomerang_server_message_sent_size_bytes_count{instance=~\"$servers\"}[$__rate_interval]))",
+          "expr": "sum by (kind)(rate(goomerang_server_message_sent_size_bytes_sum{instance=~\"$servers\"}[$__rate_interval])) /\nsum by (kind)(rate(goomerang_server_message_sent_size_bytes_count{instance=~\"$servers\"}[$__rate_interval]))",
           "format": "time_series",
           "instant": false,
-          "legendFormat": "{{type}}",
+          "legendFormat": "{{kind}}",
           "range": true,
           "refId": "A"
         }
@@ -964,7 +964,7 @@
         "type": "prometheus",
         "uid": "PBFA97CFB590B2093"
       },
-      "description": "The sent message sizes distribution per message type.",
+      "description": "The sent message sizes distribution per message kind.",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -1020,10 +1020,10 @@
           },
           "editorMode": "code",
           "exemplar": false,
-          "expr": "sum by (type)(rate(goomerang_client_message_sent_size_bytes_sum{instance=~\"$clients\"}[$__rate_interval])) /\nsum by (type)(rate(goomerang_client_message_sent_size_bytes_count{instance=~\"$clients\"}[$__rate_interval]))",
+          "expr": "sum by (kind)(rate(goomerang_client_message_sent_size_bytes_sum{instance=~\"$clients\"}[$__rate_interval])) /\nsum by (kind)(rate(goomerang_client_message_sent_size_bytes_count{instance=~\"$clients\"}[$__rate_interval]))",
           "format": "time_series",
           "instant": false,
-          "legendFormat": "{{type}}",
+          "legendFormat": "{{kind}}",
           "range": true,
           "refId": "A"
         }
@@ -1088,8 +1088,7 @@
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "green",
-                    "value": null
+                    "color": "green"
                   },
                   {
                     "color": "red",
@@ -1205,8 +1204,7 @@
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "green",
-                    "value": null
+                    "color": "green"
                   },
                   {
                     "color": "red",
@@ -1322,8 +1320,7 @@
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "green",
-                    "value": null
+                    "color": "green"
                   },
                   {
                     "color": "red",
@@ -1439,8 +1436,7 @@
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "green",
-                    "value": null
+                    "color": "green"
                   },
                   {
                     "color": "red",
@@ -1556,8 +1552,7 @@
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "green",
-                    "value": null
+                    "color": "green"
                   },
                   {
                     "color": "red",
@@ -1673,8 +1668,7 @@
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "green",
-                    "value": null
+                    "color": "green"
                   },
                   {
                     "color": "red",
@@ -1804,8 +1798,7 @@
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "green",
-                    "value": null
+                    "color": "green"
                   },
                   {
                     "color": "red",
@@ -1921,8 +1914,7 @@
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "green",
-                    "value": null
+                    "color": "green"
                   },
                   {
                     "color": "red",
@@ -2038,8 +2030,7 @@
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "green",
-                    "value": null
+                    "color": "green"
                   },
                   {
                     "color": "red",
@@ -2155,8 +2146,7 @@
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "green",
-                    "value": null
+                    "color": "green"
                   },
                   {
                     "color": "red",
@@ -2272,8 +2262,7 @@
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "green",
-                    "value": null
+                    "color": "green"
                   },
                   {
                     "color": "red",
@@ -2366,6 +2355,10 @@
             "$__all"
           ]
         },
+        "datasource": {
+          "type": "prometheus",
+          "uid": "PBFA97CFB590B2093"
+        },
         "definition": "goomerang_server_status",
         "description": "Current detected servers",
         "hide": 0,
@@ -2395,6 +2388,10 @@
             "$__all"
           ]
         },
+        "datasource": {
+          "type": "prometheus",
+          "uid": "PBFA97CFB590B2093"
+        },
         "definition": "goomerang_client_status",
         "description": "Current detected servers",
         "hide": 0,
@@ -2416,8 +2413,8 @@
     ]
   },
   "time": {
-    "from": "2022-06-04T14:40:40.842Z",
-    "to": "2022-06-06T14:40:40.842Z"
+    "from": "now-5m",
+    "to": "now"
   },
   "timepicker": {},
   "timezone": "",

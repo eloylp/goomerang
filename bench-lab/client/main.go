@@ -59,17 +59,15 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+	mc.RegisterMessage(&model.Reply{})
 	mc.RegisterHandler(&model.Point{}, message.HandlerFunc(func(s message.Sender, msg *message.Message) {
 		time.Sleep(20 * time.Millisecond)
-		// logrus.Printf("client: received message : %s \n", msg.Metadata.Kind)
 	}))
 	logrus.Infoln("starting client ...")
 	mustWaitTCPService(TargetAddr, 100*time.Millisecond, 5*time.Second)
-	go func() {
-		if err := mc.Connect(context.Background()); err != nil {
-			logrus.WithError(err).Fatal("error connecting client")
-		}
-	}()
+	if err := mc.Connect(context.Background()); err != nil {
+		logrus.WithError(err).Fatal("error connecting client")
+	}
 
 	ctx, cancl := context.WithCancel(context.Background())
 

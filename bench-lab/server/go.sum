@@ -243,6 +243,14 @@ go.eloylp.dev/goomerang v0.0.0-20220624161231-777cb9a8e369 h1:oVqRu515NsdkFL9djZ
 go.eloylp.dev/goomerang v0.0.0-20220624161231-777cb9a8e369/go.mod h1:O+MFNCV1zf+0+O/ARqQQswXV/W+n9gpIVa5s3WvIqU0=
 go.eloylp.dev/goomerang v0.0.0-20220624162434-a78187b442a5 h1:GoODtVns9TrzdLk6wWmurgaxMrRiR7Otu3sjlyVIaBo=
 go.eloylp.dev/goomerang v0.0.0-20220624162434-a78187b442a5/go.mod h1:O+MFNCV1zf+0+O/ARqQQswXV/W+n9gpIVa5s3WvIqU0=
+go.eloylp.dev/goomerang v0.0.0-20220625150208-a5e7c9effac2 h1:O+ERUOIOYkUBUhgewiiFZRIeJR55gueOyuYLDY1vuZY=
+go.eloylp.dev/goomerang v0.0.0-20220625150208-a5e7c9effac2/go.mod h1:O+MFNCV1zf+0+O/ARqQQswXV/W+n9gpIVa5s3WvIqU0=
+go.eloylp.dev/goomerang v0.0.0-20220625151742-a1d2f7ac28fa h1:cxSRL1bQBJorNYnR4fkJA3PRDz2CsgqLT+kZ9TK+lJs=
+go.eloylp.dev/goomerang v0.0.0-20220625151742-a1d2f7ac28fa/go.mod h1:O+MFNCV1zf+0+O/ARqQQswXV/W+n9gpIVa5s3WvIqU0=
+go.eloylp.dev/goomerang v0.0.0-20220625154347-ddaaf394bc75 h1:k62TyNhc678QDkMaWgHA2fzvcdfhLUJRRTevSFB/ECM=
+go.eloylp.dev/goomerang v0.0.0-20220625154347-ddaaf394bc75/go.mod h1:O+MFNCV1zf+0+O/ARqQQswXV/W+n9gpIVa5s3WvIqU0=
+go.eloylp.dev/goomerang v0.0.0-20220625155148-a1409d319dc7 h1:WCT9nIH4IITswahYiTi245p4o9jv8DD4Je2AHv+3Z9Y=
+go.eloylp.dev/goomerang v0.0.0-20220625155148-a1409d319dc7/go.mod h1:O+MFNCV1zf+0+O/ARqQQswXV/W+n9gpIVa5s3WvIqU0=
 go.opencensus.io v0.21.0/go.mod h1:mSImk1erAIZhrmZN+AvHh14ztQfjbGwt4TtuofqLduU=
 go.opencensus.io v0.22.0/go.mod h1:+kGneAE2xo2IficOXnaByMWTGM9T73dGwxeWcUqIpI8=
 go.opencensus.io v0.22.2/go.mod h1:yxeiOL68Rb0Xd1ddK5vPZ/oVn4vY4Ynel7k9FzqtOIw=
