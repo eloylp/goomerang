@@ -87,7 +87,7 @@ func NewMetrics(c Config) *Metrics {
 		MessageSentSyncResponseTime: prometheus.NewHistogramVec(prometheus.HistogramOpts{
 			Namespace: "goomerang",
 			Subsystem: "client",
-			Name:      "message_sync_sent_duration_seconds",
+			Name:      "message_sent_sync_duration_seconds",
 			Help:      "The time spent in a synchronous message sending operation",
 			Buckets:   c.SendSyncResponseTimeBuckets,
 		}, []string{"kind"}),
