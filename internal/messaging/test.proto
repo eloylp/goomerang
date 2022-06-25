@@ -6,3 +6,7 @@ option go_package = "go.eloylp.dev/goomerang/internal/test";
 message MessageV1 {
   string message = 1;
 }
+
+message ReplyV1 {
+  string message = 1;
+}
