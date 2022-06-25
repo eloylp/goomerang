@@ -17,8 +17,6 @@ import (
 	"go.eloylp.dev/goomerang/bench-lab/model"
 	"go.eloylp.dev/goomerang/message"
 	serverMetrics "go.eloylp.dev/goomerang/metrics/server"
-	"google.golang.org/protobuf/types/known/timestamppb"
-
 	serverMiddleware "go.eloylp.dev/goomerang/middleware/server"
 	"go.eloylp.dev/goomerang/server"
 )
@@ -52,10 +50,13 @@ func main() {
 			logrus.WithError(err).Error("internal server error detected")
 		}),
 	)
-	ms.RegisterHandler(&model.Point{}, message.HandlerFunc(func(s message.Sender, msg *message.Message) {
+	ms.RegisterHandler(&model.PointV1{}, message.HandlerFunc(func(s message.Sender, msg *message.Message) {
 		time.Sleep(20 * time.Millisecond)
-		reply := message.New().SetPayload(&model.Reply{Status: "OK"})
-		s.Send(reply)
+		reply := message.New().SetPayload(&model.PointReplyV1{Status: "OK"})
+		_, err := s.Send(reply)
+		if err != nil {
+			log.Fatal(err)
+		}
 		//logrus.Printf("server: received message : %s \n", msg.metadata.Kind)
 	}))
 	if err != nil {
@@ -93,11 +94,9 @@ func interactions(ctx context.Context, s *serverMiddleware.MeteredServer) {
 		case <-ctx.Done():
 			return
 		default:
-			_, err := s.BroadCast(context.Background(), message.New().SetPayload(&model.Point{
-				X:          34.45,
-				Y:          89.12,
-				Time:       timestamppb.Now(),
-				DeviceData: bytes,
+			_, err := s.BroadCast(context.Background(), message.New().SetPayload(&model.BroadcastV1{
+				Message: "Broadcasting !",
+				Data:    bytes,
 			}))
 			if err != nil {
 				logrus.WithError(err).Error("error broadcasting message")

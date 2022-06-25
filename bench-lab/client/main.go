@@ -59,8 +59,12 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	mc.RegisterMessage(&model.Reply{})
-	mc.RegisterHandler(&model.Point{}, message.HandlerFunc(func(s message.Sender, msg *message.Message) {
+	mc.RegisterHandler(&model.PointReplyV1{}, message.HandlerFunc(func(s message.Sender, msg *message.Message) {
+		// It's ok, discard from buffer
+		time.Sleep(20 * time.Millisecond)
+	}))
+	mc.RegisterHandler(&model.BroadcastV1{}, message.HandlerFunc(func(s message.Sender, msg *message.Message) {
+		// process server broadcast
 		time.Sleep(20 * time.Millisecond)
 	}))
 	logrus.Infoln("starting client ...")
@@ -100,7 +104,7 @@ func sendMessages(ctx context.Context, c *clientMiddleware.MeteredClient, bytes 
 		case <-ctx.Done():
 			return
 		default:
-			_, err := c.Send(message.New().SetPayload(&model.Point{
+			_, err := c.Send(message.New().SetPayload(&model.PointV1{
 				X:          34.45,
 				Y:          89.12,
 				Time:       timestamppb.Now(),
@@ -119,7 +123,7 @@ func sendSyncMessages(ctx context.Context, c *clientMiddleware.MeteredClient, by
 		case <-ctx.Done():
 			return
 		default:
-			_, _, err := c.SendSync(context.Background(), message.New().SetPayload(&model.Point{
+			_, _, err := c.SendSync(context.Background(), message.New().SetPayload(&model.PointV1{
 				X:          34.45,
 				Y:          89.12,
 				Time:       timestamppb.Now(),
