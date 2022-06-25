@@ -1,6 +1,6 @@
 
-.PHONY: bench-lab
-bench-lab-up:
+.PHONY: up
+up:
 	CGO_ENABLED=0 go build -trimpath -tags timetzdata -o ./server/server server/main.go
 	CGO_ENABLED=0 go build -trimpath -tags timetzdata -o ./proxy/proxy proxy/main.go
 	CGO_ENABLED=0 go build -trimpath -tags timetzdata -o ./client/client client/main.go
@@ -10,16 +10,16 @@ bench-lab-up:
 	@echo "Server pprof access at: http://localhost:6060/debug/pprof"
 	@echo "Client pprof access at: http://localhost:6061/debug/pprof"
 
-.PHONY: bench-lab-down
-bench-lab-down:
+.PHONY: down
+down:
 	docker-compose down
 
-.PHONY: bench-lab-logs
-bench-lab-logs:
+.PHONY: logs
+logs:
 	docker-compose logs -f
 
-.PHONY: bench-lab-update
-bench-lab-update:
+.PHONY: update
+update:
 	cd server && go get -u go.eloylp.dev/goomerang && cd ..
 	cd client && go get -u go.eloylp.dev/goomerang && cd ..
 
