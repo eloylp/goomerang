@@ -20,6 +20,7 @@ import (
 	"go.eloylp.dev/goomerang/ws"
 )
 
+// Client holds are the client subsystems and dependencies.
 type Client struct {
 	cfg               *Cfg
 	ServerURL         url.URL
@@ -39,6 +40,7 @@ type Client struct {
 	heartbeatInterval time.Duration
 }
 
+// New creates a new client, review available options.
 func New(opts ...Option) (*Client, error) {
 	cfg := defaultConfig()
 	for _, o := range opts {
@@ -74,6 +76,9 @@ func New(opts ...Option) (*Client, error) {
 	return c, nil
 }
 
+// Connect tries a connection to the specified server.
+// This method can be called after a client shutdown again
+// in order to retry the connection.
 func (c *Client) Connect(ctx context.Context) error {
 	if c.status() != ws.StatusNew && c.status() != ws.StatusClosed {
 		return ErrAlreadyRunning
@@ -175,6 +180,13 @@ func (c *Client) processMessage(data []byte) (err error) {
 	return nil
 }
 
+// Send will write the provided *message.Message to the output buffer.
+// This method is completely asynchronous. In case the client has closed
+// the connection due to other reasons, ErrNotRunning will be returned.
+//
+// If successful, it will return the payload size in bytes. This payload size
+// does not include the goomerang base message (which is around 12 bytes) nor
+// the headers.
 func (c *Client) Send(msg *message.Message) (payloadSize int, err error) {
 	if c.status() != ws.StatusRunning {
 		return 0, ErrNotRunning
@@ -190,6 +202,15 @@ func (c *Client) Send(msg *message.Message) (payloadSize int, err error) {
 	return
 }
 
+// SendSync will send a message to the server and wait for a reply. If
+// the provided context is cancelled, this function will return immediately
+// and the reply message will be lost.
+//
+// If successful, it will return the payload size in bytes. This payload size
+// does not include the goomerang base message (which is around 12 bytes) nor
+// the headers.
+//
+// ErrNotRunning error will be returned in case the client was closed for any reason.
 func (c *Client) SendSync(ctx context.Context, msg *message.Message) (payloadSize int, response *message.Message, err error) {
 	if c.status() != ws.StatusRunning {
 		return 0, nil, ErrNotRunning
@@ -218,6 +239,10 @@ func (c *Client) SendSync(ctx context.Context, msg *message.Message) (payloadSiz
 	}
 }
 
+// Close will initiate the graceful shutdown procedure for this
+// client. It will work in a best effort way. In case of errors,
+// they are going to be collected and returned as a multi-error
+// type, with the hope the maximum number of closing actions are performed.
 func (c *Client) Close(ctx context.Context) (err error) {
 	return c.close(ctx, true)
 }
@@ -265,16 +290,30 @@ func (c *Client) close(ctx context.Context, isInitiator bool) (err error) {
 	}
 }
 
+// Middleware registers a middleware in the client. It
+// will panic if the client its already running.
 func (c *Client) Middleware(m message.Middleware) {
 	c.handlerChainer.AppendMiddleware(m)
 }
 
+// Handle registers a message handler in the client. It
+// will panic if the client its already running.
 func (c *Client) Handle(msg proto.Message, h message.Handler) {
 	fqdn := messaging.FQDN(msg)
 	c.messageRegistry.Register(fqdn, msg)
 	c.handlerChainer.AppendHandler(fqdn, h)
 }
 
+// RegisterMessage will make the client aware of a specific kind of
+// protocol buffer message. This is specially needed when
+// the user sends messages with methods like SendSync(),
+// as the client needs to know how to decode the incoming reply.
+//
+// If the kind of message it's already registered with the Handle()
+// method, then the user can omit this registration.
+//
+// Any kind of protocol buffers message that arrives to the client,
+// and It's not registered, will be discarded.
 func (c *Client) RegisterMessage(msg proto.Message) {
 	c.messageRegistry.Register(messaging.FQDN(msg), msg)
 }

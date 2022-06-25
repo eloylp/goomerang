@@ -19,6 +19,8 @@ import (
 	"go.eloylp.dev/goomerang/ws"
 )
 
+// Server will hold all subsystem and orchestration
+// elements.
 type Server struct {
 	intServer       *http.Server
 	connRegistry    map[*websocket.Conn]connSlot
@@ -37,6 +39,8 @@ type Server struct {
 	listener        net.Listener
 }
 
+// New creates a server instance, check all available
+// options.
 func New(opts ...Option) (*Server, error) {
 	cfg := defaultConfig()
 	for _, o := range opts {
@@ -80,21 +84,45 @@ func New(opts ...Option) (*Server, error) {
 	return s, nil
 }
 
+// Middleware registers a middleware in the server. It
+// will panic if the server its already running.
 func (s *Server) Middleware(m message.Middleware) {
 	s.handlerChainer.AppendMiddleware(m)
 }
 
+// Handle registers a message handler in the server. It
+// will panic if the server its already running.
 func (s *Server) Handle(msg proto.Message, handler message.Handler) {
 	fqdn := messaging.FQDN(msg)
 	s.messageRegistry.Register(fqdn, msg)
 	s.handlerChainer.AppendHandler(fqdn, handler)
 }
 
+// BroadcastResult represents the size and duration
+// of each sent message during a broadcast operation.
+// It provides information to the caller code.
 type BroadcastResult struct {
 	Size     int
 	Duration time.Duration
 }
 
+// BroadCast will try to send the provided message to all
+// connected clients.
+//
+// In case the provided context is cancelled, the operation
+// could be partially completed. It's recommended to always
+// pass a context.WithTimeout().
+//
+// The send operation will happen in parallel for each client.
+//
+// In case of errors, it will continue the operation,
+// keeping the first 100 ones and returning them in a
+// multi-error type.
+//
+// In case of success, the BroadcastResult return type will provide
+// feedback, such as time distribution.
+//
+// Calling this method it's intended to be thread safe.
 func (s *Server) BroadCast(ctx context.Context, msg *message.Message) (brResult []BroadcastResult, err error) {
 	if s.status() != ws.StatusRunning {
 		return []BroadcastResult{}, ErrNotRunning
@@ -135,6 +163,11 @@ func (s *Server) BroadCast(ctx context.Context, msg *message.Message) (brResult 
 	}
 }
 
+// Run will start the server with all the previously
+// provided options.
+//
+// The server instance it's not reusable. This method
+// can be only executed once in the lifecycle of a server.
 func (s *Server) Run() (err error) {
 	if s.status() == ws.StatusClosed {
 		return ErrClosed
@@ -167,6 +200,9 @@ func (s *Server) Run() (err error) {
 	return nil
 }
 
+// Addr provides the listener address. It will
+// return an empty string if it's not possible to
+// determine the IP information.
 func (s *Server) Addr() string {
 	if s.status() != ws.StatusRunning {
 		return ""
@@ -174,6 +210,16 @@ func (s *Server) Addr() string {
 	return s.listener.Addr().String()
 }
 
+// Shutdown will start the graceful shutdown of the server.
+//
+// The call to this function will block till the operation completes or
+// the provided context expires.
+//
+// A closing signal will be sent to all connected clients in parallel. Clients
+// should then individually reply to this signal with another closing one. The server
+// will wait a grace period of 5 seconds per each connection, before closing them.
+//
+// This function will also wait for all the inflight message handlers and subsystems.
 func (s *Server) Shutdown(ctx context.Context) (err error) {
 	if s.status() != ws.StatusRunning {
 		return ErrNotRunning
