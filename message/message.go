@@ -9,7 +9,7 @@ import (
 )
 
 type Message struct {
-	Metadata *Metadata     `json:"metadata"`
+	Metadata Metadata      `json:"metadata"`
 	Payload  proto.Message `json:"payload"`
 	Header   Header        `json:"header"`
 }

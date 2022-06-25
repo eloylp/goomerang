@@ -40,7 +40,7 @@ func TestMessageJSON(t *testing.T) {
 
 func messageFixture() *message.Message {
 	return &message.Message{
-		Metadata: &message.Metadata{
+		Metadata: message.Metadata{
 			Creation:    time.UnixMilli(1).UTC(),
 			UUID:        "09AF",
 			Kind:        "goomerang.test.MessageV1",

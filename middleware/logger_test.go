@@ -29,7 +29,7 @@ func TestLogger(t *testing.T) {
 
 	payload := &testMessages.MessageV1{Message: "hi!"}
 	msg := &message.Message{
-		Metadata: &message.Metadata{
+		Metadata: message.Metadata{
 			Creation:    date,
 			UUID:        "09AF",
 			Kind:        messaging.FQDN(payload),

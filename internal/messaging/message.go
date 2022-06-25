@@ -16,7 +16,7 @@ func FQDN(msg proto.Message) string {
 }
 
 func FromFrame(frame *protocol.Frame, msgRegistry Registry) (*message.Message, error) {
-	meta := &message.Metadata{
+	meta := message.Metadata{
 		Creation:    frame.Creation.AsTime(),
 		UUID:        frame.Uuid,
 		Kind:        frame.Kind,

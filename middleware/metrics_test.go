@@ -64,7 +64,7 @@ func TestMetrics(t *testing.T) {
 
 			sender := &fakeSender{}
 			msg := &message.Message{
-				Metadata: &message.Metadata{
+				Metadata: message.Metadata{
 					PayloadSize: 10,
 					Creation:    time.Now().Add(-1 * time.Second),
 					Kind:        "goomerang.test.MessageV1",
@@ -121,7 +121,7 @@ func TestMetricsIfNotSendsMessageBack(t *testing.T) {
 		msg = message.New().SetPayload(&testMessages.MessageV1{})
 	})
 	msg := &message.Message{
-		Metadata: &message.Metadata{
+		Metadata: message.Metadata{
 			PayloadSize: 10,
 			Creation:    time.Now().Add(-1 * time.Second),
 			Kind:        "goomerang.test.MessageV1",
@@ -136,7 +136,7 @@ func TestMetricsIfNotSendsMessageBack(t *testing.T) {
 type fakeSender struct{}
 
 func (f *fakeSender) Send(msg *message.Message) (payloadSize int, err error) {
-	msg.Metadata = &message.Metadata{
+	msg.Metadata = message.Metadata{
 		Kind: "goomerang.test.MessageV1",
 	}
 	return 20, nil
