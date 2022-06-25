@@ -33,7 +33,7 @@ func FromFrame(frame *protocol.Frame, msgRegistry Registry) (*message.Message, e
 	return &message.Message{
 		Metadata: meta,
 		Payload:  msg,
-		Header:   message.Header(frame.Headers),
+		Header:   frame.Headers,
 	}, nil
 }
 
