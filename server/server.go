@@ -118,6 +118,7 @@ func (s *Server) BroadCast(ctx context.Context, msg *message.Message) (brResult 
 			if err := cs.write(data); err != nil && errCount < 100 {
 				errs = append(errs, fmt.Errorf("broadCast: %v", err))
 				errCount++
+				continue
 			}
 			brResult = append(brResult, BroadcastResult{
 				Size:     payloadSize,
