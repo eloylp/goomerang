@@ -11,3 +11,7 @@ message Point {
   google.protobuf.Timestamp time = 3;
   bytes device_data = 4;
 }
+
+message Reply {
+  string status = 1;
+}
