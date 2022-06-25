@@ -15,3 +15,7 @@ message PointV1 {
 message PointReplyV1 {
   string status = 1;
 }
+
+message BroadcastV1 {
+  string message = 1;
+}
