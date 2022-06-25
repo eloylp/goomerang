@@ -39,20 +39,17 @@ func TestMessageJSON(t *testing.T) {
 }
 
 func messageFixture() *message.Message {
-	return &message.Message{
-		Metadata: message.Metadata{
-			Creation:    time.UnixMilli(1).UTC(),
-			UUID:        "09AF",
-			Kind:        "goomerang.test.MessageV1",
-			PayloadSize: 10,
-			IsSync:      true,
-		},
-		Payload: &test.MessageV1{Message: "Hi !"},
-		Header: message.Header{
-			"k1": "v1",
-			"k2": "v2",
-		},
+	msg := message.New()
+	msg.Metadata = message.Metadata{
+		Creation:    time.UnixMilli(1).UTC(),
+		UUID:        "09AF",
+		PayloadSize: 10,
+		IsSync:      true,
 	}
+	msg.SetHeader("k1", "v1")
+	msg.SetHeader("k2", "v2")
+	msg.SetPayload(&test.MessageV1{Message: "Hi !"})
+	return msg
 }
 
 func TestMessageText(t *testing.T) {

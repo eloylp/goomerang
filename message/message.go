@@ -22,6 +22,7 @@ func New() *Message {
 
 func (m *Message) SetPayload(p proto.Message) *Message {
 	m.Payload = p
+	m.Metadata.Kind = string(p.ProtoReflect().Descriptor().FullName())
 	return m
 }
 
