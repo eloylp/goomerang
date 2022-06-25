@@ -15,8 +15,7 @@ import (
 
 	testMessages "go.eloylp.dev/goomerang/internal/messaging/test"
 	"go.eloylp.dev/goomerang/message"
-	clientMetrics "go.eloylp.dev/goomerang/metrics/client"
-	serverMetrics "go.eloylp.dev/goomerang/metrics/server"
+	"go.eloylp.dev/goomerang/metrics"
 	"go.eloylp.dev/goomerang/middleware"
 )
 
@@ -24,10 +23,10 @@ func TestMetrics(t *testing.T) {
 
 	registry := prometheus.NewRegistry()
 
-	server := serverMetrics.NewMetrics(serverMetrics.DefaultConfig())
+	server := metrics.NewServerMetrics(metrics.DefaultServerConfig())
 	server.Register(registry)
 
-	client := clientMetrics.NewMetrics(clientMetrics.DefaultConfig())
+	client := metrics.NewClientMetrics(metrics.DefaultClientConfig())
 	client.Register(registry)
 
 	cases := []struct {
@@ -107,7 +106,7 @@ func AssertMetricsHandler(t *testing.T, handler http.Handler, system string) {
 }
 
 func TestMetricsIfNotSendsMessageBack(t *testing.T) {
-	server := serverMetrics.NewMetrics(serverMetrics.DefaultConfig())
+	server := metrics.NewServerMetrics(metrics.DefaultServerConfig())
 	m, err := middleware.PromHistograms(middleware.PromConfig{
 		MessageInflightTime:   server.MessageInflightTime,
 		MessageReceivedSize:   server.MessageReceivedSize,
@@ -148,7 +147,7 @@ func TestPromMiddlewareDoesValidations(t *testing.T) {
 }
 
 func TestPromConfig_Validate_MessageInflightTime(t *testing.T) {
-	m := clientMetrics.NewMetrics(clientMetrics.DefaultConfig())
+	m := metrics.NewClientMetrics(metrics.DefaultClientConfig())
 	c := middleware.PromConfig{
 		MessageReceivedSize:   m.MessageReceivedSize,
 		MessageProcessingTime: m.MessageProcessingTime,
@@ -158,7 +157,7 @@ func TestPromConfig_Validate_MessageInflightTime(t *testing.T) {
 }
 
 func TestPromConfig_Validate_NoReceivedMessageSize(t *testing.T) {
-	m := clientMetrics.NewMetrics(clientMetrics.DefaultConfig())
+	m := metrics.NewClientMetrics(metrics.DefaultClientConfig())
 	c := middleware.PromConfig{
 		MessageInflightTime:   m.MessageInflightTime,
 		MessageProcessingTime: m.MessageProcessingTime,
@@ -168,7 +167,7 @@ func TestPromConfig_Validate_NoReceivedMessageSize(t *testing.T) {
 }
 
 func TestPromConfig_Validate_MessageProcessingTime(t *testing.T) {
-	m := clientMetrics.NewMetrics(clientMetrics.DefaultConfig())
+	m := metrics.NewClientMetrics(metrics.DefaultClientConfig())
 	c := middleware.PromConfig{
 		MessageInflightTime: m.MessageInflightTime,
 		MessageReceivedSize: m.MessageReceivedSize,
@@ -178,7 +177,7 @@ func TestPromConfig_Validate_MessageProcessingTime(t *testing.T) {
 }
 
 func TestPromConfig_Validate_SentMessageSize(t *testing.T) {
-	m := clientMetrics.NewMetrics(clientMetrics.DefaultConfig())
+	m := metrics.NewClientMetrics(metrics.DefaultClientConfig())
 	c := middleware.PromConfig{
 		MessageInflightTime:   m.MessageInflightTime,
 		MessageReceivedSize:   m.MessageReceivedSize,
@@ -188,7 +187,7 @@ func TestPromConfig_Validate_SentMessageSize(t *testing.T) {
 }
 
 func TestPromConfig_Validate_SentMessageTime(t *testing.T) {
-	m := clientMetrics.NewMetrics(clientMetrics.DefaultConfig())
+	m := metrics.NewClientMetrics(metrics.DefaultClientConfig())
 	c := middleware.PromConfig{
 		MessageInflightTime:   m.MessageInflightTime,
 		MessageReceivedSize:   m.MessageReceivedSize,

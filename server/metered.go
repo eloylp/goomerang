@@ -9,17 +9,16 @@ import (
 
 	"go.eloylp.dev/goomerang/internal/messaging"
 	"go.eloylp.dev/goomerang/message"
-	serverMetrics "go.eloylp.dev/goomerang/metrics/server"
+	"go.eloylp.dev/goomerang/metrics"
 	"go.eloylp.dev/goomerang/middleware"
-	"go.eloylp.dev/goomerang/server"
 )
 
 type MeteredServer struct {
-	s       *server.Server
-	metrics *serverMetrics.Metrics
+	s       *Server
+	metrics *metrics.ServerMetrics
 }
 
-func NewMeteredServer(m *serverMetrics.Metrics, opts ...server.Option) (*MeteredServer, error) {
+func NewMetered(m *metrics.ServerMetrics, opts ...Option) (*MeteredServer, error) {
 	metricsMiddleware, err := middleware.PromHistograms(middleware.PromConfig{
 		MessageInflightTime:   m.MessageInflightTime,
 		MessageReceivedSize:   m.MessageReceivedSize,
@@ -31,17 +30,17 @@ func NewMeteredServer(m *serverMetrics.Metrics, opts ...server.Option) (*Metered
 		m.Errors.Inc()
 		panic(fmt.Errorf("goomerang: connect: instrumentation: %v", err))
 	}
-	monitorOpts := []server.Option{
-		server.WithOnStatusChangeHook(StatusMetricHook(m)),
-		server.WithOnWorkerStart(WorkerStartMetricHook(m)),
-		server.WithOnWorkerEnd(WorkerEndMetricHook(m)),
-		server.WithOnConfiguration(ConfigurationMaxConcurrentMetricHook(m)),
-		server.WithOnErrorHook(func(err error) {
+	monitorOpts := []Option{
+		WithOnStatusChangeHook(StatusMetricHook(m)),
+		WithOnWorkerStart(WorkerStartMetricHook(m)),
+		WithOnWorkerEnd(WorkerEndMetricHook(m)),
+		WithOnConfiguration(ConfigurationMaxConcurrentMetricHook(m)),
+		WithOnErrorHook(func(err error) {
 			m.Errors.Inc()
 		}),
 	}
 	mergedOpts := append(monitorOpts, opts...)
-	s, err := server.New(mergedOpts...)
+	s, err := New(mergedOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -57,7 +56,7 @@ func (s *MeteredServer) RegisterHandler(msg proto.Message, handler message.Handl
 	s.s.Handle(msg, handler)
 }
 
-func (s *MeteredServer) BroadCast(ctx context.Context, msg *message.Message) (brResult []server.BroadcastResult, err error) {
+func (s *MeteredServer) BroadCast(ctx context.Context, msg *message.Message) (brResult []BroadcastResult, err error) {
 	start := time.Now()
 	brResult, err = s.s.BroadCast(ctx, msg)
 	if err != nil {
@@ -87,26 +86,26 @@ func (s *MeteredServer) Shutdown(ctx context.Context) (err error) {
 	return
 }
 
-func StatusMetricHook(m *serverMetrics.Metrics) func(status uint32) {
+func StatusMetricHook(m *metrics.ServerMetrics) func(status uint32) {
 	return func(status uint32) {
 		m.CurrentStatus.Set(float64(status))
 	}
 }
 
-func WorkerStartMetricHook(m *serverMetrics.Metrics) func() {
+func WorkerStartMetricHook(m *metrics.ServerMetrics) func() {
 	return func() {
 		m.ConcurrentWorkers.Inc()
 	}
 }
 
-func WorkerEndMetricHook(m *serverMetrics.Metrics) func() {
+func WorkerEndMetricHook(m *metrics.ServerMetrics) func() {
 	return func() {
 		m.ConcurrentWorkers.Dec()
 	}
 }
 
-func ConfigurationMaxConcurrentMetricHook(m *serverMetrics.Metrics) func(cfg *server.Cfg) {
-	return func(cfg *server.Cfg) {
+func ConfigurationMaxConcurrentMetricHook(m *metrics.ServerMetrics) func(cfg *Cfg) {
+	return func(cfg *Cfg) {
 		m.ConfigMaxConcurrency.Set(float64(cfg.MaxConcurrency))
 	}
 }

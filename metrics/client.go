@@ -1,14 +1,10 @@
-package client
+package metrics
 
 import (
 	"github.com/prometheus/client_golang/prometheus"
 )
 
-var (
-	defBucketsForSizeBytes = []float64{10, 20, 40, 80, 160, 320, 640, 1280, 2560, 5120, 10240, 50000}
-)
-
-type Config struct {
+type ClientConfig struct {
 	MessageInflightTimeBuckets   []float64
 	ReceivedMessageSizeBuckets   []float64
 	SentMessageSizeBuckets       []float64
@@ -17,8 +13,8 @@ type Config struct {
 	SendTimeBuckets              []float64
 }
 
-func DefaultConfig() Config {
-	return Config{
+func DefaultClientConfig() ClientConfig {
+	return ClientConfig{
 		MessageInflightTimeBuckets:   prometheus.DefBuckets,
 		ReceivedMessageSizeBuckets:   defBucketsForSizeBytes,
 		SentMessageSizeBuckets:       defBucketsForSizeBytes,
@@ -28,7 +24,7 @@ func DefaultConfig() Config {
 	}
 }
 
-type Metrics struct {
+type ClientMetrics struct {
 	MessageInflightTime         *prometheus.HistogramVec
 	MessageReceivedSize         *prometheus.HistogramVec
 	MessageSentSize             *prometheus.HistogramVec
@@ -41,8 +37,8 @@ type Metrics struct {
 	Errors                      prometheus.Counter
 }
 
-func NewMetrics(c Config) *Metrics {
-	return &Metrics{
+func NewClientMetrics(c ClientConfig) *ClientMetrics {
+	return &ClientMetrics{
 
 		MessageInflightTime: prometheus.NewHistogramVec(prometheus.HistogramOpts{
 			Namespace: "goomerang",
@@ -122,7 +118,7 @@ func NewMetrics(c Config) *Metrics {
 	}
 }
 
-func (m *Metrics) Register(r prometheus.Registerer) {
+func (m *ClientMetrics) Register(r prometheus.Registerer) {
 	r.MustRegister(m.MessageInflightTime)
 	r.MustRegister(m.MessageReceivedSize)
 	r.MustRegister(m.MessageSentSize)
