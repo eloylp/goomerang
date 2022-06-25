@@ -50,14 +50,15 @@ func NewMetrics(c Config) *Metrics {
 			Name:      "message_received_inflight_duration_seconds",
 			Help:      "The time the message spent over the wire till received",
 			Buckets:   c.MessageInflightTimeBuckets,
-		}, []string{"type"}),
+		}, []string{"kind"}),
+
 		MessageReceivedSize: prometheus.NewHistogramVec(prometheus.HistogramOpts{
 			Namespace: "goomerang",
 			Subsystem: "server",
 			Name:      "message_received_size_bytes",
 			Help:      "The size of the received messages in bytes",
 			Buckets:   c.MessageReceivedSizeBuckets,
-		}, []string{"type"}),
+		}, []string{"kind"}),
 
 		MessageSentSize: prometheus.NewHistogramVec(prometheus.HistogramOpts{
 			Namespace: "goomerang",
@@ -65,7 +66,7 @@ func NewMetrics(c Config) *Metrics {
 			Name:      "message_sent_size_bytes",
 			Help:      "The size of the sent messages in bytes",
 			Buckets:   c.MessageSentSizeBuckets,
-		}, []string{"type"}),
+		}, []string{"kind"}),
 
 		MessageSentTime: prometheus.NewHistogramVec(prometheus.HistogramOpts{
 			Namespace: "goomerang",
@@ -73,7 +74,7 @@ func NewMetrics(c Config) *Metrics {
 			Name:      "message_sent_duration_seconds",
 			Help:      "The time spent in during asynchronous message sending operation (buffer)",
 			Buckets:   c.MessageSentTimeBuckets,
-		}, []string{"type"}),
+		}, []string{"kind"}),
 
 		MessageProcessingTime: prometheus.NewHistogramVec(prometheus.HistogramOpts{
 			Namespace: "goomerang",
@@ -81,7 +82,7 @@ func NewMetrics(c Config) *Metrics {
 			Name:      "message_processing_duration_seconds",
 			Help:      "The time spent in message handler execution",
 			Buckets:   c.MessageProcessingTimeBuckets,
-		}, []string{"type"}),
+		}, []string{"kind"}),
 
 		MessageBroadcastSentTime: prometheus.NewHistogramVec(prometheus.HistogramOpts{
 			Namespace: "goomerang",
@@ -89,7 +90,7 @@ func NewMetrics(c Config) *Metrics {
 			Name:      "message_broadcast_sent_duration_seconds",
 			Help:      "The time spent in a broadcast operation",
 			Buckets:   c.MessageBroadcastSentTimeBuckets,
-		}, []string{"type"}),
+		}, []string{"kind"}),
 
 		ConcurrentWorkers: prometheus.NewGauge(prometheus.GaugeOpts{
 			Namespace: "goomerang",

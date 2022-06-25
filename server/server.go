@@ -274,7 +274,7 @@ func (s *Server) processMessage(cs connSlot, data []byte, sOpts message.Sender) 
 	if err != nil {
 		return err
 	}
-	handler, err := s.handlerChainer.Handler(msg.Metadata.Type)
+	handler, err := s.handlerChainer.Handler(msg.Metadata.Kind)
 	if err != nil {
 		return err
 	}

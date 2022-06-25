@@ -128,7 +128,7 @@ func (c *Client) receiver() {
 				return
 			}
 			if messageType != websocket.BinaryMessage {
-				c.hooks.ExecOnError(fmt.Errorf("protocol: unexpected message type %v", messageType))
+				c.hooks.ExecOnError(fmt.Errorf("protocol: unexpected message kind %v", messageType))
 				continue
 			}
 			if c.cfg.MaxConcurrency <= 1 {
@@ -172,7 +172,7 @@ func (c *Client) processMessage(data []byte) (err error) {
 		}
 		return nil
 	}
-	handler, err := c.handlerChainer.Handler(msg.Metadata.Type)
+	handler, err := c.handlerChainer.Handler(msg.Metadata.Kind)
 	if err != nil {
 		return err
 	}

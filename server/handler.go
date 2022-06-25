@@ -57,7 +57,7 @@ func mainHandler(s *Server) http.HandlerFunc {
 					continue
 				}
 				if messageType != websocket.BinaryMessage {
-					s.hooks.ExecOnError(fmt.Errorf("server: cannot process websocket frame type %v", messageType))
+					s.hooks.ExecOnError(fmt.Errorf("server: cannot process websocket frame kind %v", messageType))
 					continue
 				}
 				if s.cfg.MaxConcurrency <= 1 {

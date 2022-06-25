@@ -16,7 +16,7 @@ func Logger(logger logrus.FieldLogger) message.Middleware {
 			h.Handle(sender, msg)
 			duration := time.Since(start)
 			logger.WithFields(logrus.Fields{
-				"type":           msg.Metadata.Type,
+				"kind":           msg.Metadata.Kind,
 				"metadata":       msg.Metadata,
 				"headers":        msg.Header,
 				"processingTime": duration,

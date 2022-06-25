@@ -7,7 +7,7 @@ option go_package = "go.eloylp.dev/goomerang/internal/protocol";
 
 message Frame {
   string uuid = 1;
-  string type = 2;
+  string kind = 2;
   int64 payloadSize = 3;
   bool is_sync = 4;
   google.protobuf.Timestamp creation = 5;

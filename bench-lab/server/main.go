@@ -54,7 +54,7 @@ func main() {
 	)
 	ms.RegisterHandler(&model.Point{}, message.HandlerFunc(func(s message.Sender, msg *message.Message) {
 		time.Sleep(20 * time.Millisecond)
-		//logrus.Printf("server: received message : %s \n", msg.Metadata.Type)
+		//logrus.Printf("server: received message : %s \n", msg.Metadata.Kind)
 	}))
 	if err != nil {
 		log.Fatal(err)

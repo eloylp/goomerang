@@ -17,17 +17,17 @@ func PromHistograms(c PromConfig) (message.Middleware, error) {
 	}
 	return func(h message.Handler) message.Handler {
 		return message.HandlerFunc(func(s message.Sender, msg *message.Message) {
-			c.MessageInflightTime.WithLabelValues(msg.Metadata.Type).Observe(time.Since(msg.Metadata.Creation).Seconds())
-			c.MessageReceivedSize.WithLabelValues(msg.Metadata.Type).Observe(float64(msg.Metadata.PayloadSize))
+			c.MessageInflightTime.WithLabelValues(msg.Metadata.Kind).Observe(time.Since(msg.Metadata.Creation).Seconds())
+			c.MessageReceivedSize.WithLabelValues(msg.Metadata.Kind).Observe(float64(msg.Metadata.PayloadSize))
 
 			wrappedSender := NewMeteredSender(s, c)
 			start := time.Now()
 			h.Handle(wrappedSender, msg)
 
-			c.MessageProcessingTime.WithLabelValues(msg.Metadata.Type).Observe(time.Since(start).Seconds())
+			c.MessageProcessingTime.WithLabelValues(msg.Metadata.Kind).Observe(time.Since(start).Seconds())
 			sentMessage := wrappedSender.Msg()
 			if sentMessage != nil {
-				c.MessageSentSize.WithLabelValues(sentMessage.Metadata.Type).Observe(float64(wrappedSender.Bytes()))
+				c.MessageSentSize.WithLabelValues(sentMessage.Metadata.Kind).Observe(float64(wrappedSender.Bytes()))
 			}
 		})
 	}, nil

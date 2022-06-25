@@ -48,7 +48,7 @@ func TestFromFrame(t *testing.T) {
 
 	frame := &protocol.Frame{
 		Uuid:        "09AF",
-		Type:        msgFQDN,
+		Kind:        msgFQDN,
 		PayloadSize: size,
 		IsSync:      true,
 		Creation:    now,
@@ -63,7 +63,7 @@ func TestFromFrame(t *testing.T) {
 	require.NoError(t, err)
 
 	assert.Equal(t, "09AF", msg.Metadata.UUID)
-	assert.Equal(t, msgFQDN, msg.Metadata.Type)
+	assert.Equal(t, msgFQDN, msg.Metadata.Kind)
 	assert.Equal(t, size, int64(msg.Metadata.PayloadSize))
 	assert.Equal(t, now.AsTime(), msg.Metadata.Creation)
 	assert.Equal(t, true, msg.Metadata.IsSync)

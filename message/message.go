@@ -41,7 +41,7 @@ func (m Message) String() string {
 type Metadata struct {
 	Creation    time.Time `json:"creation"`
 	UUID        string    `json:"uuid"`
-	Type        string    `json:"type"`
+	Kind        string    `json:"kind"`
 	PayloadSize int       `json:"payloadSize"`
 	IsSync      bool      `json:"isSync"`
 }
@@ -50,7 +50,7 @@ func (m Metadata) String() string {
 	elems := make([]string, 0, 5)
 	elems = append(elems, fmt.Sprintf("creation=%v", m.Creation))
 	elems = append(elems, fmt.Sprintf("uuid=%s", m.UUID))
-	elems = append(elems, fmt.Sprintf("type=%s", m.Type))
+	elems = append(elems, fmt.Sprintf("kind=%s", m.Kind))
 	elems = append(elems, fmt.Sprintf("payloadSize=%v", m.PayloadSize))
 	elems = append(elems, fmt.Sprintf("isSync=%v", m.IsSync))
 	return strings.Join(elems, ",")

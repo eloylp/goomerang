@@ -61,7 +61,7 @@ func main() {
 	}
 	mc.RegisterHandler(&model.Point{}, message.HandlerFunc(func(s message.Sender, msg *message.Message) {
 		time.Sleep(20 * time.Millisecond)
-		// logrus.Printf("client: received message : %s \n", msg.Metadata.Type)
+		// logrus.Printf("client: received message : %s \n", msg.Metadata.Kind)
 	}))
 	logrus.Infoln("starting client ...")
 	mustWaitTCPService(TargetAddr, 100*time.Millisecond, 5*time.Second)

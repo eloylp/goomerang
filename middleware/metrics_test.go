@@ -67,7 +67,7 @@ func TestMetrics(t *testing.T) {
 				Metadata: &message.Metadata{
 					PayloadSize: 10,
 					Creation:    time.Now().Add(-1 * time.Second),
-					Type:        "goomerang.test.MessageV1",
+					Kind:        "goomerang.test.MessageV1",
 				},
 				Payload: &testMessages.MessageV1{},
 			}
@@ -89,21 +89,21 @@ func AssertMetricsHandler(t *testing.T, handler http.Handler, system string) {
 	}
 	body := string(data)
 
-	assert.Contains(t, body, fmt.Sprintf(`goomerang_%s_message_received_inflight_duration_seconds_bucket{type="goomerang.test.MessageV1",le="2.5"} 1`, system))
-	assert.Contains(t, body, fmt.Sprintf(`goomerang_%s_message_received_inflight_duration_seconds_sum{type="goomerang.test.MessageV1"} 1`, system))
-	assert.Contains(t, body, fmt.Sprintf(`goomerang_%s_message_received_inflight_duration_seconds_count{type="goomerang.test.MessageV1"} 1`, system))
+	assert.Contains(t, body, fmt.Sprintf(`goomerang_%s_message_received_inflight_duration_seconds_bucket{kind="goomerang.test.MessageV1",le="2.5"} 1`, system))
+	assert.Contains(t, body, fmt.Sprintf(`goomerang_%s_message_received_inflight_duration_seconds_sum{kind="goomerang.test.MessageV1"} 1`, system))
+	assert.Contains(t, body, fmt.Sprintf(`goomerang_%s_message_received_inflight_duration_seconds_count{kind="goomerang.test.MessageV1"} 1`, system))
 
-	assert.Contains(t, body, fmt.Sprintf(`goomerang_%s_message_received_size_bytes_bucket{type="goomerang.test.MessageV1",le="10"} 1`, system))
-	assert.Contains(t, body, fmt.Sprintf(`goomerang_%s_message_received_size_bytes_sum{type="goomerang.test.MessageV1"} 10`, system))
-	assert.Contains(t, body, fmt.Sprintf(`goomerang_%s_message_received_size_bytes_count{type="goomerang.test.MessageV1"} 1`, system))
+	assert.Contains(t, body, fmt.Sprintf(`goomerang_%s_message_received_size_bytes_bucket{kind="goomerang.test.MessageV1",le="10"} 1`, system))
+	assert.Contains(t, body, fmt.Sprintf(`goomerang_%s_message_received_size_bytes_sum{kind="goomerang.test.MessageV1"} 10`, system))
+	assert.Contains(t, body, fmt.Sprintf(`goomerang_%s_message_received_size_bytes_count{kind="goomerang.test.MessageV1"} 1`, system))
 
-	assert.Contains(t, body, fmt.Sprintf(`goomerang_%s_message_sent_size_bytes_bucket{type="goomerang.test.MessageV1",le="+Inf"} 1`, system))
-	assert.Contains(t, body, fmt.Sprintf(`goomerang_%s_message_sent_size_bytes_sum{type="goomerang.test.MessageV1"} 20`, system))
-	assert.Contains(t, body, fmt.Sprintf(`goomerang_%s_message_sent_size_bytes_count{type="goomerang.test.MessageV1"} 1`, system))
+	assert.Contains(t, body, fmt.Sprintf(`goomerang_%s_message_sent_size_bytes_bucket{kind="goomerang.test.MessageV1",le="+Inf"} 1`, system))
+	assert.Contains(t, body, fmt.Sprintf(`goomerang_%s_message_sent_size_bytes_sum{kind="goomerang.test.MessageV1"} 20`, system))
+	assert.Contains(t, body, fmt.Sprintf(`goomerang_%s_message_sent_size_bytes_count{kind="goomerang.test.MessageV1"} 1`, system))
 
-	assert.Contains(t, body, fmt.Sprintf(`goomerang_%s_message_sent_duration_seconds_bucket{type="goomerang.test.MessageV1",le="+Inf"} 1`, system))
-	assert.Contains(t, body, fmt.Sprintf(`goomerang_%s_message_sent_duration_seconds_sum{type="goomerang.test.MessageV1"}`, system))
-	assert.Contains(t, body, fmt.Sprintf(`goomerang_%s_message_sent_duration_seconds_count{type="goomerang.test.MessageV1"} 1`, system))
+	assert.Contains(t, body, fmt.Sprintf(`goomerang_%s_message_sent_duration_seconds_bucket{kind="goomerang.test.MessageV1",le="+Inf"} 1`, system))
+	assert.Contains(t, body, fmt.Sprintf(`goomerang_%s_message_sent_duration_seconds_sum{kind="goomerang.test.MessageV1"}`, system))
+	assert.Contains(t, body, fmt.Sprintf(`goomerang_%s_message_sent_duration_seconds_count{kind="goomerang.test.MessageV1"} 1`, system))
 }
 
 func TestMetricsIfNotSendsMessageBack(t *testing.T) {
@@ -124,7 +124,7 @@ func TestMetricsIfNotSendsMessageBack(t *testing.T) {
 		Metadata: &message.Metadata{
 			PayloadSize: 10,
 			Creation:    time.Now().Add(-1 * time.Second),
-			Type:        "goomerang.test.MessageV1",
+			Kind:        "goomerang.test.MessageV1",
 		},
 		Payload: &testMessages.MessageV1{},
 	}
@@ -137,7 +137,7 @@ type fakeSender struct{}
 
 func (f *fakeSender) Send(msg *message.Message) (payloadSize int, err error) {
 	msg.Metadata = &message.Metadata{
-		Type: "goomerang.test.MessageV1",
+		Kind: "goomerang.test.MessageV1",
 	}
 	return 20, nil
 }

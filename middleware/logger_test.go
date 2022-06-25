@@ -32,7 +32,7 @@ func TestLogger(t *testing.T) {
 		Metadata: &message.Metadata{
 			Creation:    date,
 			UUID:        "09AF",
-			Type:        messaging.FQDN(payload),
+			Kind:        messaging.FQDN(payload),
 			PayloadSize: 10,
 			IsSync:      false,
 		},
@@ -48,10 +48,10 @@ func TestLogger(t *testing.T) {
 	logLines := output.String()
 	assert.Contains(t, logLines, `msg="message processed"`)
 	AssertHeadersArePresent(t, logLines)
-	assert.Contains(t, logLines, `metadata="creation=2022-04-10 22:56:18 +0000 UTC,uuid=09AF,type=goomerang.test.MessageV1,payloadSize=10,isSync=false"`)
+	assert.Contains(t, logLines, `metadata="creation=2022-04-10 22:56:18 +0000 UTC,uuid=09AF,kind=goomerang.test.MessageV1,payloadSize=10,isSync=false"`)
 	assert.Contains(t, logLines, `payload="message:\"hi!\""`)
 	assert.Contains(t, logLines, `processingTime=`)
-	assert.Contains(t, logLines, `type=goomerang.test.MessageV1`)
+	assert.Contains(t, logLines, `kind=goomerang.test.MessageV1`)
 }
 
 func AssertHeadersArePresent(t *testing.T, lines string) {

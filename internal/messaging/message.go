@@ -19,11 +19,11 @@ func FromFrame(frame *protocol.Frame, msgRegistry Registry) (*message.Message, e
 	meta := &message.Metadata{
 		Creation:    frame.Creation.AsTime(),
 		UUID:        frame.Uuid,
-		Type:        frame.Type,
+		Kind:        frame.Kind,
 		PayloadSize: int(frame.PayloadSize),
 		IsSync:      frame.IsSync,
 	}
-	msg, err := msgRegistry.Message(frame.Type)
+	msg, err := msgRegistry.Message(frame.Kind)
 	if err != nil {
 		return nil, fmt.Errorf("problems locating message: %w", err)
 	}
@@ -44,7 +44,7 @@ func Pack(msg *message.Message, opts ...FrameOption) (int, []byte, error) {
 	}
 	payloadSize := len(payload)
 	frame := &protocol.Frame{
-		Type:        FQDN(msg.Payload),
+		Kind:        FQDN(msg.Payload),
 		PayloadSize: int64(payloadSize),
 		Payload:     payload,
 		Creation:    timestamppb.New(time.Now()),
