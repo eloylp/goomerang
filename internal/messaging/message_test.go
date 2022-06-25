@@ -31,7 +31,7 @@ func TestPackTimestamp(t *testing.T) {
 	require.NoError(t, err)
 	now := time.Now().UnixMicro()
 	packTime := unpack.Creation.AsTime().UnixMicro()
-	assert.InDelta(t, now, packTime, 2000)
+	assert.InDelta(t, now, packTime, 20000)
 	assert.Less(t, packTime, now)
 }
 
