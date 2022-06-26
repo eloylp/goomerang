@@ -6,6 +6,11 @@ communications library.
 <img src="" alt="goomerang" width="300"/>
 </p>
 
+## Status
+
+This project it's still a proof of concept. It has none or very few production experience. Maintainers of the project reserve the right of
+breaking the public API.
+
 ## Motivation
 
 Goomerang is an effort to provide an easy, application friendly way of communicating clients and servers. Because some of us only need to
