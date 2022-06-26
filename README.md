@@ -16,7 +16,7 @@ breaking the public API.
 Goomerang is an effort to provide an easy, application friendly way of communicating clients and servers. Because some of us only need to
 send some protos over a fast pipe.
 
-![idea](/home/eloylp/projects/goomerang/docs/idea.drawio.svg)
+![idea](docs/idea.drawio.svg)
 
 Possible status transitions for servers:
 
