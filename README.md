@@ -8,7 +8,7 @@ communications library.
 
 ## Status
 
-This project it's still a proof of concept. It has none or very few production experience. Maintainers of the project reserve the right of
+This project is still a proof of concept. It has none or very little production experience. Maintainers of the project reserve the right of
 breaking the public API.
 
 ## Motivation
