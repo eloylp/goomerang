@@ -54,8 +54,6 @@ CLOSED-->RUNNING;
 
 ## Installation
 
-An installation on any Go project can be done by:
-
 ```bash
 go get go.eloylp.dev/goomerang
 ```
