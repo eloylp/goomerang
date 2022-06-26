@@ -3,7 +3,7 @@ syntax = "proto3";
 import "google/protobuf/timestamp.proto";
 
 package company.map;
-option go_package = "go.eloylp.dev/goomerang/bench-lab/model";
+option go_package = "go.eloylp.dev/goomerang/lab/model";
 
 message PointV1 {
   float x = 1;

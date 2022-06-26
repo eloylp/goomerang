@@ -15,7 +15,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/sirupsen/logrus"
-	"go.eloylp.dev/goomerang/bench-lab/model"
+	"go.eloylp.dev/goomerang/lab/model"
 	"go.eloylp.dev/goomerang/message"
 	"go.eloylp.dev/goomerang/metrics"
 	"google.golang.org/protobuf/types/known/timestamppb"

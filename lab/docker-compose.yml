@@ -23,7 +23,7 @@ services:
     ports:
       - "127.0.0.1:6060:6060" ## Go pprof
     networks:
-      - bench-lab
+      - lab
 
   proxy:
     container_name: proxy
@@ -42,7 +42,7 @@ services:
     expose:
       - 8081
     networks:
-      - bench-lab
+      - lab
 
   client: &client
     container_name: client
@@ -66,7 +66,7 @@ services:
     ports:
       - "127.0.0.1:6061:6060" ## Go pprof
     networks:
-      - bench-lab
+      - lab
 
 #    We could add more clients here (just keeping this close), copying the first one.
 #    We must REMEMBER to add it into the targets config, located at ./prometheus/prometheus.yml.
@@ -95,7 +95,7 @@ services:
     ports:
       - "127.0.0.1:9090:9090"
     networks:
-      - bench-lab
+      - lab
 
   grafana:
     image: grafana/grafana-oss:8.5.3
@@ -114,10 +114,10 @@ services:
     ports:
       - "127.0.0.1:3000:3000"
     networks:
-      - bench-lab
+      - lab
 
 networks:
-  bench-lab:
+  lab:
 volumes:
   prometheus_data:
   grafana_data:
