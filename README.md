@@ -88,9 +88,8 @@ func main() {
 }
 ```
 
-The client side package its quite symmetric with the server one. The client also has many configurable options, see
-them [here](client/opts.go).
-Lets see a client example:
+The client side package its quite symmetric with the server one. The client has also many configurable options, see
+them [here](client/opts.go). Let's see a client example:
 
 ```go
 package main
@@ -122,11 +121,10 @@ useful way. Both, client and server have support for handlers. See the next sect
 
 ## Messages
 
-Goomerang facilitates the creation of custom protocols for messages. Messages can have 2 parts, `headers` and a `payload`. Headers are just
-a key/value map of type string/string. The payload allows holding
-any type
-which accomplishes the [proto.Message](https://github.com/protocolbuffers/protobuf-go/blob/v1.28.0/proto/proto.go#L24) interface, so any
-protocol buffer message.
+Goomerang facilitates the creation of custom protocols in messages. Messages can have 2 parts, `headers` and a `payload`. Headers are just
+a key/value map of type string/string. The payload allows holding any type which accomplishes
+the [proto.Message](https://github.com/protocolbuffers/protobuf-go/blob/v1.28.0/proto/proto.go#L24) interface, so any protocol buffer
+message type.
 
 ```go
 package main
@@ -144,15 +142,17 @@ func main() {
 }
 ```
 
-The message type it's normally used in handlers. It can also be used
+It's encouraged to use the message builder, so all complexities and needed data will be fulfilled.
+
+The `message.Message` type it's normally used in message handlers. It can also be used
 in the public API of client and server instances for simple operations like `Send(msg)`. See more in the following documentation.
 
 ## A history of handlers and middlewares
 
 There's support for handlers and middlewares for both, client and server sides. This part of the project comes inspired by the
-Go [HTTP standard library](https://pkg.go.dev/net/http#HandlerFunc). Our hope is to make this part familiar and versatile.
+Go [HTTP standard library](https://pkg.go.dev/net/http#HandlerFunc). The intention is making this part familiar and versatile.
 
-Handlers and middlewares **can only be registered before starting** the client or server.
+Handlers and middlewares **can only be registered before starting** the client or the server.
 
 ### Message Handlers
 
@@ -236,14 +236,14 @@ func main() {
 	s, _ := server.New(server.WithListenAddr("127.0.0.1:8080"))
 	s.Middleware(func(h message.Handler) message.Handler {
 		return message.HandlerFunc(func(sender message.Sender, msg *message.Message) {
-			fmt.Printf("received message of kind: %q", msg.Metadata.Type)
+			fmt.Printf("received message of kind: %q", msg.Metadata.Kind)
 			h.Handle(sender, msg) // Continue with the next handler in chain.
 		})
 	})
 }
 ```
 
-That's sounds really familiar ! Yes, Goomerang tries to preserve same traits as the standard library. Again, the same symmetric interface
+That's sounds really familiar ! Yes, Goomerang tries to preserve same aspects of the standard library. Again, the same symmetric interface
 can be found in the client public API.
 
 It's important to note that **any number of middlewares can be registered**. The **order of registration will drive the order of execution**
@@ -295,13 +295,13 @@ func main() {
 }
 ```
 
-As a rule of thumb, we always recommend this middleware to be implemented as first in the chain (so it protects the rest of handlers), in
+As a rule of thumb, its recommended this middleware to be implemented as first in the chain (so it protects the rest of handlers), in
 order to not crash the entire process if
 a panic arises at some point in the handler chain.
 
 ## Broadcasts
 
-From the server side perspective, it's possible to send messages to all connected clients. This can be useful for a number of cases, like
+From the server side perspective, it's possible to send a message to all connected clients. This can be useful for a number of cases, like
 push notifications. Here's and example on how to do so:
 
 ```go
@@ -329,8 +329,8 @@ func main() {
 }
 ```
 
-From the client perspective, it is not possible to send broadcasts to all the other connected clients. However, nothing will stop the
-developer to create a handler for enabling this operation:
+From the client side, it is not possible to send broadcasts to all the other connected clients. However, nothing will stop the
+developer to create a handler for enabling this operation in the server:
 
 ```go
 package main
@@ -352,7 +352,7 @@ func main() {
 
 		broadcastMessage := msg.Payload.(*protos.MyBroadCastV1)
 
-		// Calls to the server broadcast method, will use the global lock of the server,
+		// Calls to the server broadcast method, available via scope.
 		s.Broadcast(context.TODO(), broadcastMessage.Message)
 
 	}))
@@ -370,25 +370,15 @@ func main() {
 
 ## Synchronous sends
 
-The default send methods `c.Send()` `s.Broadcast()` from client and server respectively, **are completely asynchronous**. They work as a "
-fire
-and forget" send system. They just write to the TCP socket send buffer. They are only going to block the call if the other peer stops ACKing
-TCP
-packets, and the pre-negotiated TCP window size is exceeded. That way the sender knows when to stop sending messages to the other peer,
-until it starts performing more TCP acks.
+The default send methods `c.Send()` `s.Broadcast()` from client and server respectively, **are completely asynchronous**. They work as a
+"fire and forget" send system. That means the user of the library should design a way to ensure the message was received and processed by
+the server before removing it from its internal state. Unless of course, the intrinsic value of the data expires very quick,
+and the client can afford its lost.
 
-The following command can give us minimum, default and maximum receive buffers size in bytes in a Linux machine.
-
-```bash
-$ cat /proc/sys/net/ipv4/tcp_rmem 
-4096	131072	6291456
-```
-
-That means the user of the library should design a way to ensure the message was received and processed by the server before removing it
-from its internal state. Unless of course, the intrinsic value of the data expires very quick, and the client can afford its lost.
-
-Clients on this library have a `c.SyncSend(ctx, msg)` method implemented. This allows clients sending messages and wait for the server
+In response to this issue, clients on this library have a `c.SyncSend(ctx, msg)` method implemented. This allows clients sending messages
+and wait for the server
 reply.
+
 Here is an example of its use:
 
 ```go
@@ -417,14 +407,13 @@ func main() {
 		log.Fatal(err)
 	}
 
-	if respProto.GetHeader("status") == "OK" {
-		resp := respProto.Payload.(*protos.MySuccessReplyV1)
-		// Do something with the success reply
+	if respProto.GetHeader("status") != "OK" {
+		resp := respProto.Payload.(*protos.MyBadReplyV1)
+		// Do something with the bad reply
 		return
 	}
-
-	resp := respProto.Payload.(*protos.MyBadReplyV1)
-	// Do something with the bad reply
+	resp := respProto.Payload.(*protos.MySuccessReplyV1)
+	// Do something with the success reply
 }
 ```
 
@@ -432,10 +421,21 @@ This is just a high level request/response pattern built on the top of the "fire
 previously commented send system. It probably can help some clients, when the reply is
 crucial for completing the operation.
 
+Asynchronous methods just write to the TCP socket send buffer. They are only going to block the call if the other peer stops ACKing
+TCP packets, so the pre-negotiated TCP window size is exceeded. That way the sender knows when to stop sending messages to the other peer,
+until it starts performing more TCP acks again.
+
+The following command can give us minimum, default and maximum receive buffers size in bytes in a Linux machine.
+
+```bash
+$ cat /proc/sys/net/ipv4/tcp_rmem 
+4096	131072	6291456
+```
+
 ## Hooks
 
 Sometimes getting feedback from internal parts of the system its difficult. Specially in processing loops, where in case of errors we cannot
-return them to client, and we do not want to take decisions on their place. To deal with this,
+return them to the user, and we do not want to make decisions on their place. To deal with this,
 in both parts (client and server) the user can register function hooks. A complete list of them can be found in the configuration options of
 both, [client](client/opts.go) and [server](server/opts.go). Let's take a look on how to register an error hook:
 
@@ -461,7 +461,7 @@ func main() {
 }
 ```
 
-This error hooks are very handy to log errors, so the user can use best, customized loggers. All the hooks can be
+This error hooks are very handy to log errors, so the user can use custom loggers/metrics registries. All the hooks can be
 registered multiple times. The logic behind will just execute the hooks in order.
 
 ## Graceful shutdown
@@ -590,5 +590,5 @@ The same, symmetric interface can be found in the server public API.
 ![img.png](docs/grafana-dashboard.png)
 
 This library provides an
-out-of-the-box [Grafana](https://grafana.com/) [dashboard](bench-lab/grafana/provisioning/dashboards/goomerang.json) which should cover the
+out-of-the-box [Grafana](https://grafana.com/) [dashboard](lab/grafana/provisioning/dashboards/goomerang.json) which should cover the
 basic usage. Users of the library are encouraged to adapt it at discretion.
