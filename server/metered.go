@@ -31,10 +31,10 @@ func NewMetered(m *metrics.ServerMetrics, opts ...Option) (*MeteredServer, error
 		panic(fmt.Errorf("goomerang: connect: instrumentation: %v", err))
 	}
 	monitorOpts := []Option{
-		WithOnStatusChangeHook(StatusMetricHook(m)),
-		WithOnWorkerStart(WorkerStartMetricHook(m)),
-		WithOnWorkerEnd(WorkerEndMetricHook(m)),
-		WithOnConfiguration(ConfigurationMaxConcurrentMetricHook(m)),
+		WithOnStatusChangeHook(statusMetricHook(m)),
+		WithOnWorkerStart(workerStartMetricHook(m)),
+		WithOnWorkerEnd(workerEndMetricHook(m)),
+		WithOnConfiguration(configurationMaxConcurrentMetricHook(m)),
 		WithOnErrorHook(func(err error) {
 			m.Errors.Inc()
 		}),
@@ -86,25 +86,25 @@ func (s *MeteredServer) Shutdown(ctx context.Context) (err error) {
 	return
 }
 
-func StatusMetricHook(m *metrics.ServerMetrics) func(status uint32) {
+func statusMetricHook(m *metrics.ServerMetrics) func(status uint32) {
 	return func(status uint32) {
 		m.CurrentStatus.Set(float64(status))
 	}
 }
 
-func WorkerStartMetricHook(m *metrics.ServerMetrics) func() {
+func workerStartMetricHook(m *metrics.ServerMetrics) func() {
 	return func() {
 		m.ConcurrentWorkers.Inc()
 	}
 }
 
-func WorkerEndMetricHook(m *metrics.ServerMetrics) func() {
+func workerEndMetricHook(m *metrics.ServerMetrics) func() {
 	return func() {
 		m.ConcurrentWorkers.Dec()
 	}
 }
 
-func ConfigurationMaxConcurrentMetricHook(m *metrics.ServerMetrics) func(cfg *Cfg) {
+func configurationMaxConcurrentMetricHook(m *metrics.ServerMetrics) func(cfg *Cfg) {
 	return func(cfg *Cfg) {
 		m.ConfigMaxConcurrency.Set(float64(cfg.MaxConcurrency))
 	}

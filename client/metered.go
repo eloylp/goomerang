@@ -9,16 +9,16 @@ import (
 
 	"go.eloylp.dev/goomerang/internal/messaging"
 	"go.eloylp.dev/goomerang/message"
-	metrics2 "go.eloylp.dev/goomerang/metrics"
+	"go.eloylp.dev/goomerang/metrics"
 	"go.eloylp.dev/goomerang/middleware"
 )
 
 type MeteredClient struct {
 	c       *Client
-	metrics *metrics2.ClientMetrics
+	metrics *metrics.ClientMetrics
 }
 
-func NewMetered(m *metrics2.ClientMetrics, opts ...Option) (*MeteredClient, error) {
+func NewMetered(m *metrics.ClientMetrics, opts ...Option) (*MeteredClient, error) {
 	metricsMiddleware, err := middleware.PromHistograms(middleware.PromConfig{
 		MessageInflightTime:   m.MessageInflightTime,
 		MessageReceivedSize:   m.MessageReceivedSize,
@@ -31,10 +31,10 @@ func NewMetered(m *metrics2.ClientMetrics, opts ...Option) (*MeteredClient, erro
 		panic(fmt.Errorf("goomerang: connect: instrumentation: %v", err))
 	}
 	monitorOpts := []Option{
-		WithOnStatusChangeHook(StatusMetricHook(m)),
-		WithOnWorkerStart(WorkerStartMetricHook(m)),
-		WithOnWorkerEnd(WorkerEndMetricHook(m)),
-		WithOnConfiguration(ConfigurationMaxConcurrentMetricHook(m)),
+		WithOnStatusChangeHook(statusMetricHook(m)),
+		WithOnWorkerStart(workerStartMetricHook(m)),
+		WithOnWorkerEnd(workerEndMetricHook(m)),
+		WithOnConfiguration(configurationMaxConcurrentMetricHook(m)),
 		WithOnErrorHook(func(err error) {
 			m.Errors.Inc()
 		}),
@@ -97,25 +97,25 @@ func (c *MeteredClient) RegisterMessage(msg proto.Message) {
 	c.c.RegisterMessage(msg)
 }
 
-func StatusMetricHook(m *metrics2.ClientMetrics) func(status uint32) {
+func statusMetricHook(m *metrics.ClientMetrics) func(status uint32) {
 	return func(status uint32) {
 		m.CurrentStatus.Set(float64(status))
 	}
 }
 
-func WorkerStartMetricHook(m *metrics2.ClientMetrics) func() {
+func workerStartMetricHook(m *metrics.ClientMetrics) func() {
 	return func() {
 		m.ConcurrentWorkers.Inc()
 	}
 }
 
-func WorkerEndMetricHook(m *metrics2.ClientMetrics) func() {
+func workerEndMetricHook(m *metrics.ClientMetrics) func() {
 	return func() {
 		m.ConcurrentWorkers.Dec()
 	}
 }
 
-func ConfigurationMaxConcurrentMetricHook(m *metrics2.ClientMetrics) func(cfg *Cfg) {
+func configurationMaxConcurrentMetricHook(m *metrics.ClientMetrics) func(cfg *Cfg) {
 	return func(cfg *Cfg) {
 		m.ConfigMaxConcurrency.Set(float64(cfg.MaxConcurrency))
 	}
