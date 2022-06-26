@@ -50,7 +50,7 @@ CLOSED-->RUNNING;
   connections.
 * Customizable TLS configuration.
 * Custom errors are exposed, ability to build retry systems on top of the public API.
-* Optional [Prometheus metrics](#prometheus-metrics), that will help to instrument clients and servers.
+* [Observability tools](#observability), that will help to instrument clients and servers.
 
 ## Installation
 
@@ -537,9 +537,58 @@ Note left of S: Status = Closed
 S->>S: Return to user
 ```
 
-## Prometheus metrics
+## Observability
 
-This library provides an easy way to quickly instrument your servers and clients. By default, this library assumes no monitoring. In order to enable it  
+### Prometheus metrics
+
+By default, this library assumes no metrics. However, it provides tools for a quick instrumentation with
+[Prometheus](https://prometheus.io/) metrics for both, [clients](metrics/client.go) and [servers](metrics/server.go). Let's see an
+example of a metered client:
+
+```go
+package main
+
+import (
+	"log"
+
+	"github.com/prometheus/client_golang/prometheus"
+
+	"go.eloylp.dev/goomerang/client"
+	"go.eloylp.dev/goomerang/metrics"
+)
+
+func main() {
+	// Metrics creation, with the default config.
+	m := metrics.NewClientMetrics(metrics.DefaultClientConfig())
+
+	// Register the metrics in Prometheus registry. This time, the global one.
+	m.Register(prometheus.DefaultRegisterer)
+
+	// Use the same options as in a normal client constructor.
+	c, err := client.NewMetered(m,
+		client.WithServerAddr("127.0.0.1:9090"),
+		client.WithMaxConcurrency(5),
+		// ...
+	)
+	if err != nil {
+		log.Fatal(err)
+	}
+	// ...
+}
+```
+
+Note in the above example, the `client.NewMetered(...)` accepts as second argument the same type of [options](client/opts.go) exposed in the
+[basic example](#basic-usage).
+
+As commented in the [middleware section](#middlewares), the user also has access to all low level observability middlewares in
+the [middleware package](middleware). We encourage the user to take a look there in case further customization its needed.
+
+The same, symmetric interface can be found in the server public API.
+
+### Grafana dashboard
 
 ![img.png](docs/grafana-dashboard.png)
 
+This library provides an
+out-of-the-box [Grafana](https://grafana.com/) [dashboard](bench-lab/grafana/provisioning/dashboards/goomerang.json) which should cover the
+basic usage. Users of the library are encouraged to adapt it at discretion.
