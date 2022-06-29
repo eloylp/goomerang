@@ -590,3 +590,8 @@ The same, symmetric interface can be found in the server public API.
 This library provides an
 out-of-the-box [Grafana](https://grafana.com/) [dashboard](lab/grafana/provisioning/dashboards/goomerang.json) which should cover the
 basic usage. Users of the library are encouraged to adapt it at discretion.
+
+# Contributing
+
+Contributions are welcome ! If you think something could be improved, request a new feature or just want to leave some feedback,
+please check our [contributing](CONTRIBUTING.md) guide. 
