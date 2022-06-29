@@ -15,7 +15,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/sirupsen/logrus"
-	"go.eloylp.dev/goomerang/lab/model"
+	"go.eloylp.dev/goomerang/example/protos"
 	"go.eloylp.dev/goomerang/message"
 	"go.eloylp.dev/goomerang/metrics"
 	"google.golang.org/protobuf/types/known/timestamppb"
@@ -58,11 +58,11 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	mc.RegisterHandler(&model.PointReplyV1{}, message.HandlerFunc(func(s message.Sender, msg *message.Message) {
+	mc.RegisterHandler(&protos.PointReplyV1{}, message.HandlerFunc(func(s message.Sender, msg *message.Message) {
 		// It's ok, discard from buffer
 		time.Sleep(20 * time.Millisecond)
 	}))
-	mc.RegisterHandler(&model.BroadcastV1{}, message.HandlerFunc(func(s message.Sender, msg *message.Message) {
+	mc.RegisterHandler(&protos.BroadcastV1{}, message.HandlerFunc(func(s message.Sender, msg *message.Message) {
 		// process server broadcast
 		time.Sleep(20 * time.Millisecond)
 	}))
@@ -103,7 +103,7 @@ func sendMessages(ctx context.Context, c *client.MeteredClient, bytes []byte) {
 		case <-ctx.Done():
 			return
 		default:
-			_, err := c.Send(message.New().SetPayload(&model.PointV1{
+			_, err := c.Send(message.New().SetPayload(&protos.PointV1{
 				X:          34.45,
 				Y:          89.12,
 				Time:       timestamppb.Now(),
@@ -122,7 +122,7 @@ func sendSyncMessages(ctx context.Context, c *client.MeteredClient, bytes []byte
 		case <-ctx.Done():
 			return
 		default:
-			_, _, err := c.SendSync(context.Background(), message.New().SetPayload(&model.PointV1{
+			_, _, err := c.SendSync(context.Background(), message.New().SetPayload(&protos.PointV1{
 				X:          34.45,
 				Y:          89.12,
 				Time:       timestamppb.Now(),

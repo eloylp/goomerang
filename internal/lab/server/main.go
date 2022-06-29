@@ -14,7 +14,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/sirupsen/logrus"
-	"go.eloylp.dev/goomerang/lab/model"
+	"go.eloylp.dev/goomerang/example/protos"
 	"go.eloylp.dev/goomerang/message"
 	"go.eloylp.dev/goomerang/metrics"
 	"go.eloylp.dev/goomerang/server"
@@ -49,9 +49,9 @@ func main() {
 			logrus.WithError(err).Error("internal server error detected")
 		}),
 	)
-	ms.RegisterHandler(&model.PointV1{}, message.HandlerFunc(func(s message.Sender, msg *message.Message) {
+	ms.RegisterHandler(&protos.PointV1{}, message.HandlerFunc(func(s message.Sender, msg *message.Message) {
 		time.Sleep(20 * time.Millisecond)
-		reply := message.New().SetPayload(&model.PointReplyV1{Status: "OK"})
+		reply := message.New().SetPayload(&protos.PointReplyV1{Status: "OK"})
 		_, err := s.Send(reply)
 		if err != nil {
 			log.Fatal(err)
@@ -93,7 +93,7 @@ func interactions(ctx context.Context, s *server.MeteredServer) {
 		case <-ctx.Done():
 			return
 		default:
-			_, err := s.BroadCast(context.Background(), message.New().SetPayload(&model.BroadcastV1{
+			_, err := s.BroadCast(context.Background(), message.New().SetPayload(&protos.BroadcastV1{
 				Message: "Broadcasting !",
 				Data:    bytes,
 			}))

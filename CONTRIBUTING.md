@@ -26,7 +26,7 @@ submit pull requests to this one.
 
 ### The Lab
 
-Goomerang provides a laboratory for simulating a production environment. Check it [here](lab/README.md).
+Goomerang provides a laboratory for simulating a production environment. Check it [here](internal/lab/README.md).
 
 ### Git and releases
 

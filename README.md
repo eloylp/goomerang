@@ -588,7 +588,7 @@ The same, symmetric interface can be found in the server public API.
 ![img.png](docs/grafana-dashboard.png)
 
 This library provides an
-out-of-the-box [Grafana](https://grafana.com/) [dashboard](lab/grafana/provisioning/dashboards/goomerang.json) which should cover the
+out-of-the-box [Grafana](https://grafana.com/) [dashboard](internal/lab/grafana/provisioning/dashboards/goomerang.json) which should cover the
 basic usage. Users of the library are encouraged to adapt it at discretion.
 
 # Contributing
