@@ -22,9 +22,3 @@ logs:
 update:
 	cd server && go get -u go.eloylp.dev/goomerang && cd ..
 	cd client && go get -u go.eloylp.dev/goomerang && cd ..
-
-.PHONY: messages
-messages:
-	protoc --go_out=model/ ./model/*.proto
-	mv model/go.eloylp.dev/goomerang/lab/model/*.pb.go ./model
-	rm -rf model/go.eloylp.dev
