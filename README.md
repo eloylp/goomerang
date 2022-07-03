@@ -2,8 +2,14 @@
 
 A [protocol buffers](https://developers.google.com/protocol-buffers/) over [websocket](https://datatracker.ietf.org/doc/html/rfc6455)
 communications library.
+<br>
+<br>
 <p align="center">
-<img src="" alt="goomerang" width="300"/>
+<img src="https://raw.githubusercontent.com/lidiackr/gophers/main/eloylp/goomerang/head.png" alt="goomerang" width="550"/>
+</p>
+
+<p align="right" style="color:silver">
+Gopher art by <a href="https://github.com/lidiackr">@lidiackr</a>
 </p>
 
 ## Status
@@ -588,7 +594,8 @@ The same, symmetric interface can be found in the server public API.
 ![img.png](docs/grafana-dashboard.png)
 
 This library provides an
-out-of-the-box [Grafana](https://grafana.com/) [dashboard](internal/lab/grafana/provisioning/dashboards/goomerang.json) which should cover the
+out-of-the-box [Grafana](https://grafana.com/) [dashboard](internal/lab/grafana/provisioning/dashboards/goomerang.json) which should cover
+the
 basic usage. Users of the library are encouraged to adapt it at discretion.
 
 # Contributing
