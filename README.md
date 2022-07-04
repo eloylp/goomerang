@@ -19,7 +19,7 @@ breaking the public API.
 
 ## Motivation
 
-Goomerang is an effort to provide an easy, application friendly way of communicating clients and servers. Because some of us only need to
+Goomerang is an effort to provide an easy, application friendly way for communicating clients and servers. Because some of us only need to
 send some protos over a fast pipe.
 
 ![idea](docs/idea.drawio.svg)
