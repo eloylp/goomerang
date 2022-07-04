@@ -56,7 +56,7 @@ func TestFromFrame(t *testing.T) {
 		Headers:     header,
 	}
 
-	msgRegistry := messaging.Registry{}
+	msgRegistry := message.Registry{}
 	msgRegistry.Register(msgFQDN, inputMsg)
 
 	msg, err := messaging.FromFrame(frame, msgRegistry)

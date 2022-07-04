@@ -1,17 +1,17 @@
-package messaging_test
+package message_test
 
 import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
 
-	"go.eloylp.dev/goomerang/internal/messaging"
 	"go.eloylp.dev/goomerang/internal/messaging/test"
+	"go.eloylp.dev/goomerang/message"
 )
 
 func TestMessageRegistry(t *testing.T) {
 	msg := &test.MessageV1{}
-	r := messaging.Registry{}
+	r := message.Registry{}
 	r.Register("m1", msg)
 	res, err := r.Message("m1")
 	require.NoError(t, err)
@@ -20,7 +20,7 @@ func TestMessageRegistry(t *testing.T) {
 }
 
 func TestMessageRegistryNotFound(t *testing.T) {
-	r := messaging.Registry{}
+	r := message.Registry{}
 	_, err := r.Message("m1")
 	require.EqualError(t, err, "cannot found message with key: m1")
 }

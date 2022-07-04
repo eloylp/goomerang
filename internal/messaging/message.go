@@ -15,7 +15,7 @@ func FQDN(msg proto.Message) string {
 	return string(msg.ProtoReflect().Descriptor().FullName())
 }
 
-func FromFrame(frame *protocol.Frame, msgRegistry Registry) (*message.Message, error) {
+func FromFrame(frame *protocol.Frame, msgRegistry message.Registry) (*message.Message, error) {
 	meta := message.Metadata{
 		Creation:    frame.Creation.AsTime(),
 		UUID:        frame.Uuid,

@@ -30,7 +30,7 @@ type Server struct {
 	cancl           context.CancelFunc
 	wsUpgrader      *websocket.Upgrader
 	handlerChainer  *messaging.HandlerChainer
-	messageRegistry messaging.Registry
+	messageRegistry message.Registry
 	hooks           *hooks
 	cfg             *Cfg
 	workerPool      *conc.WorkerPool
@@ -70,7 +70,7 @@ func New(opts ...Option) (*Server, error) {
 			EnableCompression: cfg.EnableCompression,
 		},
 		handlerChainer:  messaging.NewHandlerChainer(),
-		messageRegistry: messaging.Registry{},
+		messageRegistry: message.Registry{},
 		hooks:           cfg.hooks,
 		cfg:             cfg,
 		workerPool:      wp,

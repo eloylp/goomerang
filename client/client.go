@@ -25,7 +25,7 @@ type Client struct {
 	cfg               *Cfg
 	ServerURL         url.URL
 	handlerChainer    *messaging.HandlerChainer
-	messageRegistry   messaging.Registry
+	messageRegistry   message.Registry
 	writeLock         *sync.Mutex
 	wg                *sync.WaitGroup
 	conn              *websocket.Conn
@@ -66,7 +66,7 @@ func New(opts ...Option) (*Client, error) {
 		writeLock:       &sync.Mutex{},
 		wg:              &sync.WaitGroup{},
 		handlerChainer:  messaging.NewHandlerChainer(),
-		messageRegistry: messaging.Registry{},
+		messageRegistry: message.Registry{},
 		requestRegistry: newRegistry(),
 		workerPool:      wp,
 		chCloseWait:     make(chan struct{}, 1),
