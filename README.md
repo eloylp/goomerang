@@ -138,13 +138,13 @@ package main
 import (
 	"go.eloylp.dev/goomerang/message"
 
-	"myapp/protos"
+	"go.eloylp.dev/goomerang/example/protos"
 )
 
 func main() {
 	msg := message.New().
 		SetHeader("status", "requested").
-		SetPayload(&protos.MyMessageV1{})
+		SetPayload(&protos.MessageV1{})
 }
 ```
 
@@ -170,7 +170,7 @@ package main
 import (
 	"go.eloylp.dev/goomerang/message"
 	"go.eloylp.dev/goomerang/server"
-	"myapp/protos"
+	"go.eloylp.dev/goomerang/example/protos"
 )
 
 func main() {
@@ -178,16 +178,16 @@ func main() {
 	// Create the server
 	s, _ := server.New(server.WithListenAddr("127.0.0.1:8080"))
 
-	// protos.MyMessageV1 represents a hypothetical message in your proto repo.
-	s.Handle(&protos.MyMessageV1{}, message.HandlerFunc(func(sender message.Sender, msg *message.Message) {
+	// protos.MessageV1 represents a hypothetical message in your proto repo.
+	s.Handle(&protos.MessageV1{}, message.HandlerFunc(func(sender message.Sender, msg *message.Message) {
 		// We need to cast the message, from the proto interface, to the concrete message type.
-		msgT := msg.Payload.(*protos.MyMessageV1)
+		msgT := msg.Payload.(*protos.MessageV1)
 
 		// Do whatever with your message,
 		// your handling logic goes here.
 
 		// Alternatively, reply with another message.
-		payload := &protos.MyReplyMsgV1{}
+		payload := &protos.ReplyMsgV1{}
 		reply := message.New().
 			SetPayload(payload).
 			SetHeader("status", "200")
@@ -212,12 +212,12 @@ import (
 	"go.eloylp.dev/goomerang/message"
 )
 
-type MyHandler struct {
+type Handler struct {
 	DB *sql.DB
 }
 
-func (m *MyHandler) Handle(sender message.Sender, msg *message.Message) {
-	// My handling logic goes there.
+func (m *Handler) Handle(sender message.Sender, msg *message.Message) {
+	//  handling logic goes there.
 }
 ```
 
@@ -265,9 +265,9 @@ import (
 
 func main() {
 	s, _ := server.New(server.WithListenAddr("127.0.0.1:8080"))
-	s.Handle(MyHandler())
-	s.Middleware(MyMiddleware1())
-	s.Middleware(MyMiddleware2())
+	s.Handle(Handler())
+	s.Middleware(Middleware1())
+	s.Middleware(Middleware2())
 }
 ```
 
@@ -275,8 +275,8 @@ The order of execution would be:
 
 ```mermaid
 graph LR;
-MyMiddleware1-->MyMiddleware2;
-MyMiddleware2-->MyHandler;
+Middleware1-->Middleware2;
+Middleware2-->Handler;
 ```
 
 This library facilitates some middleware implementations [here](./middleware) that can be used directly. Let's see the example of the panic
@@ -319,14 +319,14 @@ import (
 
 	"go.eloylp.dev/goomerang/message"
 	"go.eloylp.dev/goomerang/server"
-	"myapp/protos"
+	"go.eloylp.dev/goomerang/example/protos"
 )
 
 func main() {
 	// Create the server
 	s, _ := server.New(server.WithListenAddr("127.0.0.1:8080"))
 
-	msg := message.New().SetPayload(&protos.MyMessageV1{})
+	msg := message.New().SetPayload(&protos.MessageV1{})
 
 	_, err := s.BroadCast(context.TODO(), msg)
 	if err != nil {
@@ -336,43 +336,7 @@ func main() {
 ```
 
 From the client side, it is not possible to send broadcasts to all the other connected clients. However, nothing will stop the
-developer to create a handler for enabling this operation in the server:
-
-```go
-package main
-
-import (
-	"context"
-	"log"
-
-	"go.eloylp.dev/goomerang/message"
-	"go.eloylp.dev/goomerang/server"
-	"myapp/protos"
-)
-
-func main() {
-	// Create the server
-	s, _ := server.New(server.WithListenAddr("127.0.0.1:8080"))
-
-	s.Handle(&protos.MyBroadCastV1{}, message.HandlerFunc(func(sender message.Sender, msg *message.Message) {
-
-		broadcastMessage := msg.Payload.(*protos.MyBroadCastV1)
-
-		// Calls to the server broadcast method, available via scope.
-		s.Broadcast(context.TODO(), broadcastMessage.Message)
-
-	}))
-
-	msg := message.New().SetPayload(&protos.MyBroadCastV1{
-		Message: &protos.MyMessageV1{},
-	})
-
-	_, err := s.BroadCast(context.TODO(), msg)
-	if err != nil {
-		log.Fatal(err)
-	}
-}
-```
+developer to create a handler for enabling this operation in the server. An example can be found [here](client_side_broadcast_test.go).
 
 ## Synchronous sends
 
@@ -396,7 +360,7 @@ import (
 
 	"go.eloylp.dev/goomerang/client"
 	"go.eloylp.dev/goomerang/message"
-	"myapp/protos"
+	"go.eloylp.dev/goomerang/example/protos"
 )
 
 func main() {
@@ -405,7 +369,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	msg := message.New().SetPayload(&protos.MyMessageV1{})
+	msg := message.New().SetPayload(&protos.MessageV1{})
 	// Will block till reply from the server is received or
 	// the context is cancelled.
 	_, respProto, err := c.SendSync(context.TODO(), msg)
@@ -414,11 +378,11 @@ func main() {
 	}
 
 	if respProto.GetHeader("status") != "OK" {
-		resp := respProto.Payload.(*protos.MyBadReplyV1)
+		resp := respProto.Payload.(*protos.BadReplyV1)
 		// Do something with the bad reply
 		return
 	}
-	resp := respProto.Payload.(*protos.MySuccessReplyV1)
+	resp := respProto.Payload.(*protos.SuccessReplyV1)
 	// Do something with the success reply
 }
 ```
