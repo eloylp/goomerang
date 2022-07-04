@@ -9,19 +9,19 @@ import (
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
+	"go.eloylp.dev/goomerang/example/protos"
 	"go.eloylp.dev/goomerang/internal/messaging"
 	"go.eloylp.dev/goomerang/internal/messaging/protocol"
-	"go.eloylp.dev/goomerang/internal/messaging/test"
 	"go.eloylp.dev/goomerang/message"
 )
 
 func TestFQDN(t *testing.T) {
-	m := &test.MessageV1{}
-	assert.Equal(t, "goomerang.test.MessageV1", messaging.FQDN(m))
+	m := &protos.MessageV1{}
+	assert.Equal(t, "goomerang.example.MessageV1", messaging.FQDN(m))
 }
 
 func TestPackTimestamp(t *testing.T) {
-	payload := &test.MessageV1{}
+	payload := &protos.MessageV1{}
 	msg := &message.Message{
 		Payload: payload,
 	}
@@ -36,7 +36,7 @@ func TestPackTimestamp(t *testing.T) {
 }
 
 func TestFromFrame(t *testing.T) {
-	inputMsg := &test.MessageV1{Message: "This is a test message."}
+	inputMsg := &protos.MessageV1{Message: "This is a test message."}
 	msgFQDN := string(inputMsg.ProtoReflect().Descriptor().FullName())
 	inputMsgData, err := proto.Marshal(inputMsg)
 	require.NoError(t, err)
@@ -69,5 +69,5 @@ func TestFromFrame(t *testing.T) {
 	assert.Equal(t, true, msg.Metadata.IsSync)
 	assert.Equal(t, "my-value", msg.Header.Get("my-key"))
 
-	assert.Equal(t, inputMsg.Message, msg.Payload.(*test.MessageV1).Message)
+	assert.Equal(t, inputMsg.Message, msg.Payload.(*protos.MessageV1).Message)
 }

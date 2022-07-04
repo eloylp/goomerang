@@ -187,7 +187,7 @@ func main() {
 		// your handling logic goes here.
 
 		// Alternatively, reply with another message.
-		payload := &protos.ReplyMsgV1{}
+		payload := &protos.ReplyV1{}
 		reply := message.New().
 			SetPayload(payload).
 			SetHeader("status", "200")

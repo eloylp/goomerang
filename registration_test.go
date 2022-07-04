@@ -7,7 +7,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"go.eloylp.dev/goomerang/client"
-	"go.eloylp.dev/goomerang/internal/messaging/test"
+	"go.eloylp.dev/goomerang/example/protos"
 	"go.eloylp.dev/goomerang/message"
 	"go.eloylp.dev/goomerang/server"
 )
@@ -84,7 +84,7 @@ func TestHandlerRegistrationMoment(t *testing.T) {
 }
 
 func registerClientDumbHandler(c *client.Client) {
-	c.Handle(&test.MessageV1{}, message.HandlerFunc(func(s message.Sender, w *message.Message) {}))
+	c.Handle(&protos.MessageV1{}, message.HandlerFunc(func(s message.Sender, w *message.Message) {}))
 }
 
 func registerClientDumbMiddleware(c *client.Client) {
@@ -94,7 +94,7 @@ func registerClientDumbMiddleware(c *client.Client) {
 }
 
 func registerServerDumbHandler(s *server.Server) {
-	s.Handle(&test.MessageV1{}, message.HandlerFunc(func(s message.Sender, w *message.Message) {}))
+	s.Handle(&protos.MessageV1{}, message.HandlerFunc(func(s message.Sender, w *message.Message) {}))
 }
 
 func registerServerDumbMiddleware(s *server.Server) {

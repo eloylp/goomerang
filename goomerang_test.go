@@ -9,8 +9,8 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"go.eloylp.dev/goomerang/client"
+	"go.eloylp.dev/goomerang/example/protos"
 	"go.eloylp.dev/goomerang/internal/messaging"
-	testMessages "go.eloylp.dev/goomerang/internal/messaging/test"
 	"go.eloylp.dev/goomerang/internal/test"
 	"go.eloylp.dev/goomerang/message"
 	"go.eloylp.dev/goomerang/server"
@@ -22,7 +22,7 @@ func TestRoundTrip(t *testing.T) {
 	defer s.Shutdown(defaultCtx)
 
 	s.Handle(defaultMsg.Payload, message.HandlerFunc(func(s message.Sender, msg *message.Message) {
-		_ = msg.Payload.(*testMessages.MessageV1)
+		_ = msg.Payload.(*protos.MessageV1)
 		if _, err := s.Send(defaultMsg); err != nil {
 			arbiter.ErrorHappened(err)
 		}
@@ -33,7 +33,7 @@ func TestRoundTrip(t *testing.T) {
 	defer c.Close(defaultCtx)
 
 	c.Handle(defaultMsg.Payload, message.HandlerFunc(func(c message.Sender, msg *message.Message) {
-		_ = msg.Payload.(*testMessages.MessageV1)
+		_ = msg.Payload.(*protos.MessageV1)
 		arbiter.ItsAFactThat("CLIENT_RECEIVED_REPLY")
 	}))
 	connect()
@@ -58,7 +58,7 @@ func TestSecuredRoundTrip(t *testing.T) {
 	msg := defaultMsg.Payload
 
 	s.Handle(msg, message.HandlerFunc(func(s message.Sender, msg *message.Message) {
-		_ = msg.Payload.(*testMessages.MessageV1)
+		_ = msg.Payload.(*protos.MessageV1)
 		if _, err := s.Send(defaultMsg); err != nil {
 			arbiter.ErrorHappened(err)
 		}
@@ -75,7 +75,7 @@ func TestSecuredRoundTrip(t *testing.T) {
 	defer c.Close(defaultCtx)
 
 	c.Handle(msg, message.HandlerFunc(func(c message.Sender, msg *message.Message) {
-		_ = msg.Payload.(*testMessages.MessageV1)
+		_ = msg.Payload.(*protos.MessageV1)
 		arbiter.ItsAFactThat("CLIENT_RECEIVED_REPLY")
 	}))
 	connect()
@@ -157,7 +157,7 @@ func TestHeadersAreSent(t *testing.T) {
 	}))
 	connect()
 	msg := message.New().
-		SetPayload(&testMessages.MessageV1{Message: "ping"}).
+		SetPayload(&protos.MessageV1{Message: "ping"}).
 		SetHeader("h1", "v1")
 
 	_, err := c.Send(msg)

@@ -8,8 +8,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"go.eloylp.dev/goomerang/internal/messaging/test"
-	testMessages "go.eloylp.dev/goomerang/internal/messaging/test"
+	"go.eloylp.dev/goomerang/example/protos"
 	"go.eloylp.dev/goomerang/message"
 )
 
@@ -28,7 +27,7 @@ func TestMessageJSON(t *testing.T) {
     "creation": "1970-01-01T00:00:00.001Z",
     "isSync": true,
     "payloadSize": 10,
-    "kind": "goomerang.test.MessageV1"
+    "kind": "goomerang.example.MessageV1"
  },
   "payload": {
   "message": "Hi !"
@@ -48,14 +47,14 @@ func messageFixture() *message.Message {
 	}
 	msg.SetHeader("k1", "v1")
 	msg.SetHeader("k2", "v2")
-	msg.SetPayload(&test.MessageV1{Message: "Hi !"})
+	msg.SetPayload(&protos.MessageV1{Message: "Hi !"})
 	return msg
 }
 
 func TestMessageText(t *testing.T) {
 	msg := messageFixture()
-	possibleOutput1 := `metadata: creation=1970-01-01 00:00:00.001 +0000 UTC,uuid=09AF,kind=goomerang.test.MessageV1,payloadSize=10,isSync=true headers: k1=v1,k2=v2 - payload: message:"Hi !"`
-	possibleOutput2 := `metadata: creation=1970-01-01 00:00:00.001 +0000 UTC,uuid=09AF,kind=goomerang.test.MessageV1,payloadSize=10,isSync=true headers: k2=v2,k1=v1 - payload: message:"Hi !"`
+	possibleOutput1 := `metadata: creation=1970-01-01 00:00:00.001 +0000 UTC,uuid=09AF,kind=goomerang.example.MessageV1,payloadSize=10,isSync=true headers: k1=v1,k2=v2 - payload: message:"Hi !"`
+	possibleOutput2 := `metadata: creation=1970-01-01 00:00:00.001 +0000 UTC,uuid=09AF,kind=goomerang.example.MessageV1,payloadSize=10,isSync=true headers: k2=v2,k1=v1 - payload: message:"Hi !"`
 	textMsg := msg.String()
 	if textMsg == possibleOutput1 {
 		return
@@ -67,7 +66,7 @@ func TestMessageText(t *testing.T) {
 }
 
 func TestMessage(t *testing.T) {
-	payload := &testMessages.MessageV1{
+	payload := &protos.MessageV1{
 		Message: "Hi !",
 	}
 	msg := message.New().

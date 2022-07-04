@@ -6,8 +6,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"go.eloylp.dev/goomerang/example/protos"
 	"go.eloylp.dev/goomerang/internal/messaging"
-	testMessages "go.eloylp.dev/goomerang/internal/messaging/test"
 	"go.eloylp.dev/goomerang/internal/test"
 	"go.eloylp.dev/goomerang/message"
 )
@@ -19,7 +19,7 @@ func TestMiddlewareRegistry(t *testing.T) {
 	handler := message.HandlerFunc(func(sender message.Sender, msg *message.Message) {
 		arbiter.ItsAFactThat("HANDLER_EXECUTED")
 		resp := &message.Message{
-			Payload: &testMessages.MessageV1{},
+			Payload: &protos.MessageV1{},
 		}
 		sender.Send(resp)
 	})

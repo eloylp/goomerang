@@ -7,7 +7,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"go.eloylp.dev/goomerang/client"
-	testMessages "go.eloylp.dev/goomerang/internal/messaging/test"
+	"go.eloylp.dev/goomerang/example/protos"
 	"go.eloylp.dev/goomerang/internal/test"
 	"go.eloylp.dev/goomerang/message"
 	"go.eloylp.dev/goomerang/server"
@@ -65,13 +65,13 @@ func TestServerSupportMultipleClients(t *testing.T) {
 		arbiter.ErrorHappened(err)
 	}))
 	s.Handle(defaultMsg.Payload, message.HandlerFunc(func(ops message.Sender, msg *message.Message) {
-		pingMsg, ok := msg.Payload.(*testMessages.MessageV1)
+		pingMsg, ok := msg.Payload.(*protos.MessageV1)
 		if !ok {
 			arbiter.ErrorHappened(errors.New("cannot type assert message"))
 			return
 		}
 		arbiter.ItsAFactThat("SERVER_RECEIVED_FROM_CLIENT_" + pingMsg.Message)
-		payload := &testMessages.MessageV1{Message: pingMsg.Message}
+		payload := &protos.MessageV1{Message: pingMsg.Message}
 		_, err := ops.Send(message.New().SetPayload(payload))
 		if err != nil {
 			arbiter.ErrorHappened(err)
@@ -83,7 +83,7 @@ func TestServerSupportMultipleClients(t *testing.T) {
 
 	c1, connect1 := PrepareClient(t, client.WithServerAddr(s.Addr()))
 	c1.Handle(defaultMsg.Payload, message.HandlerFunc(func(ops message.Sender, msg *message.Message) {
-		pongMsg, ok := msg.Payload.(*testMessages.MessageV1)
+		pongMsg, ok := msg.Payload.(*protos.MessageV1)
 		if !ok {
 			arbiter.ErrorHappened(errors.New("cannot type assert message"))
 			return
@@ -94,7 +94,7 @@ func TestServerSupportMultipleClients(t *testing.T) {
 	defer c1.Close(defaultCtx)
 	c2, connect2 := PrepareClient(t, client.WithServerAddr(s.Addr()))
 	c2.Handle(defaultMsg.Payload, message.HandlerFunc(func(ops message.Sender, msg *message.Message) {
-		pongMsg, ok := msg.Payload.(*testMessages.MessageV1)
+		pongMsg, ok := msg.Payload.(*protos.MessageV1)
 		if !ok {
 			arbiter.ErrorHappened(errors.New("cannot type assert message"))
 			return
@@ -104,9 +104,9 @@ func TestServerSupportMultipleClients(t *testing.T) {
 	connect2()
 	defer c2.Close(defaultCtx)
 
-	_, err := c1.Send(message.New().SetPayload(&testMessages.MessageV1{Message: "1"}))
+	_, err := c1.Send(message.New().SetPayload(&protos.MessageV1{Message: "1"}))
 	require.NoError(t, err)
-	_, err = c2.Send(message.New().SetPayload(&testMessages.MessageV1{Message: "2"}))
+	_, err = c2.Send(message.New().SetPayload(&protos.MessageV1{Message: "2"}))
 	require.NoError(t, err)
 
 	arbiter.RequireNoErrors()

@@ -13,7 +13,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	testMessages "go.eloylp.dev/goomerang/internal/messaging/test"
+	"go.eloylp.dev/goomerang/example/protos"
 	"go.eloylp.dev/goomerang/message"
 	"go.eloylp.dev/goomerang/metrics"
 	"go.eloylp.dev/goomerang/middleware"
@@ -57,7 +57,7 @@ func TestMetrics(t *testing.T) {
 			require.NoError(t, err)
 
 			h := message.HandlerFunc(func(s message.Sender, msg *message.Message) {
-				msg = message.New().SetPayload(&testMessages.MessageV1{})
+				msg = message.New().SetPayload(&protos.MessageV1{})
 				_, _ = s.Send(msg)
 			})
 
@@ -68,7 +68,7 @@ func TestMetrics(t *testing.T) {
 					Creation:    time.Now().Add(-1 * time.Second),
 					Kind:        "goomerang.test.MessageV1",
 				},
-				Payload: &testMessages.MessageV1{},
+				Payload: &protos.MessageV1{},
 			}
 
 			m(h).Handle(sender, msg)
@@ -117,7 +117,7 @@ func TestMetricsIfNotSendsMessageBack(t *testing.T) {
 	require.NoError(t, err)
 
 	h := message.HandlerFunc(func(s message.Sender, msg *message.Message) {
-		msg = message.New().SetPayload(&testMessages.MessageV1{})
+		msg = message.New().SetPayload(&protos.MessageV1{})
 	})
 	msg := &message.Message{
 		Metadata: message.Metadata{
@@ -125,7 +125,7 @@ func TestMetricsIfNotSendsMessageBack(t *testing.T) {
 			Creation:    time.Now().Add(-1 * time.Second),
 			Kind:        "goomerang.test.MessageV1",
 		},
-		Payload: &testMessages.MessageV1{},
+		Payload: &protos.MessageV1{},
 	}
 	assert.NotPanics(t, func() {
 		m(h).Handle(&fakeSender{}, msg)

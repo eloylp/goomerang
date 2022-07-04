@@ -2,7 +2,7 @@ syntax = "proto3";
 
 // The protocol buffer FQDN. Used by the goomerang
 // internals to distinguish among messages.
-package examples.map;
+package goomerang.example;
 // The protocol buffer package mapping to the Go one
 option go_package = "go.eloylp.dev/goomerang/examples/protos";
 
@@ -14,7 +14,7 @@ message MessageV1 {
 
 // ReplyMsgV1 represent the first version of
 // a reply message.
-message ReplyMsgV1 {
+message ReplyV1 {
   string message = 1;
 }
 
