@@ -9,6 +9,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"go.eloylp.dev/goomerang/client"
+	"go.eloylp.dev/goomerang/internal/messaging"
 	testMessages "go.eloylp.dev/goomerang/internal/messaging/test"
 	"go.eloylp.dev/goomerang/internal/test"
 	"go.eloylp.dev/goomerang/message"
@@ -164,4 +165,12 @@ func TestHeadersAreSent(t *testing.T) {
 	arbiter.RequireNoErrors()
 	arbiter.RequireHappened("SERVER_RECEIVED_MSG_HEADERS")
 	arbiter.RequireHappened("CLIENT_RECEIVED_MSG_HEADERS")
+}
+
+func TestUserCanAccessServerRegistry(t *testing.T) {
+	s, _ := PrepareServer(t)
+	s.Handle(defaultMsg.Payload, nilHandler)
+	msg, err := s.Registry().Message(defaultMsg.Metadata.Kind)
+	require.NoError(t, err)
+	assert.Equal(t, messaging.FQDN(defaultMsg.Payload), messaging.FQDN(msg))
 }

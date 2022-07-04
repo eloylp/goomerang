@@ -294,3 +294,7 @@ func (s *Server) setStatus(status uint32) {
 func (s *Server) status() uint32 {
 	return atomic.LoadUint32(&s.currentStatus)
 }
+
+func (s *Server) Registry() message.Registry {
+	return s.messageRegistry
+}
