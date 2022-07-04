@@ -1,0 +1,32 @@
+syntax = "proto3";
+
+// The protocol buffer FQDN. Used by the goomerang
+// internals to distinguish among messages.
+package examples.map;
+// The protocol buffer package mapping to the Go one
+option go_package = "go.eloylp.dev/goomerang/examples/protos";
+
+// MessageV1 represent the first version
+// of a message.
+message MessageV1 {
+  string message = 1;
+}
+
+// ReplyMsgV1 represent the first version of
+// a reply message.
+message ReplyMsgV1 {
+  string message = 1;
+}
+
+// BadReplyV1 represent the first version of a
+// bad reply by the server.
+message BadReplyV1 {
+  string message = 1;
+}
+
+// BroadCastV1 represent a broadcast message
+// the server will send to all clients.
+message BroadCastV1 {
+  bytes broadcasted_message = 1;
+  string kind = 2;
+}
