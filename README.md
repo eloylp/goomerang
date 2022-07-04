@@ -66,6 +66,8 @@ go get go.eloylp.dev/goomerang
 
 ## Basic usage
 
+If you are unfamiliar with protocol buffers, all the examples on this readme plus a little guide can be found [here](example/protos/README.md).
+
 Let's create a basic server. We just need to import the server package from the library. The server has many options
 available, we encourage the user to review them [here](server/opts.go).
 
