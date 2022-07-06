@@ -11,9 +11,10 @@ then it's converted for the relevant target languages:
 
 ```mermaid
 graph LR;
-ProtoCompiler-->IDL;
+IDL-->ProtoCompiler;
 ProtoCompiler-->Go;
-ProtoCompiler-->OtherLanguage;
+ProtoCompiler-->Rust;
+ProtoCompiler-->...;
 ```
 
 The first thing the user needs to do is to download and install
