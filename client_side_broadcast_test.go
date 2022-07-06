@@ -1,3 +1,5 @@
+//go:build integration
+
 package goomerang_test
 
 import (
@@ -14,6 +16,8 @@ import (
 )
 
 func TestUserCanConfigureBroadcastHandler(t *testing.T) {
+	t.Parallel()
+
 	arbiter := test.NewArbiter(t)
 	s, run := PrepareServer(t)
 	// The server should have the broadcast message previously registered.

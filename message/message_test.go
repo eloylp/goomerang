@@ -1,3 +1,5 @@
+//go:build unit
+
 package message_test
 
 import (

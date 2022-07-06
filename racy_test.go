@@ -24,6 +24,7 @@ import (
 // test to check functionality. Only data races. It must
 // be executed in isolation.
 func TestNoRaces(t *testing.T) {
+	t.Parallel()
 
 	// Bring up 2 clients and one server.
 	s, run := PrepareServer(t)

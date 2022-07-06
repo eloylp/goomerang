@@ -1,10 +1,16 @@
 lint:
-	golangci-lint run --build-tags unit,integration,racy -v
+	golangci-lint run --build-tags racy -v
 lint-fix:
-	golangci-lint run --build-tags unit,integration,racy -v --fix
-test:
-	go test -v ./...
-
+	golangci-lint run --build-tags racy -v --fix
+test: test-unit test-integration test-racy test-long
+test-unit:
+	go test -v -count=1 -race -tags unit -shuffle on ./...
+test-integration:
+	go test -v -count=1 -race -tags integration -shuffle on ./...
+test-racy:
+	go test -v -count=1 -race -tags racy -shuffle on ./...
+test-long:
+	go test -v -count=1 -race -tags long -shuffle on ./...
 messages:
 	protoc --go_out=internal/messaging ./internal/messaging/*.proto
 	mkdir -p internal/message/protocol

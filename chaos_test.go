@@ -1,3 +1,5 @@
+//go:build integration
+
 package goomerang_test
 
 import (
@@ -10,6 +12,8 @@ import (
 )
 
 func TestClientReturnsKnownErrOnConnFailure(t *testing.T) {
+	t.Parallel()
+
 	arbiter := test.NewArbiter(t)
 
 	s, run := PrepareServer(t)

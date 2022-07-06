@@ -1,3 +1,5 @@
+//go:build integration
+
 package goomerang_test
 
 import (
@@ -14,6 +16,8 @@ import (
 )
 
 func TestShutdownProcedureServerSideInit(t *testing.T) {
+	t.Parallel()
+
 	serverArbiter := test.NewArbiter(t)
 	clientArbiter := test.NewArbiter(t)
 
@@ -56,6 +60,8 @@ func TestShutdownProcedureServerSideInit(t *testing.T) {
 }
 
 func TestServerSendsCloseToAllClients(t *testing.T) {
+	t.Parallel()
+
 	arbiter := test.NewArbiter(t)
 
 	errHook := func(err error) {
@@ -88,6 +94,8 @@ func TestServerSendsCloseToAllClients(t *testing.T) {
 }
 
 func TestServerCannotSendMessagesIfNotRunning(t *testing.T) {
+	t.Parallel()
+
 	s, run := PrepareServer(t)
 
 	_, err := s.BroadCast(defaultCtx, defaultMsg)
@@ -103,12 +111,16 @@ func TestServerCannotSendMessagesIfNotRunning(t *testing.T) {
 }
 
 func TestServerCannotShutdownIfNotRunning(t *testing.T) {
+	t.Parallel()
+
 	s, _ := PrepareServer(t)
 	err := s.Shutdown(defaultCtx)
 	assert.ErrorIs(t, err, server.ErrNotRunning, "should not shutdown if not running")
 }
 
 func TestServerCannotShutdownIfClosed(t *testing.T) {
+	t.Parallel()
+
 	s, run := PrepareServer(t)
 	run()
 	err := s.Shutdown(defaultCtx)
@@ -118,6 +130,8 @@ func TestServerCannotShutdownIfClosed(t *testing.T) {
 }
 
 func TestServerCannotRunIfAlreadyRunning(t *testing.T) {
+	t.Parallel()
+
 	s, run := PrepareServer(t)
 	run()
 	defer s.Shutdown(defaultCtx)
@@ -126,6 +140,8 @@ func TestServerCannotRunIfAlreadyRunning(t *testing.T) {
 }
 
 func TestServerCannotRunIfAlreadyClosed(t *testing.T) {
+	t.Parallel()
+
 	s, run := PrepareServer(t)
 	run()
 	require.NoError(t, s.Shutdown(defaultCtx))
@@ -134,6 +150,8 @@ func TestServerCannotRunIfAlreadyClosed(t *testing.T) {
 }
 
 func TestServerHandlerCannotSendIfClosed(t *testing.T) {
+	t.Parallel()
+
 	arbiter := test.NewArbiter(t)
 	s, run := PrepareServer(t)
 	s.Handle(defaultMsg.Payload, message.HandlerFunc(func(s message.Sender, msg *message.Message) {

@@ -1,3 +1,5 @@
+//go:build integration
+
 package goomerang_test
 
 import (
@@ -15,6 +17,8 @@ import (
 )
 
 func TestShutdownProcedureClientSideInit(t *testing.T) {
+	t.Parallel()
+
 	serverArbiter := test.NewArbiter(t)
 	clientArbiter := test.NewArbiter(t)
 
@@ -62,6 +66,8 @@ func TestShutdownProcedureClientSideInit(t *testing.T) {
 }
 
 func TestClientNormalClose(t *testing.T) {
+	t.Parallel()
+
 	s, run := PrepareServer(t)
 	defer s.Shutdown(defaultCtx)
 	run()
@@ -71,6 +77,8 @@ func TestClientNormalClose(t *testing.T) {
 }
 
 func TestClientShouldBeClosedWhenServerCloses(t *testing.T) {
+	t.Parallel()
+
 	s, run := PrepareServer(t)
 	run()
 	c, connect := PrepareClient(t, client.WithServerAddr(s.Addr()))
@@ -83,6 +91,8 @@ func TestClientShouldBeClosedWhenServerCloses(t *testing.T) {
 }
 
 func TestClientCanBeResumed(t *testing.T) {
+	t.Parallel()
+
 	s, run := PrepareServer(t)
 	defer s.Shutdown(defaultCtx)
 	run()
@@ -96,6 +106,8 @@ func TestClientCanBeResumed(t *testing.T) {
 }
 
 func TestClientCannotConnectForSecondTime(t *testing.T) {
+	t.Parallel()
+
 	s, run := PrepareServer(t)
 	defer s.Shutdown(defaultCtx)
 	run()
@@ -108,6 +120,8 @@ func TestClientCannotConnectForSecondTime(t *testing.T) {
 }
 
 func TestClientCannotSendMessagesIfNotRunning(t *testing.T) {
+	t.Parallel()
+
 	s, run := PrepareServer(t)
 	defer s.Shutdown(defaultCtx)
 	run()
@@ -134,6 +148,8 @@ func TestClientCannotSendMessagesIfNotRunning(t *testing.T) {
 }
 
 func TestClientCannotShutdownIfNotRunning(t *testing.T) {
+	t.Parallel()
+
 	s, run := PrepareServer(t)
 	run()
 	defer s.Shutdown(defaultCtx)
@@ -147,6 +163,8 @@ func TestClientCannotShutdownIfNotRunning(t *testing.T) {
 }
 
 func TestClientHandlerCannotSendIfClosed(t *testing.T) {
+	t.Parallel()
+
 	arbiter := test.NewArbiter(t)
 	s, run := PrepareServer(t)
 	run()

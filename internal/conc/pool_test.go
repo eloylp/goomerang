@@ -1,3 +1,5 @@
+//go:build unit
+
 package conc_test
 
 import (

@@ -1,3 +1,5 @@
+//go:build unit
+
 package middleware_test
 
 import (
@@ -19,7 +21,7 @@ import (
 	"go.eloylp.dev/goomerang/middleware"
 )
 
-func TestMetrics(t *testing.T) {
+func TestMetricsMiddleware(t *testing.T) {
 
 	registry := prometheus.NewRegistry()
 
