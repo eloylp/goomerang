@@ -37,7 +37,7 @@ func FromFrame(frame *protocol.Frame, msgRegistry message.Registry) (*message.Me
 	}, nil
 }
 
-func Pack(msg *message.Message, opts ...FrameOption) (int, []byte, error) {
+func Pack(msg *message.Message, opts ...FrameOption) (payloadSIze int, data []byte, err error) {
 	payload, err := proto.Marshal(msg.Payload)
 	if err != nil {
 		return 0, nil, err
