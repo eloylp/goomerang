@@ -42,9 +42,7 @@ func (a *Arbiter) Errors() []error {
 	a.l.Lock()
 	defer a.l.Unlock()
 	snapshot := make([]error, len(a.errors))
-	for i := 0; i < len(a.errors); i++ {
-		snapshot[i] = a.errors[i]
-	}
+	copy(snapshot, a.errors)
 	return a.errors
 }
 
