@@ -22,7 +22,6 @@ import (
 )
 
 func TestMetricsMiddleware(t *testing.T) {
-
 	registry := prometheus.NewRegistry()
 
 	server := metrics.NewServerMetrics(metrics.DefaultServerConfig())

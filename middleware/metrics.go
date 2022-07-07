@@ -11,7 +11,6 @@ import (
 )
 
 func PromHistograms(c PromConfig) (message.Middleware, error) {
-
 	if err := c.Validate(); err != nil {
 		return nil, fmt.Errorf("metrics middleware config: validation error: %w", err)
 	}

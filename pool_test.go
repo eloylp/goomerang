@@ -28,7 +28,6 @@ func WorkerPoolTest(maxConcurrency int, shouldBeActive bool) func(t *testing.T) 
 			}),
 			server.WithOnWorkerEnd(func() {
 				arbiter.ItsAFactThat("SERVER_POOL_WORKER_ENDED")
-
 			}))
 		s.Handle(defaultMsg.Payload, nilHandler)
 		run()
