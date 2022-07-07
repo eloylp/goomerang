@@ -57,8 +57,8 @@ func TestMetricsMiddleware(t *testing.T) {
 			m, err := middleware.PromHistograms(c.config)
 			require.NoError(t, err)
 
-			h := message.HandlerFunc(func(s message.Sender, msg *message.Message) {
-				msg = message.New().SetPayload(&protos.MessageV1{})
+			h := message.HandlerFunc(func(s message.Sender, _ *message.Message) {
+				msg := message.New().SetPayload(&protos.MessageV1{})
 				_, _ = s.Send(msg)
 			})
 
@@ -117,9 +117,6 @@ func TestMetricsIfNotSendsMessageBack(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	h := message.HandlerFunc(func(s message.Sender, msg *message.Message) {
-		msg = message.New().SetPayload(&protos.MessageV1{})
-	})
 	msg := &message.Message{
 		Metadata: message.Metadata{
 			PayloadSize: 10,
@@ -128,6 +125,7 @@ func TestMetricsIfNotSendsMessageBack(t *testing.T) {
 		},
 		Payload: &protos.MessageV1{},
 	}
+	h := message.HandlerFunc(func(s message.Sender, msg *message.Message) {})
 	assert.NotPanics(t, func() {
 		m(h).Handle(&fakeSender{}, msg)
 	})
