@@ -203,7 +203,7 @@ func (c *Client) Send(msg *message.Message) (payloadSize int, err error) {
 }
 
 // SendSync will send a message to the server and wait for a reply. If
-// the provided context is cancelled, this function will return immediately
+// the provided context is canceled, this function will return immediately
 // and the reply message will be lost.
 //
 // If successful, it will return the payload size in bytes. This payload size
