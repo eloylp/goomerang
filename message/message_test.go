@@ -36,7 +36,6 @@ func TestMessageJSON(t *testing.T) {
  }
 }
 `, string(data))
-
 }
 
 func messageFixture() *message.Message {
