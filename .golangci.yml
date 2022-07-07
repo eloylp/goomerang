@@ -1,3 +1,10 @@
+run:
+  go: 1.18.3
+  build-tags:
+    - unit
+    - integration
+    - racy
+    - long
 linters-settings:
   dupl:
     threshold: 100
@@ -7,9 +14,13 @@ linters-settings:
       #- fmt.Errorf # consider errors.Errorf in github.com/pkg/errors
       - fmt.Print.* # too much log noise
       - log.Print.*
+  gocognit:
+    min-complexity: 8
   funlen:
     lines: 120
     statements: 50
+  nestif:
+    min-complexity: 8
   goconst:
     min-len: 2
     min-occurrences: 2
@@ -26,6 +37,7 @@ linters-settings:
       - octalLiteral
       - whyNoLint
       - wrapperFunc
+      - hugeParam
   gocyclo:
     min-complexity: 15
   goimports:
@@ -52,7 +64,6 @@ linters:
     - deadcode
     - depguard
     - dogsled
-    - dupl
     - errcheck
     - forbidigo
     - funlen
@@ -63,7 +74,6 @@ linters:
     - gofmt
     - goimports
     - golint
-    - gomnd
     - goprintffuncname
     - gosec
     - gosimple
@@ -84,7 +94,6 @@ linters:
     - unused
     - varcheck
     - whitespace
-    - testpackage
     - nestif
   # don't enable:
   # - gochecknoglobals
@@ -102,9 +111,11 @@ issues:
         - gochecknoinits
         - gosec
         - bodyclose
+        - scopelint
         - errcheck
         - dupl
         - forbidigo
+        - lll
     - path: cmd
       linters:
         - gomnd
