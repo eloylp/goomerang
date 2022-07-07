@@ -109,7 +109,7 @@ type BroadcastResult struct {
 // BroadCast will try to send the provided message to all
 // connected clients.
 //
-// In case the provided context is cancelled, the operation
+// In case the provided context is canceled, the operation
 // could be partially completed. It's recommended to always
 // pass a context.WithTimeout().
 //
@@ -130,20 +130,28 @@ func (s *Server) BroadCast(ctx context.Context, msg *message.Message) (brResult 
 	ch := make(chan struct{})
 	go func() {
 		defer close(ch)
+
 		var data []byte
-		payloadSize, data, err := messaging.Pack(msg)
+		var payloadSize int
+		payloadSize, data, err = messaging.Pack(msg)
+
 		if err != nil {
 			return
 		}
-		errs := make([]error, 0, 100)
+
+		const maxErrors = 100
+		errs := make([]error, 0, maxErrors)
 		var errCount int
+
 		s.serverL.RLock()
 		defer s.serverL.RUnlock()
+
 		brResult = make([]BroadcastResult, 0, len(s.connRegistry))
+
 		for conn := range s.connRegistry {
 			cs := s.connRegistry[conn]
 			start := time.Now()
-			if err := cs.write(data); err != nil && errCount < 100 {
+			if err := cs.write(data); err != nil && errCount < maxErrors {
 				errs = append(errs, fmt.Errorf("broadCast: %v", err))
 				errCount++
 				continue
