@@ -49,11 +49,13 @@ type Metadata struct {
 
 func (m Metadata) String() string {
 	elems := make([]string, 0, 5)
-	elems = append(elems, fmt.Sprintf("creation=%v", m.Creation))
-	elems = append(elems, fmt.Sprintf("uuid=%s", m.UUID))
-	elems = append(elems, fmt.Sprintf("kind=%s", m.Kind))
-	elems = append(elems, fmt.Sprintf("payloadSize=%v", m.PayloadSize))
-	elems = append(elems, fmt.Sprintf("isSync=%v", m.IsSync))
+	elems = append(elems,
+		fmt.Sprintf("creation=%v", m.Creation),
+		fmt.Sprintf("uuid=%s", m.UUID),
+		fmt.Sprintf("kind=%s", m.Kind),
+		fmt.Sprintf("payloadSize=%v", m.PayloadSize),
+		fmt.Sprintf("isSync=%v", m.IsSync),
+	)
 	return strings.Join(elems, ",")
 }
 
