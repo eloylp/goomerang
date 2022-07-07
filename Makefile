@@ -1,6 +1,11 @@
+.DEFAULT_GOAL := all
+
+.PHONY: all
+all: lint test
+
 .PHONY: lint
 lint:
-	golangci-lint run --build-tags racy -v
+	golangci-lint run -v
 
 .PHONY: lint-fix
 lint-fix:
