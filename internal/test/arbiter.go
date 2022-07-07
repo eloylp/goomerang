@@ -137,8 +137,6 @@ func (a *Arbiter) RequireError(errMsg string) {
 		}
 		return false
 	}, time.Second, time.Millisecond, "expected error %q not happened in expected time.", errMsg)
-	a.l.RLock()
-	defer a.l.RUnlock()
 }
 
 func (a *Arbiter) RequireErrorIs(err error) {
