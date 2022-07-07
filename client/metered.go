@@ -39,7 +39,7 @@ func NewMetered(m *metrics.ClientMetrics, opts ...Option) (*MeteredClient, error
 			m.Errors.Inc()
 		}),
 	}
-	mergedOpts := append(monitorOpts, opts...)
+	mergedOpts := append(monitorOpts, opts...) //nolint: gocritic
 	c, err := New(mergedOpts...)
 	if err != nil {
 		return nil, err
