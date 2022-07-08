@@ -109,11 +109,9 @@ func (a *Arbiter) RequireHappenedTimes(event string, expectedCount int) *Arbiter
 }
 
 func (a *Arbiter) ErrorHappened(err error) {
-	if err != nil {
-		a.l.Lock()
-		defer a.l.Unlock()
-		a.errors = append(a.errors, err)
-	}
+	a.l.Lock()
+	defer a.l.Unlock()
+	a.errors = append(a.errors, err)
 }
 
 func (a *Arbiter) RequireNoErrors() {
