@@ -8,6 +8,11 @@ communications library.
 <img src="https://raw.githubusercontent.com/lidiackr/gophers/main/eloylp/goomerang/head.png" alt="goomerang" width="550"/>
 </p>
 
+<p align="center">
+<a href="https://github.com/eloylp/goomerang/actions/workflows/ci.yml"> <img src="https://github.com/eloylp/goomerang/actions/workflows/ci.yml/badge.svg">
+</a>
+</p>
+
 <p align="right" style="color:silver">
 Gopher art by <a href="https://github.com/lidiackr">@lidiackr</a>
 </p>
@@ -394,10 +399,10 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-    // The client needs to be aware of the reply messages 
-    // beforehand. 
-    c.RegisterMessage(&protos.SuccessReplyV1{})
-    c.RegisterMessage(&protos.BadReplyV1{})
+	// The client needs to be aware of the reply messages 
+	// beforehand. 
+	c.RegisterMessage(&protos.SuccessReplyV1{})
+	c.RegisterMessage(&protos.BadReplyV1{})
 
 	msg := message.New().SetPayload(&protos.MessageV1{})
 	// Will block till reply from the server is received or
