@@ -383,7 +383,9 @@ func (c *Client) heartbeat() {
 	for {
 		select {
 		case <-ticker.C:
-			c.hooks.ExecOnError(pingFn())
+			if err := pingFn(); err != nil {
+				c.hooks.ExecOnError(err)
+			}
 		case <-c.ctx.Done():
 			return
 		}
