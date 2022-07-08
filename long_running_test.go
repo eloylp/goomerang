@@ -18,6 +18,8 @@ import (
 )
 
 func TestNoErrorsTransferringMessages(t *testing.T) {
+	t.Parallel()
+
 	// Server
 	serverArbiter := test.NewArbiter(t)
 	s, run := PrepareServer(t, server.WithOnErrorHook(noErrorHook(serverArbiter)))
