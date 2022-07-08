@@ -3,18 +3,20 @@
 All contributions are welcome. Ideas, code, documentation, production experiences, bugfixes ... we only need to define some key
 ideas in order to make this more efficient.
 
-### Key ideas of this project
+### Key ideas
 
 * Good documentation.
 * The project strives for simplicity.
-* The library itself represents a spirit of composition, we are enablers for the users, not drivers.
+* The library itself represents a spirit of composition, it enables users, it doesn't try to drive them.
 * Use testing strategies wisely. Take care of testing code equal or better than production one.
 
-### I have an idea
+### Issues
 
-Creating a new issue it's generally a good way to share your idea and get feedback. We do not have templates for issues. We consider
-creating good issues and documentation part of the creative process, and we don't want to interfere on it. However, its encouraged to
+Creating a new issue it's generally a good way to share your ideas and get feedback. We do not have templates for issues. We consider
+creating good issues and documentation its part of the creative process, and we don't want to interfere on it. However, it's encouraged to
 provide as much context as possible. Feel free to talk about a specific use case, show the maintainers what we are trying to solve.
+
+Explore the available labels in order to proper categorize it and get the fastest feedback.
 
 If the contribution it's a bugfix, a little feature or documentation improvement that could be implemented in, lets say, a couple of days at
 maximum, one could go directly for a PR. It's fine.
@@ -35,7 +37,7 @@ this project will just use a master branch and feature branches.
 
 ### Conduct
 
-Whenever you are interacting, just ensure that your comment or reply passes
+Whenever you are interacting, just ensure that your interaction (issue, comment, reply ...) passes
 the T.H.I.N.K test, by asking the following questions. Is it ...
 
 T. Truthful?

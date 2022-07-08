@@ -15,7 +15,7 @@ Gopher art by <a href="https://github.com/lidiackr">@lidiackr</a>
 ## Status
 
 This project is still a proof of concept. It has none or very little production experience. Maintainers of the project reserve the right of
-breaking the public API.
+breaking the public API in new versions.
 
 ## Motivation
 
@@ -27,16 +27,26 @@ send some protos over a fast pipe.
 Possible status transitions for servers:
 
 ```mermaid
-graph LR;
-NEW-->RUNNING-->CLOSING-->CLOSED;
+stateDiagram-v2
+ direction LR
+ [*] --> NEW
+ NEW --> RUNNING
+ RUNNING --> CLOSING
+ CLOSING --> CLOSED  
+ CLOSED --> [*]
 ```
 
 Possible status transitions for clients:
 
 ```mermaid
-graph LR;
-NEW-->RUNNING-->CLOSING-->CLOSED;
-CLOSED-->RUNNING;
+stateDiagram-v2
+direction LR
+[*] --> NEW
+NEW --> RUNNING
+RUNNING --> CLOSING
+CLOSING --> CLOSED
+CLOSED --> RUNNING
+CLOSED --> [*]
 ```
 
 ## Main features
@@ -44,9 +54,8 @@ CLOSED-->RUNNING;
 * Simple, modular, embeddable. Use only the parts of interest. Have full control over the dependency.
 * Websockets as underlying transport (currently built on top of [gorilla/websocket](https://github.com/gorilla/websocket)).
 * [Protocol buffers](https://developers.google.com/protocol-buffers/) as first class citizen. Register [message handlers](#message-handlers)
-  at clients and
-  servers.
-* [Middleware support](#middlewares), based on the Go HTTP standard lib.
+  at clients and servers.
+* [Middleware support](#middlewares), inspired by the Go HTTP standard lib.
 * [Broadcast messages](#broadcasts) from the server to clients.
 * Send [synchronous messages](#synchronous-sends) from the client side, following a request/response pattern.
 * Support for concurrency at a message handler level.
@@ -56,7 +65,7 @@ CLOSED-->RUNNING;
   connections.
 * Customizable TLS configuration.
 * Custom errors are exposed, ability to build retry systems on top of the public API.
-* [Observability tools](#observability), that will help to instrument clients and servers.
+* [Observability tools](#observability), that will help instrumenting clients and servers.
 
 ## Installation
 
@@ -66,10 +75,11 @@ go get go.eloylp.dev/goomerang
 
 ## Basic usage
 
-If you are unfamiliar with protocol buffers, all the examples on this readme plus a little guide can be found [here](example/protos/README.md).
+If you are unfamiliar with protocol buffers, all the examples on this readme plus a little guide can be
+found [here](example/protos/README.md).
 
-Let's create a basic server. We just need to import the server package from the library. The server has many options
-available, we encourage the user to review them [here](server/opts.go).
+Let's create a basic server. We just need to import the server package from the library. The server has
+multiple [available options](server/opts.go), we encourage the user to review them.
 
 ```go
 package main
@@ -94,8 +104,8 @@ func main() {
 }
 ```
 
-The client side package its quite symmetric with the server one. The client has also many configurable options, see
-them [here](client/opts.go). Let's see a client example:
+The client side package its quite symmetric with the server one. The client has also multiple [available options](client/opts.go), Let's
+see an example:
 
 ```go
 package main
@@ -115,20 +125,20 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	if err := c.Connect(context.Background()); err != nil {
+	if err := c.Connect(context.TODO()); err != nil {
 		log.Fatal(err)
 	}
 	//...
 }
 ```
 
-That's it ! we just have connected a client and a server ! But not in a very
-useful way. Both, client and server have support for handlers. See the next sections for more information.
+That's it ! we just have connected a client and a server ! But not in a very useful way. Both, client and server have support for handlers.
+See the next sections for more information.
 
 ## Messages
 
-Goomerang facilitates the creation of custom protocols in messages. Messages can have 2 parts, `headers` and a `payload`. Headers are just
-a key/value map of type string/string. The payload allows holding any type which accomplishes
+Goomerang facilitates the creation of custom message protocols. Messages can have 2 parts, `headers` and a `payload`. Headers are just
+a `map[string]string`. The payload allows holding any type which accomplishes
 the [proto.Message](https://github.com/protocolbuffers/protobuf-go/blob/v1.28.0/proto/proto.go#L24) interface, so any protocol buffer
 message type.
 
@@ -143,20 +153,34 @@ import (
 
 func main() {
 	msg := message.New().
-		SetHeader("status", "requested").
-		SetPayload(&protos.MessageV1{})
+		SetHeader("Key", "Value").
+		SetPayload(&protos.MessageV1{
+			Message: "my message !",
+		})
 }
 ```
 
-It's encouraged to use the message builder, so all complexities and needed data will be fulfilled.
+It's **encouraged to use the message builder**, so all complexities and needed data will be fulfilled.
 
 The `message.Message` type it's normally used in message handlers. It can also be used
 in the public API of client and server instances for simple operations like `Send(msg)`. See more in the following documentation.
 
+### Messages registration
+
+Both parts, clients and servers, need to know all kind of messages they are going to receive beforehand. There are 2 ways of registering
+message types:
+
+* Using the [handler registration](#message-handlers) functions.
+* In clients, the convenient `client.RegisterMessage(msg)` can be used.
+
+**They are exclusive**. If a message is already registered in the moment of the handler registration, such message doesnt need to be
+registered
+by other methods.k
+
 ## A history of handlers and middlewares
 
 There's support for handlers and middlewares for both, client and server sides. This part of the project comes inspired by the
-Go [HTTP standard library](https://pkg.go.dev/net/http#HandlerFunc). The intention is making this part familiar and versatile.
+Go [HTTP standard library](https://pkg.go.dev/net/http#HandlerFunc). The intention is to make this part familiar and versatile.
 
 Handlers and middlewares **can only be registered before starting** the client or the server.
 
@@ -223,10 +247,10 @@ func (m *Handler) Handle(sender message.Sender, msg *message.Message) {
 
 ### Middlewares
 
-Middlewares are just message handlers that always get executed no matter the kind of message, providing the ability to execute the next
-handler in the chain. They are
-being executed just before the message handler, bringing the opportunity to add extra logic to the message processing like metrics, logging
-or panic handlers. Let's see how to register a middleware:
+Middlewares are just message handlers that always get executed no matter the kind of message, alternatively providing the ability to execute
+the next
+handler in the chain. They are executed just before the message handler, bringing the opportunity to add preprocessing or postprocessing
+logic to the message handling operation. i.e metrics, logging or panic handlers. Let's see how to register a middleware:
 
 ```go
 package main
@@ -279,7 +303,8 @@ Middleware1-->Middleware2;
 Middleware2-->Handler;
 ```
 
-This library facilitates some middleware implementations [here](./middleware) that can be used directly. Let's see the example of the panic
+This library facilitates some middleware [implementations](middleware) that could be used directly by library users. Let's see the example
+of the panic
 handler one:
 
 ```go
@@ -301,14 +326,13 @@ func main() {
 }
 ```
 
-As a rule of thumb, its recommended this middleware to be implemented as first in the chain (so it protects the rest of handlers), in
-order to not crash the entire process if
-a panic arises at some point in the handler chain.
+As a rule of thumb, its recommended to implement the panic middleware as first in the chain (so it protects the rest of handlers), in
+order to not crash the entire process if a panic arises at some point in the handler chain.
 
 ## Broadcasts
 
 From the server side perspective, it's possible to send a message to all connected clients. This can be useful for a number of cases, like
-push notifications. Here's and example on how to do so:
+push notifications. Here's and example on how to do it:
 
 ```go
 package main
@@ -326,7 +350,9 @@ func main() {
 	// Create the server
 	s, _ := server.New(server.WithListenAddr("127.0.0.1:8080"))
 
-	msg := message.New().SetPayload(&protos.MessageV1{})
+	msg := message.New().SetPayload(&protos.MessageV1{
+		Message: "a message for everyone !"
+	})
 
 	_, err := s.BroadCast(context.TODO(), msg)
 	if err != nil {
@@ -336,18 +362,18 @@ func main() {
 ```
 
 From the client side, it is not possible to send broadcasts to all the other connected clients. However, nothing will stop the
-developer to create a handler for enabling this operation in the server. An example can be found [here](client_side_broadcast_test.go).
+user of the library of creating a handler for enabling this operation in the server. An example can be
+found [here](client_side_broadcast_test.go).
 
 ## Synchronous sends
 
 The default send methods `c.Send()` `s.Broadcast()` from client and server respectively, **are completely asynchronous**. They work as a
 "fire and forget" send system. That means the user of the library should design a way to ensure the message was received and processed by
-the server before removing it from its internal state. Unless of course, the intrinsic value of the data expires very quick,
-and the client can afford its lost.
+the server before removing it from its internal state. Unless of course, the intrinsic value of the data expires very quick and the client
+can afford its lost.
 
 In response to this issue, clients on this library have a `c.SyncSend(ctx, msg)` method implemented. This allows clients sending messages
-and wait for the server
-reply.
+and wait for the server reply.
 
 Here is an example of its use:
 
@@ -368,6 +394,10 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+    // The client needs to be aware of the reply messages 
+    // beforehand. 
+    c.RegisterMessage(&protos.SuccessReplyV1{})
+    c.RegisterMessage(&protos.BadReplyV1{})
 
 	msg := message.New().SetPayload(&protos.MessageV1{})
 	// Will block till reply from the server is received or
@@ -388,8 +418,10 @@ func main() {
 ```
 
 This is just a high level request/response pattern built on the top of the "fire and forget"
-previously commented send system. It probably can help some clients, when the reply is
-crucial for completing the operation.
+previously commented send system. It probably can be useful some users, when the reply is
+crucial for completing the operation. Remember we are sharing the same pipe here, for all the messages.
+
+### Some extra notes
 
 Asynchronous methods just write to the TCP socket send buffer. They are only going to block the call if the other peer stops ACKing
 TCP packets, so the pre-negotiated TCP window size is exceeded. That way the sender knows when to stop sending messages to the other peer,
@@ -439,11 +471,12 @@ registered multiple times. The logic behind will just execute the hooks in order
 The current implementation supports a graceful shutdown
 as described
 in [RFC6455](https://datatracker.ietf.org/doc/html/rfc6455#section-1.4). One side of the connections initiates the shutdown procedure,
-signaling it's not going to send more messages and waiting for the same reply from the other peer. Once all processing logic (like handlers)
-end, the library just returns the control to the user. This implementation works in a best-effort way, many things can go wrong in the
+signaling it's not going to send more messages and waiting for the same reply from the other peer. Once all processing logic (like message
+handlers)
+end, the library just returns the control to the user. This implementation works in a best-effort way, as many things can go wrong in the
 middle of the process. Users of the library are encouraged to not rely on this shutdown procedure regarding data integrity.
 
-Let's see the shutdown process when a **client initiates** the shutdown procedure:
+Let's see the shutdown sequence when a **client initiates** the shutdown procedure:
 
 ```mermaid
 sequenceDiagram
@@ -551,7 +584,7 @@ Note in the above example, the `client.NewMetered(...)` accepts as second argume
 [basic example](#basic-usage).
 
 As commented in the [middleware section](#middlewares), the user also has access to all low level observability middlewares in
-the [middleware package](middleware). We encourage the user to take a look there in case further customization its needed.
+the [middleware package](middleware). Its encouraged for users to take a look there in case further customization its needed.
 
 The same, symmetric interface can be found in the server public API.
 
@@ -564,7 +597,7 @@ out-of-the-box [Grafana](https://grafana.com/) [dashboard](internal/lab/grafana/
 the
 basic usage. Users of the library are encouraged to adapt it at discretion.
 
-# Contributing
+## Contributing
 
 Contributions are welcome ! If you think something could be improved, request a new feature or just want to leave some feedback,
 please check our [contributing](CONTRIBUTING.md) guide. 
