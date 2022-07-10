@@ -32,8 +32,8 @@ Goomerang provides a laboratory for simulating a production environment. Check i
 
 ### Git and releases
 
-The project follows [semver](https://semver.org/) for versioning, and we keep a [CHANGELOG.md](CHANGELOG.md). To keep it simple, initially
-this project will just use a master branch and feature branches.
+The project follows [semver](https://semver.org/) for versioning, and we keep a [CHANGELOG.md](CHANGELOG.md). All contributions should
+be done against the `develop` branch, in which all changes will be buffered till a new release is published. 
 
 ### Conduct
 
