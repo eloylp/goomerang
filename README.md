@@ -9,10 +9,9 @@ communications library.
 </p>
 
 <p align="center">
-<a href="https://github.com/eloylp/goomerang/actions/workflows/ci.yml"> <img src="https://github.com/eloylp/goomerang/actions/workflows/ci.yml/badge.svg">
-</a>
-<a href="https://goreportcard.com/report/go.eloylp.dev/goomerang"> <img src="https://goreportcard.com/badge/go.eloylp.dev/goomerang">
-</a>
+<a href="https://github.com/eloylp/goomerang/actions/workflows/ci.yml"><img src="https://github.com/eloylp/goomerang/actions/workflows/ci.yml/badge.svg" alt="ci status"></a>
+<a href="https://goreportcard.com/report/go.eloylp.dev/goomerang"><img src="https://goreportcard.com/badge/go.eloylp.dev/goomerang" alt="code quality"></a>
+<a href="https://godoc.org/go.eloylp.dev/goomerang"><img src="https://godoc.org/go.eloylp.dev/goomerang?status.svg" alt="godoc"></a>
 </p>
 
 <p align="right" style="color:silver">
