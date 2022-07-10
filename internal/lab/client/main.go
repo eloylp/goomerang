@@ -58,11 +58,11 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	mc.RegisterHandler(&protos.PointReplyV1{}, message.HandlerFunc(func(s message.Sender, msg *message.Message) {
+	mc.Handle(&protos.PointReplyV1{}, message.HandlerFunc(func(s message.Sender, msg *message.Message) {
 		// It's ok, discard from buffer
 		time.Sleep(20 * time.Millisecond)
 	}))
-	mc.RegisterHandler(&protos.BroadcastV1{}, message.HandlerFunc(func(s message.Sender, msg *message.Message) {
+	mc.Handle(&protos.BroadcastV1{}, message.HandlerFunc(func(s message.Sender, msg *message.Message) {
 		// process server broadcast
 		time.Sleep(20 * time.Millisecond)
 	}))

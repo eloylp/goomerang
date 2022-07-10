@@ -49,7 +49,7 @@ func main() {
 			logrus.WithError(err).Error("internal server error detected")
 		}),
 	)
-	ms.RegisterHandler(&protos.PointV1{}, message.HandlerFunc(func(s message.Sender, msg *message.Message) {
+	ms.Handle(&protos.PointV1{}, message.HandlerFunc(func(s message.Sender, msg *message.Message) {
 		time.Sleep(20 * time.Millisecond)
 		reply := message.New().SetPayload(&protos.PointReplyV1{Status: "OK"})
 		_, err := s.Send(reply)
