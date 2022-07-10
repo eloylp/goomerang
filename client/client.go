@@ -23,7 +23,7 @@ import (
 // Client holds are the client subsystems and dependencies.
 type Client struct {
 	cfg               *Cfg
-	ServerURL         url.URL
+	serverURL         url.URL
 	handlerChainer    *messaging.HandlerChainer
 	messageRegistry   message.Registry
 	writeLock         *sync.Mutex
@@ -51,7 +51,7 @@ func New(opts ...Option) (*Client, error) {
 		return nil, fmt.Errorf("goomerang client: %w", err)
 	}
 	c := &Client{
-		ServerURL:         serverURL(cfg),
+		serverURL:         serverURL(cfg),
 		cfg:               cfg,
 		hooks:             cfg.hooks,
 		heartbeatInterval: cfg.HeartbeatInterval,
@@ -85,7 +85,7 @@ func (c *Client) Connect(ctx context.Context) error {
 	}
 	c.ctx, c.cancl = context.WithCancel(context.Background())
 	c.handlerChainer.PrepareChains()
-	conn, resp, err := c.dialer.DialContext(ctx, c.ServerURL.String(), nil)
+	conn, resp, err := c.dialer.DialContext(ctx, c.serverURL.String(), nil)
 	if err != nil {
 		return fmt.Errorf("connect: %v", err)
 	}
