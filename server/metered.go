@@ -48,11 +48,11 @@ func NewMetered(m *metrics.ServerMetrics, opts ...Option) (*MeteredServer, error
 	return &MeteredServer{s: s, metrics: m}, nil
 }
 
-func (s *MeteredServer) RegisterMiddleware(m message.Middleware) {
+func (s *MeteredServer) Middleware(m message.Middleware) {
 	s.s.Middleware(m)
 }
 
-func (s *MeteredServer) RegisterHandler(msg proto.Message, handler message.Handler) {
+func (s *MeteredServer) Handle(msg proto.Message, handler message.Handler) {
 	s.s.Handle(msg, handler)
 }
 

@@ -85,11 +85,11 @@ func (c *MeteredClient) Close(ctx context.Context) (err error) {
 	return
 }
 
-func (c *MeteredClient) RegisterMiddleware(m message.Middleware) {
+func (c *MeteredClient) Middleware(m message.Middleware) {
 	c.c.Middleware(m)
 }
 
-func (c *MeteredClient) RegisterHandler(msg proto.Message, h message.Handler) {
+func (c *MeteredClient) Handle(msg proto.Message, h message.Handler) {
 	c.c.Handle(msg, h)
 }
 
