@@ -6,6 +6,8 @@ import (
 	"go.eloylp.dev/goomerang/message"
 )
 
+// Sender is just a handy middleware for gathering
+// the message and the bytes sent after the operation.
 type Sender struct {
 	bytes  int
 	msg    *message.Message
@@ -31,6 +33,10 @@ func (s *Sender) Send(msg *message.Message) (int, error) {
 	return w, err
 }
 
+// MeteredSender is an instrumented sender. It's very handy
+// to know the sent message,size and time. It requires
+// the PromConfig parameter, which should be populated beforehand
+// with the needed histograms.
 type MeteredSender struct {
 	bytes      int
 	msg        *message.Message

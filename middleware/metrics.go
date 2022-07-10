@@ -10,6 +10,9 @@ import (
 	"go.eloylp.dev/goomerang/message"
 )
 
+// PromHistograms will return a middleware ready to register
+// Prometheus metrics. It accepts a PromConfig type parameter
+// for configuring the expected histograms.
 func PromHistograms(c PromConfig) (message.Middleware, error) {
 	if err := c.Validate(); err != nil {
 		return nil, fmt.Errorf("metrics middleware config: validation error: %w", err)
@@ -32,6 +35,8 @@ func PromHistograms(c PromConfig) (message.Middleware, error) {
 	}, nil
 }
 
+// PromConfig holds all needed histograms for registering
+// message time and sizes.
 type PromConfig struct {
 	MessageInflightTime   *prometheus.HistogramVec
 	MessageReceivedSize   *prometheus.HistogramVec
