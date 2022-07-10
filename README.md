@@ -11,6 +11,8 @@ communications library.
 <p align="center">
 <a href="https://github.com/eloylp/goomerang/actions/workflows/ci.yml"> <img src="https://github.com/eloylp/goomerang/actions/workflows/ci.yml/badge.svg">
 </a>
+<a href="https://goreportcard.com/report/go.eloylp.dev/goomerang"> <img src="https://goreportcard.com/badge/go.eloylp.dev/goomerang">
+</a>
 </p>
 
 <p align="right" style="color:silver">
