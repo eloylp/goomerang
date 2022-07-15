@@ -14,7 +14,7 @@ func mainHandler(s *Server) http.HandlerFunc {
 		s.wg.Add(1)
 		defer s.wg.Done()
 		if s.status() != ws.StatusRunning {
-			w.WriteHeader(http.StatusUnavailableForLegalReasons)
+			w.WriteHeader(http.StatusServiceUnavailable)
 			_, _ = w.Write([]byte("server: not running"))
 			return
 		}
