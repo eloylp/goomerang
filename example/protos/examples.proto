@@ -30,3 +30,10 @@ message BroadCastV1 {
   bytes broadcasted_message = 1;
   string kind = 2;
 }
+
+
+// MessageV1 represent the first version
+// of a message.
+message SubscriptionV1 {
+  string subscribe_to = 1;
+}
