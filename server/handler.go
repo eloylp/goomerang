@@ -30,7 +30,6 @@ func mainHandler(s *Server) http.HandlerFunc {
 				s.hooks.ExecOnError(err)
 			}
 		}()
-		sender := &stdSender{cs, s}
 		for {
 			select {
 			case <-s.ctx.Done():
@@ -60,8 +59,9 @@ func mainHandler(s *Server) http.HandlerFunc {
 					s.hooks.ExecOnError(fmt.Errorf("server: cannot process websocket frame kind %v", messageType))
 					continue
 				}
+
 				if s.cfg.MaxConcurrency <= 1 {
-					if err := s.processMessage(cs, data, sender); err != nil {
+					if err := s.processMessage(cs, data); err != nil {
 						s.hooks.ExecOnError(err)
 					}
 					continue
@@ -71,7 +71,7 @@ func mainHandler(s *Server) http.HandlerFunc {
 				go func() {
 					defer s.hooks.ExecOnWorkerEnd()
 					defer s.workerPool.Done()
-					if err := s.processMessage(cs, data, sender); err != nil {
+					if err := s.processMessage(cs, data); err != nil {
 						s.hooks.ExecOnError(err)
 					}
 				}()

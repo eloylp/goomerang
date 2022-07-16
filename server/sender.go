@@ -8,11 +8,11 @@ import (
 
 type stdSender struct {
 	connSlot connSlot
-	server   *Server
+	status   func() uint32
 }
 
 func (s *stdSender) Send(msg *message.Message) (int, error) {
-	if s.server.status() != ws.StatusRunning {
+	if s.status() != ws.StatusRunning {
 		return 0, ErrNotRunning
 	}
 	payloadSize, m, err := messaging.Pack(msg)
@@ -24,10 +24,14 @@ func (s *stdSender) Send(msg *message.Message) (int, error) {
 
 type SyncSender struct {
 	cs          connSlot
+	status      func() uint32
 	prevMsgUUID string
 }
 
 func (s *SyncSender) Send(msg *message.Message) (int, error) {
+	if s.status() != ws.StatusRunning {
+		return 0, ErrNotRunning
+	}
 	payloadSize, m, err := messaging.Pack(msg, messaging.FrameWithUUID(s.prevMsgUUID), messaging.FrameIsSync())
 	if err != nil {
 		return payloadSize, err

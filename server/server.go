@@ -272,7 +272,7 @@ func (s *Server) broadcastClose() {
 	wg.Wait()
 }
 
-func (s *Server) processMessage(cs connSlot, data []byte, sOpts message.Sender) (err error) {
+func (s *Server) processMessage(cs connSlot, data []byte) (err error) {
 	frame, err := messaging.UnPack(data)
 	if err != nil {
 		return err
@@ -287,10 +287,10 @@ func (s *Server) processMessage(cs connSlot, data []byte, sOpts message.Sender) 
 		return err
 	}
 	if msg.Metadata.IsSync {
-		handler.Handle(&SyncSender{cs, msg.Metadata.UUID}, msg)
+		handler.Handle(&SyncSender{cs, s.status, msg.Metadata.UUID}, msg)
 		return nil
 	}
-	handler.Handle(sOpts, msg)
+	handler.Handle(&stdSender{cs, s.status}, msg)
 	return nil
 }
 
