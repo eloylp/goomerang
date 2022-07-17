@@ -52,10 +52,10 @@ func (cs *connSlot) waitReceivedClose() error {
 	}
 }
 
-func addConnection(s *Server, c *websocket.Conn) connSlot {
+func addConnection(s *Server, c *websocket.Conn) *connSlot {
 	s.serverL.Lock()
 	defer s.serverL.Unlock()
-	slot := connSlot{
+	slot := &connSlot{
 		l:             &sync.Mutex{},
 		c:             c,
 		receivedClose: make(chan struct{}, 1),
@@ -64,7 +64,7 @@ func addConnection(s *Server, c *websocket.Conn) connSlot {
 	return slot
 }
 
-func removeConnection(s *Server, c connSlot) {
+func removeConnection(s *Server, c *connSlot) {
 	s.serverL.Lock()
 	defer s.serverL.Unlock()
 	delete(s.connRegistry, c.c)

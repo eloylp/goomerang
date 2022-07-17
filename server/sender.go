@@ -7,7 +7,7 @@ import (
 )
 
 type stdSender struct {
-	connSlot connSlot
+	connSlot *connSlot
 	status   func() uint32
 }
 
@@ -23,7 +23,7 @@ func (s *stdSender) Send(msg *message.Message) (int, error) {
 }
 
 type SyncSender struct {
-	cs          connSlot
+	cs          *connSlot
 	status      func() uint32
 	prevMsgUUID string
 }

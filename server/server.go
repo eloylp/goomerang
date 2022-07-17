@@ -23,7 +23,7 @@ import (
 // elements.
 type Server struct {
 	intServer       *http.Server
-	connRegistry    map[*websocket.Conn]connSlot
+	connRegistry    map[*websocket.Conn]*connSlot
 	serverL         *sync.RWMutex
 	wg              *sync.WaitGroup
 	ctx             context.Context
@@ -58,7 +58,7 @@ func New(opts ...Option) (*Server, error) {
 			ReadTimeout:       cfg.HTTPReadTimeout,
 			WriteTimeout:      cfg.HTTPWriteTimeout,
 		},
-		connRegistry: map[*websocket.Conn]connSlot{},
+		connRegistry: map[*websocket.Conn]*connSlot{},
 		serverL:      &sync.RWMutex{},
 		wg:           &sync.WaitGroup{},
 		ctx:          ctx,
@@ -259,7 +259,7 @@ func (s *Server) broadcastClose() {
 	wg := sync.WaitGroup{}
 	for _, cs := range s.connRegistry {
 		wg.Add(1)
-		go func(cs connSlot) {
+		go func(cs *connSlot) {
 			defer wg.Done()
 			if err := cs.sendCloseSignal(); err != nil {
 				s.hooks.ExecOnError(err)
@@ -272,7 +272,7 @@ func (s *Server) broadcastClose() {
 	wg.Wait()
 }
 
-func (s *Server) processMessage(cs connSlot, data []byte) (err error) {
+func (s *Server) processMessage(cs *connSlot, data []byte) (err error) {
 	frame, err := messaging.UnPack(data)
 	if err != nil {
 		return err
