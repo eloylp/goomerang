@@ -23,6 +23,7 @@ func defaultConfig() *Cfg {
 		hooks:             &hooks{},
 		HeartbeatInterval: 5 * time.Second,
 		MaxConcurrency:    10,
+		TargetServer:      "127.0.0.1:8080",
 	}
 	return cfg
 }
