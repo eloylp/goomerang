@@ -3,6 +3,7 @@ package middleware
 import (
 	"time"
 
+	"go.eloylp.dev/goomerang/conn"
 	"go.eloylp.dev/goomerang/message"
 )
 
@@ -12,6 +13,10 @@ type Sender struct {
 	bytes  int
 	msg    *message.Message
 	sender message.Sender
+}
+
+func (s *Sender) ConnSlot() *conn.Slot {
+	return s.sender.ConnSlot()
 }
 
 func NewSender(sender message.Sender) *Sender {
@@ -42,6 +47,10 @@ type MeteredSender struct {
 	msg        *message.Message
 	sender     message.Sender
 	promConfig PromConfig
+}
+
+func (s *MeteredSender) ConnSlot() *conn.Slot {
+	return s.sender.ConnSlot()
 }
 
 func NewMeteredSender(sender message.Sender, promConfig PromConfig) *MeteredSender {

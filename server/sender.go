@@ -12,6 +12,10 @@ type stdSender struct {
 	status   func() uint32
 }
 
+func (s *stdSender) ConnSlot() *conn.Slot {
+	return s.connSlot
+}
+
 func (s *stdSender) Send(msg *message.Message) (int, error) {
 	if s.status() != ws.StatusRunning {
 		return 0, ErrNotRunning
@@ -27,6 +31,10 @@ type SyncSender struct {
 	cs          *conn.Slot
 	status      func() uint32
 	prevMsgUUID string
+}
+
+func (s *SyncSender) ConnSlot() *conn.Slot {
+	return s.cs
 }
 
 func (s *SyncSender) Send(msg *message.Message) (int, error) {

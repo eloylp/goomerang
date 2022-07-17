@@ -8,6 +8,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"go.eloylp.dev/goomerang/conn"
 	"go.eloylp.dev/goomerang/example/protos"
 	"go.eloylp.dev/goomerang/internal/messaging"
 	"go.eloylp.dev/goomerang/internal/test"
@@ -67,6 +68,10 @@ func TestMiddlewareRegistryNotFound(t *testing.T) {
 
 type FakeSender struct {
 	a *test.Arbiter
+}
+
+func (f *FakeSender) ConnSlot() *conn.Slot {
+	panic("implement me")
 }
 
 func (f *FakeSender) Send(msg *message.Message) (int, error) {

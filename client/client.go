@@ -75,6 +75,10 @@ func New(opts ...Option) (*Client, error) {
 	return c, nil
 }
 
+func (c *Client) ConnSlot() *conn.Slot {
+	return c.connSlot
+}
+
 // Connect tries a connection to the specified server.
 // This method can be called after a client shutdown again
 // in order to retry the connection.
