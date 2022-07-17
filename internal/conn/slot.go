@@ -33,10 +33,19 @@ func (s *Slot) Write(msg []byte) error {
 	return s.c.WriteMessage(websocket.BinaryMessage, msg)
 }
 
+func (s *Slot) WriteRaw(messageType int, msg []byte) error {
+	s.l.Lock()
+	defer s.l.Unlock()
+	return s.c.WriteMessage(messageType, msg)
+}
+
 func (s *Slot) SendCloseSignal() error {
 	s.l.Lock()
 	defer s.l.Unlock()
 	err := s.c.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, ""))
+	// This error is ignored because we suspect once the underlying library receives the close frame,
+	// it tries to prevent sending anything more. But we need to send back the close frame when we
+	// receive it from the server, in order to accomplish the closing handshake.
 	if err == websocket.ErrCloseSent {
 		return nil
 	}
