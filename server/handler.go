@@ -26,7 +26,7 @@ func mainHandler(s *Server) http.HandlerFunc {
 		cs := addConnection(s, c)
 		defer removeConnection(s, cs)
 		defer func() {
-			if err := cs.close(); err != nil {
+			if err := cs.Close(); err != nil {
 				s.hooks.ExecOnError(err)
 			}
 		}()
@@ -35,14 +35,14 @@ func mainHandler(s *Server) http.HandlerFunc {
 			case <-s.ctx.Done():
 				return
 			default:
-				messageType, data, err := cs.c.ReadMessage()
+				messageType, data, err := cs.Conn().ReadMessage()
 				if err != nil {
 					if websocket.IsCloseError(err, websocket.CloseNormalClosure) {
-						cs.setReceivedClose()
+						cs.SetReceivedClose()
 						// If the close was not initiated by this server, we just ack
 						// the close handshake to the client.
 						if s.status() != ws.StatusClosing {
-							if err := cs.sendCloseSignal(); err != nil {
+							if err := cs.SendCloseSignal(); err != nil {
 								s.hooks.ExecOnError(err)
 							}
 						}

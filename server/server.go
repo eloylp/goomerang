@@ -14,6 +14,7 @@ import (
 	"google.golang.org/protobuf/proto"
 
 	"go.eloylp.dev/goomerang/internal/conc"
+	"go.eloylp.dev/goomerang/internal/conn"
 	"go.eloylp.dev/goomerang/internal/messaging"
 	"go.eloylp.dev/goomerang/message"
 	"go.eloylp.dev/goomerang/ws"
@@ -23,7 +24,7 @@ import (
 // elements.
 type Server struct {
 	intServer       *http.Server
-	connRegistry    map[*websocket.Conn]*connSlot
+	connRegistry    map[*websocket.Conn]*conn.Slot
 	serverL         *sync.RWMutex
 	wg              *sync.WaitGroup
 	ctx             context.Context
@@ -58,7 +59,7 @@ func New(opts ...Option) (*Server, error) {
 			ReadTimeout:       cfg.HTTPReadTimeout,
 			WriteTimeout:      cfg.HTTPWriteTimeout,
 		},
-		connRegistry: map[*websocket.Conn]*connSlot{},
+		connRegistry: map[*websocket.Conn]*conn.Slot{},
 		serverL:      &sync.RWMutex{},
 		wg:           &sync.WaitGroup{},
 		ctx:          ctx,
@@ -148,10 +149,10 @@ func (s *Server) BroadCast(ctx context.Context, msg *message.Message) (brResult 
 
 		brResult = make([]BroadcastResult, 0, len(s.connRegistry))
 
-		for conn := range s.connRegistry {
-			cs := s.connRegistry[conn]
+		for c := range s.connRegistry {
+			cs := s.connRegistry[c]
 			start := time.Now()
-			if err := cs.write(data); err != nil && errCount < maxErrors {
+			if err := cs.Write(data); err != nil && errCount < maxErrors {
 				errs = append(errs, fmt.Errorf("broadCast: %v", err))
 				errCount++
 				continue
@@ -259,12 +260,12 @@ func (s *Server) broadcastClose() {
 	wg := sync.WaitGroup{}
 	for _, cs := range s.connRegistry {
 		wg.Add(1)
-		go func(cs *connSlot) {
+		go func(cs *conn.Slot) {
 			defer wg.Done()
-			if err := cs.sendCloseSignal(); err != nil {
+			if err := cs.SendCloseSignal(); err != nil {
 				s.hooks.ExecOnError(err)
 			}
-			if err := cs.waitReceivedClose(); err != nil {
+			if err := cs.WaitReceivedClose(); err != nil {
 				s.hooks.ExecOnError(err)
 			}
 		}(cs)
@@ -272,7 +273,7 @@ func (s *Server) broadcastClose() {
 	wg.Wait()
 }
 
-func (s *Server) processMessage(cs *connSlot, data []byte) (err error) {
+func (s *Server) processMessage(cs *conn.Slot, data []byte) (err error) {
 	frame, err := messaging.UnPack(data)
 	if err != nil {
 		return err

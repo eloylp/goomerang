@@ -1,13 +1,14 @@
 package server
 
 import (
+	"go.eloylp.dev/goomerang/internal/conn"
 	"go.eloylp.dev/goomerang/internal/messaging"
 	"go.eloylp.dev/goomerang/message"
 	"go.eloylp.dev/goomerang/ws"
 )
 
 type stdSender struct {
-	connSlot *connSlot
+	connSlot *conn.Slot
 	status   func() uint32
 }
 
@@ -19,11 +20,11 @@ func (s *stdSender) Send(msg *message.Message) (int, error) {
 	if err != nil {
 		return payloadSize, err
 	}
-	return payloadSize, s.connSlot.write(m)
+	return payloadSize, s.connSlot.Write(m)
 }
 
 type SyncSender struct {
-	cs          *connSlot
+	cs          *conn.Slot
 	status      func() uint32
 	prevMsgUUID string
 }
@@ -36,5 +37,5 @@ func (s *SyncSender) Send(msg *message.Message) (int, error) {
 	if err != nil {
 		return payloadSize, err
 	}
-	return payloadSize, s.cs.write(m)
+	return payloadSize, s.cs.Write(m)
 }
