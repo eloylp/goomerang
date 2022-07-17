@@ -1,7 +1,7 @@
 package server
 
 import (
-	"go.eloylp.dev/goomerang/internal/conn"
+	"go.eloylp.dev/goomerang/conn"
 	"go.eloylp.dev/goomerang/internal/messaging"
 	"go.eloylp.dev/goomerang/message"
 	"go.eloylp.dev/goomerang/ws"

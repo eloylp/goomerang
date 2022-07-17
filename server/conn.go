@@ -3,7 +3,7 @@ package server
 import (
 	"github.com/gorilla/websocket"
 
-	"go.eloylp.dev/goomerang/internal/conn"
+	"go.eloylp.dev/goomerang/conn"
 )
 
 func addConnection(s *Server, c *websocket.Conn) *conn.Slot {

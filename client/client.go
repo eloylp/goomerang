@@ -14,8 +14,8 @@ import (
 	"github.com/hashicorp/go-multierror"
 	"google.golang.org/protobuf/proto"
 
+	"go.eloylp.dev/goomerang/conn"
 	"go.eloylp.dev/goomerang/internal/conc"
-	"go.eloylp.dev/goomerang/internal/conn"
 	"go.eloylp.dev/goomerang/internal/messaging"
 	"go.eloylp.dev/goomerang/message"
 	"go.eloylp.dev/goomerang/ws"
