@@ -17,6 +17,7 @@ import (
 	"go.eloylp.dev/goomerang/conn"
 	"go.eloylp.dev/goomerang/internal/conc"
 	"go.eloylp.dev/goomerang/internal/messaging"
+	"go.eloylp.dev/goomerang/internal/messaging/protocol"
 	"go.eloylp.dev/goomerang/message"
 	"go.eloylp.dev/goomerang/ws"
 )
@@ -196,6 +197,62 @@ func (c *Client) Send(msg *message.Message) (payloadSize int, err error) {
 	}
 	var data []byte
 	payloadSize, data, err = messaging.Pack(msg)
+	if err != nil {
+		return
+	}
+	if err = c.connSlot.Write(data); err != nil {
+		return payloadSize, fmt.Errorf("send: %v", err)
+	}
+	return
+}
+
+func (c *Client) Subscribe(topic string) (err error) {
+	if c.status() != ws.StatusRunning {
+		return ErrNotRunning
+	}
+	msg := message.New().SetPayload(&protocol.SubscribeCommand{
+		Topic: topic,
+	})
+	var data []byte
+	_, data, err = messaging.Pack(msg)
+	if err != nil {
+		return
+	}
+	if err = c.connSlot.Write(data); err != nil {
+		err = fmt.Errorf("subscribe: %v", err)
+	}
+	return
+}
+
+func (c *Client) UnSubscribe(topic string) (err error) {
+	if c.status() != ws.StatusRunning {
+		return ErrNotRunning
+	}
+	msg := message.New().SetPayload(&protocol.UnSubscribeCommand{
+		Topic: topic,
+	})
+	var data []byte
+	_, data, err = messaging.Pack(msg)
+	if err != nil {
+		return
+	}
+	if err = c.connSlot.Write(data); err != nil {
+		err = fmt.Errorf("unsubscribe: %v", err)
+	}
+	return
+}
+
+func (c *Client) Publish(topic string, msg *message.Message) (payloadSize int, err error) {
+	if c.status() != ws.StatusRunning {
+		return 0, ErrNotRunning
+	}
+
+	pubMsg, err := messaging.MessageForPublish(topic, msg)
+	if err != nil {
+		return 0, err
+	}
+	var data []byte
+	payloadSize, data, err = messaging.Pack(pubMsg)
 	if err != nil {
 		return
 	}
