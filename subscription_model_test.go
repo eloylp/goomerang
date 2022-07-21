@@ -1,9 +1,7 @@
 package goomerang_test
 
 import (
-	"sync"
 	"testing"
-	"time"
 
 	"go.eloylp.dev/goomerang/client"
 	"go.eloylp.dev/goomerang/example/protos"
@@ -12,28 +10,12 @@ import (
 	"go.eloylp.dev/goomerang/server"
 )
 
-func TestUserIsCapableOfCreatingSubscriptions(t *testing.T) {
+func TestSubscriptionsFromClientSideCanSubscribeToTopics(t *testing.T) {
 	arbiter := test.NewArbiter(t)
 	s, run := PrepareServer(t, server.WithOnErrorHook(noErrorHook(arbiter)))
-	groups := &sync.Map{}
-
-	s.Handle(&protos.SubscriptionV1{}, message.HandlerFunc(func(s message.Sender, msg *message.Message) {
-		subs := msg.Payload.(*protos.SubscriptionV1)
-
-		val, ok := groups.Load(subs.SubscribeTo)
-		if !ok {
-			var senders []message.Sender
-			senders = append(senders, s)
-			groups.Store(subs.SubscribeTo, senders)
-			return
-		}
-		senders := val.([]message.Sender)
-		senders = append(senders, s)
-		groups.Store(subs.SubscribeTo, senders)
-	}))
+	s.RegisterMessage(&protos.MessageV1{})
 	run()
 	defer s.Shutdown(defaultCtx)
-
 	c1, connect1 := PrepareClient(t,
 		client.WithServerAddr(s.Addr()),
 		client.WithOnErrorHook(noErrorHook(arbiter)),
@@ -43,6 +25,7 @@ func TestUserIsCapableOfCreatingSubscriptions(t *testing.T) {
 		arbiter.ItsAFactThat("CLIENT1_RECEIVED_MESSAGE")
 	}))
 	connect1()
+	failIfErr(t, c1.Subscribe("topic.a"))
 	defer c1.Close(defaultCtx)
 
 	c2, connect2 := PrepareClient(t,
@@ -54,39 +37,18 @@ func TestUserIsCapableOfCreatingSubscriptions(t *testing.T) {
 		arbiter.ItsAFactThat("CLIENT2_RECEIVED_MESSAGE")
 	}))
 	connect2()
+	failIfErr(t, c2.Subscribe("topic.a"))
 	defer c2.Close(defaultCtx)
 
 	c3, connect3 := PrepareClient(t,
 		client.WithServerAddr(s.Addr()),
 		client.WithOnErrorHook(noErrorHook(arbiter)),
 	)
-	c3.Handle(&protos.MessageV1{}, message.HandlerFunc(func(_ message.Sender, msg *message.Message) {
-		_ = msg.Payload.(*protos.MessageV1)
-		arbiter.ItsAFactThat("CLIENT3_RECEIVED_MESSAGE")
-	}))
 	connect3()
-	defer c2.Close(defaultCtx)
-
-	msg := message.New().SetPayload(&protos.SubscriptionV1{SubscribeTo: "group1"})
-
-	_, err := c1.Send(msg)
-	failIfErr(t, err)
-
-	_, err = c2.Send(msg)
-	failIfErr(t, err)
-
-	time.Sleep(time.Second)
-
-	senders, ok := groups.Load("group1")
-	if !ok {
-		t.Fatal("cannot found subscription group")
-	}
-	msgS := message.New().SetPayload(&protos.MessageV1{Message: "a message"})
-	ss := senders.([]message.Sender)
-	for i := range ss {
-		_, err := ss[i].Send(msgS)
+	if _, err := c3.Publish("topic.a", defaultMsg); err != nil {
 		failIfErr(t, err)
 	}
+	defer c3.Close(defaultCtx)
 
 	arbiter.RequireNoErrors()
 	arbiter.RequireHappened("CLIENT1_RECEIVED_MESSAGE")
