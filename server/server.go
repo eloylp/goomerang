@@ -209,6 +209,20 @@ func (s *Server) Run() (err error) {
 	return nil
 }
 
+// RegisterMessage will make the server aware of a specific kind of
+// protocol buffer message. This is specially needed when
+// the user sends messages with methods like SendSync(),
+// as the client needs to know how to decode the incoming reply.
+//
+// If the kind of message it's already registered with the Handle()
+// method, then the user can omit this registration.
+//
+// This is specially needed in order to make the server aware
+// of the messages published in pub/sub patterns.K
+func (s *Server) RegisterMessage(msg proto.Message) {
+	s.messageRegistry.Register(messaging.FQDN(msg), msg)
+}
+
 // Addr provides the listener address. It will
 // return an empty string if it's not possible to
 // determine the IP information.
