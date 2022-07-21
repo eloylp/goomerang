@@ -6,6 +6,9 @@ import (
 
 	"github.com/gorilla/websocket"
 
+	"go.eloylp.dev/goomerang/internal/messaging"
+	"go.eloylp.dev/goomerang/internal/messaging/protocol"
+	"go.eloylp.dev/goomerang/message"
 	"go.eloylp.dev/goomerang/ws"
 )
 
@@ -26,6 +29,7 @@ func mainHandler(s *Server) http.HandlerFunc {
 		cs := addConnection(s, c)
 		defer removeConnection(s, cs)
 		defer func() {
+			s.pubSubEngine.unsubscribeAll(cs)
 			if err := cs.Close(); err != nil {
 				s.hooks.ExecOnError(err)
 			}
@@ -78,4 +82,32 @@ func mainHandler(s *Server) http.HandlerFunc {
 			}
 		}
 	}
+}
+
+func publishCommandHandler(mr message.Registry, pse *pubSubEngine, onErrorHook func(err error)) message.Handler {
+	return message.HandlerFunc(func(s message.Sender, msg *message.Message) {
+		pubCmd := msg.Payload.(*protocol.PublishCommand)
+		origMsg, err := messaging.MessageFromPublish(mr, msg)
+		if err != nil {
+			onErrorHook(err)
+			return
+		}
+		if err := pse.publish(pubCmd.Topic, origMsg); err != nil {
+			onErrorHook(err)
+		}
+	})
+}
+
+func unSubscribeCommandHandler(pse *pubSubEngine) message.Handler {
+	return message.HandlerFunc(func(s message.Sender, msg *message.Message) {
+		unSubsCmd := msg.Payload.(*protocol.UnSubscribeCommand)
+		pse.unsubscribe(unSubsCmd.Topic, s.ConnSlot())
+	})
+}
+
+func subscribeCommandHandler(pse *pubSubEngine) message.Handler {
+	return message.HandlerFunc(func(s message.Sender, msg *message.Message) {
+		subsCmd := msg.Payload.(*protocol.SubscribeCommand)
+		pse.subscribe(subsCmd.Topic, s)
+	})
 }

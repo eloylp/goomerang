@@ -16,6 +16,7 @@ import (
 	"go.eloylp.dev/goomerang/conn"
 	"go.eloylp.dev/goomerang/internal/conc"
 	"go.eloylp.dev/goomerang/internal/messaging"
+	"go.eloylp.dev/goomerang/internal/messaging/protocol"
 	"go.eloylp.dev/goomerang/message"
 	"go.eloylp.dev/goomerang/ws"
 )
@@ -29,6 +30,7 @@ type Server struct {
 	wg              *sync.WaitGroup
 	ctx             context.Context
 	cancl           context.CancelFunc
+	pubSubEngine    *pubSubEngine
 	wsUpgrader      *websocket.Upgrader
 	handlerChainer  *messaging.HandlerChainer
 	messageRegistry message.Registry
@@ -64,6 +66,7 @@ func New(opts ...Option) (*Server, error) {
 		wg:           &sync.WaitGroup{},
 		ctx:          ctx,
 		cancl:        cancl,
+		pubSubEngine: newPubSubEngine(),
 		wsUpgrader: &websocket.Upgrader{
 			HandshakeTimeout:  cfg.HandshakeTimeout,
 			ReadBufferSize:    cfg.ReadBufferSize,
@@ -191,6 +194,7 @@ func (s *Server) Run() (err error) {
 	if err != nil {
 		return fmt.Errorf("run: %v", err)
 	}
+	registerBuiltInHandlers(s)
 	s.setStatus(ws.StatusRunning)
 	s.handlerChainer.PrepareChains()
 
@@ -266,6 +270,12 @@ func (s *Server) Shutdown(ctx context.Context) (err error) {
 	case <-ch:
 		return
 	}
+}
+
+func registerBuiltInHandlers(s *Server) {
+	s.Handle(&protocol.SubscribeCommand{}, subscribeCommandHandler(s.pubSubEngine))
+	s.Handle(&protocol.PublishCommand{}, publishCommandHandler(s.messageRegistry, s.pubSubEngine, s.hooks.ExecOnError))
+	s.Handle(&protocol.UnSubscribeCommand{}, unSubscribeCommandHandler(s.pubSubEngine))
 }
 
 func (s *Server) broadcastClose() {
