@@ -132,7 +132,6 @@ func TestPubSubEngine(t *testing.T) {
 		multiErr := err.(*multierror.Error)
 		assert.Equal(t, 100, multiErr.Len())
 	})
-
 }
 
 func successfulSender() *senderMock {
