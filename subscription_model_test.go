@@ -11,17 +11,19 @@ import (
 	"go.eloylp.dev/goomerang/server"
 )
 
-func TestSubscriptionsFromClientSideCanSubscribeToTopics(t *testing.T) {
+func TestSubscriptionsFromClientSide(t *testing.T) {
+	t.Parallel()
+
 	arbiter := test.NewArbiter(t)
 	s, run := PrepareServer(t, server.WithOnErrorHook(noErrorHook(arbiter)))
-	s.RegisterMessage(&protos.MessageV1{})
+	s.RegisterMessage(defaultMsg.Payload)
 	run()
 	defer s.Shutdown(defaultCtx)
 	c1, connect1 := PrepareClient(t,
 		client.WithServerAddr(s.Addr()),
 		client.WithOnErrorHook(noErrorHook(arbiter)),
 	)
-	c1.Handle(&protos.MessageV1{}, message.HandlerFunc(func(_ message.Sender, msg *message.Message) {
+	c1.Handle(defaultMsg.Payload, message.HandlerFunc(func(_ message.Sender, msg *message.Message) {
 		_ = msg.Payload.(*protos.MessageV1)
 		arbiter.ItsAFactThat("CLIENT1_RECEIVED_MESSAGE")
 	}))
@@ -33,7 +35,7 @@ func TestSubscriptionsFromClientSideCanSubscribeToTopics(t *testing.T) {
 		client.WithServerAddr(s.Addr()),
 		client.WithOnErrorHook(noErrorHook(arbiter)),
 	)
-	c2.Handle(&protos.MessageV1{}, message.HandlerFunc(func(_ message.Sender, msg *message.Message) {
+	c2.Handle(defaultMsg.Payload, message.HandlerFunc(func(_ message.Sender, msg *message.Message) {
 		_ = msg.Payload.(*protos.MessageV1)
 		arbiter.ItsAFactThat("CLIENT2_RECEIVED_MESSAGE")
 	}))
