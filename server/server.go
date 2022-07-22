@@ -175,6 +175,18 @@ func (s *Server) BroadCast(ctx context.Context, msg *message.Message) (brResult 
 	}
 }
 
+// Publish enables the server to send a message to all
+// subscribed parts in a topic.
+func (s *Server) Publish(topic string, msg *message.Message) error {
+	if s.status() != ws.StatusRunning {
+		return ErrNotRunning
+	}
+	if err := s.pubSubEngine.publish(topic, msg); err != nil {
+		return fmt.Errorf("publish: %v", err)
+	}
+	return nil
+}
+
 // Run will start the server with all the previously
 // provided options.
 //
