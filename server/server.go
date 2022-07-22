@@ -222,7 +222,7 @@ func (s *Server) Run() (err error) {
 // method, then the user can omit this registration.
 //
 // This is specially needed in order to make the server aware
-// of the messages published in pub/sub patterns.K
+// of the messages published in pub/sub patterns.
 func (s *Server) RegisterMessage(msg proto.Message) {
 	s.messageRegistry.Register(messaging.FQDN(msg), msg)
 }
