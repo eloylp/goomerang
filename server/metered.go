@@ -56,9 +56,9 @@ func (s *MeteredServer) Handle(msg proto.Message, handler message.Handler) {
 	s.s.Handle(msg, handler)
 }
 
-func (s *MeteredServer) BroadCast(ctx context.Context, msg *message.Message) (brResult []BroadcastResult, err error) {
+func (s *MeteredServer) Broadcast(ctx context.Context, msg *message.Message) (brResult []BroadcastResult, err error) {
 	start := time.Now()
-	brResult, err = s.s.BroadCast(ctx, msg)
+	brResult, err = s.s.Broadcast(ctx, msg)
 	if err != nil {
 		s.metrics.Errors.Inc()
 		return

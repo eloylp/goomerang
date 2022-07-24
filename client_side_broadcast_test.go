@@ -35,7 +35,7 @@ func TestUserCanConfigureBroadcastHandler(t *testing.T) {
 			arbiter.ErrorHappened(err)
 			return
 		}
-		_, err = s.BroadCast(context.TODO(), message.New().SetPayload(oMsg))
+		_, err = s.Broadcast(context.TODO(), message.New().SetPayload(oMsg))
 		if err != nil {
 			arbiter.ErrorHappened(err)
 			return

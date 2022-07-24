@@ -49,7 +49,7 @@ func WorkerPoolTest(maxConcurrency int, shouldBeActive bool) func(t *testing.T) 
 
 		_, err := c.Send(defaultMsg)
 		require.NoError(t, err)
-		_, err = s.BroadCast(defaultCtx, defaultMsg)
+		_, err = s.Broadcast(defaultCtx, defaultMsg)
 		require.NoError(t, err)
 		if shouldBeActive {
 			arbiter.RequireHappenedInOrder(

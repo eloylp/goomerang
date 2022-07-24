@@ -31,7 +31,7 @@ func TestServerCanBroadCastMessages(t *testing.T) {
 		arbiter.ItsAFactThat("CLIENT2_RECEIVED_SERVER_GREET")
 	}))
 	connect2()
-	brResult, err := s.BroadCast(defaultCtx, defaultMsg)
+	brResult, err := s.Broadcast(defaultCtx, defaultMsg)
 	require.NoError(t, err)
 	require.Len(t, brResult, 2)
 	require.Equal(t, 12, brResult[0].Size)

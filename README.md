@@ -344,7 +344,7 @@ func main() {
 		Message: "a message for everyone!"
 	})
 
-	_, err := s.BroadCast(context.TODO(), msg)
+	_, err := s.Broadcast(context.TODO(), msg)
 	if err != nil {
 		log.Fatal(err)
 	}

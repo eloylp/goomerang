@@ -93,7 +93,7 @@ func interactions(ctx context.Context, s *server.MeteredServer) {
 		case <-ctx.Done():
 			return
 		default:
-			_, err := s.BroadCast(context.Background(), message.New().SetPayload(&protos.BroadcastV1{
+			_, err := s.Broadcast(context.Background(), message.New().SetPayload(&protos.BroadcastV1{
 				Message: "Broadcasting !",
 				Data:    bytes,
 			}))
