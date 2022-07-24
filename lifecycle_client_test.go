@@ -182,7 +182,7 @@ func TestClientHandlerCannotSendIfClosed(t *testing.T) {
 
 	// We provoke the handler execution of the client
 	// with a broadcast message.
-	_, err := s.BroadCast(defaultCtx, defaultMsg)
+	_, err := s.Broadcast(defaultCtx, defaultMsg)
 	require.NoError(t, err)
 
 	// We close the client, now the internal status changed.

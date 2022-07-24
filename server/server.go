@@ -106,7 +106,7 @@ type BroadcastResult struct {
 	Duration time.Duration
 }
 
-// BroadCast will try to send the provided message to all
+// Broadcast will try to send the provided message to all
 // connected clients.
 //
 // In case the provided context is canceled, the operation
@@ -123,7 +123,7 @@ type BroadcastResult struct {
 // feedback, such as time distribution.
 //
 // Calling this method it's intended to be thread safe.
-func (s *Server) BroadCast(ctx context.Context, msg *message.Message) (brResult []BroadcastResult, err error) {
+func (s *Server) Broadcast(ctx context.Context, msg *message.Message) (brResult []BroadcastResult, err error) {
 	if s.status() != ws.StatusRunning {
 		return []BroadcastResult{}, ErrNotRunning
 	}

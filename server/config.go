@@ -22,6 +22,7 @@ type Cfg struct {
 func defaultConfig() *Cfg {
 	cfg := &Cfg{
 		hooks:          &hooks{},
+		ListenURL:      "127.0.0.1:8080",
 		MaxConcurrency: 10,
 	}
 	return cfg
