@@ -21,3 +21,38 @@ func TestOnConfigurationHook(t *testing.T) {
 	assert.True(t, defCfg.EnableCompression)
 	assert.Equal(t, 1000, defCfg.WriteBufferSize)
 }
+
+func TestOnSubscribeHook(t *testing.T) {
+	hooks := &hooks{}
+	hooks.AppendOnSubscribe(func(topic string) {
+		assert.Equal(t, "topic.a", topic)
+	})
+	hooks.AppendOnSubscribe(func(topic string) {
+		assert.Equal(t, "topic.a", topic)
+	})
+	hooks.ExecOnSubscribe("topic.a")
+}
+
+func TestOnUnsubscribeHook(t *testing.T) {
+	hooks := &hooks{}
+	hooks.AppendOnUnsubscribe(func(topic string) {
+		assert.Equal(t, "topic.a", topic)
+	})
+	hooks.AppendOnUnsubscribe(func(topic string) {
+		assert.Equal(t, "topic.a", topic)
+	})
+	hooks.ExecOnUnsubscribe("topic.a")
+}
+
+func TestOnPublishHook(t *testing.T) {
+	hooks := &hooks{}
+	hooks.AppendOnPublish(func(topic, fqdn string) {
+		assert.Equal(t, "topic.a", topic)
+		assert.Equal(t, "message.a", fqdn)
+	})
+	hooks.AppendOnPublish(func(topic, fqdn string) {
+		assert.Equal(t, "topic.a", topic)
+		assert.Equal(t, "message.a", fqdn)
+	})
+	hooks.ExecOnPublish("topic.a", "message.a")
+}
