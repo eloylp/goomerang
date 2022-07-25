@@ -64,6 +64,7 @@ func (s *MeteredServer) Publish(topic string, msg *message.Message) error {
 		s.metrics.Errors.Inc()
 		return err
 	}
+	s.metrics.PublishCount.WithLabelValues(topic, messaging.FQDN(msg.Payload)).Inc()
 	return nil
 }
 
