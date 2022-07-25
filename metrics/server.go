@@ -152,5 +152,8 @@ func (m *ServerMetrics) Register(r prometheus.Registerer) {
 	r.MustRegister(m.ConcurrentWorkers)
 	r.MustRegister(m.ConfigMaxConcurrency)
 	r.MustRegister(m.CurrentStatus)
+	r.MustRegister(m.SubscribeCount)
+	r.MustRegister(m.UnsubscribeCount)
+	r.MustRegister(m.PublishCount)
 	r.MustRegister(m.Errors)
 }
