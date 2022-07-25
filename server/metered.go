@@ -35,6 +35,9 @@ func NewMetered(m *metrics.ServerMetrics, opts ...Option) (*MeteredServer, error
 		WithOnWorkerStart(workerStartMetricHook(m)),
 		WithOnWorkerEnd(workerEndMetricHook(m)),
 		WithOnConfiguration(configurationMaxConcurrentMetricHook(m)),
+		WithOnSubscribeHook(subscribeHook(m)),
+		WithOnUnsubscribeHook(unsubscribeHook(m)),
+		WithOnPublishHook(publishHook(m)),
 		WithOnErrorHook(func(err error) {
 			m.Errors.Inc()
 		}),
@@ -54,6 +57,14 @@ func (s *MeteredServer) Middleware(m message.Middleware) {
 
 func (s *MeteredServer) Handle(msg proto.Message, handler message.Handler) {
 	s.s.Handle(msg, handler)
+}
+
+func (s *MeteredServer) Publish(topic string, msg *message.Message) error {
+	if err := s.s.Publish(topic, msg); err != nil {
+		s.metrics.Errors.Inc()
+		return err
+	}
+	return nil
 }
 
 func (s *MeteredServer) BroadCast(ctx context.Context, msg *message.Message) (brResult []BroadcastResult, err error) {
@@ -107,5 +118,23 @@ func workerEndMetricHook(m *metrics.ServerMetrics) func() {
 func configurationMaxConcurrentMetricHook(m *metrics.ServerMetrics) func(cfg *Cfg) {
 	return func(cfg *Cfg) {
 		m.ConfigMaxConcurrency.Set(float64(cfg.MaxConcurrency))
+	}
+}
+
+func subscribeHook(m *metrics.ServerMetrics) func(topic string) {
+	return func(topic string) {
+		m.SubscribeCount.WithLabelValues(topic).Inc()
+	}
+}
+
+func unsubscribeHook(m *metrics.ServerMetrics) func(topic string) {
+	return func(topic string) {
+		m.UnsubscribeCount.WithLabelValues(topic).Inc()
+	}
+}
+
+func publishHook(m *metrics.ServerMetrics) func(topic, fqdn string) {
+	return func(topic, fqdn string) {
+		m.PublishCount.WithLabelValues(topic, fqdn).Inc()
 	}
 }
