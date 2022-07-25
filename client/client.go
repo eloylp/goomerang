@@ -224,7 +224,7 @@ func (c *Client) Subscribe(topic string) (err error) {
 	return
 }
 
-func (c *Client) UnSubscribe(topic string) (err error) {
+func (c *Client) Unsubscribe(topic string) (err error) {
 	if c.status() != ws.StatusRunning {
 		return ErrNotRunning
 	}

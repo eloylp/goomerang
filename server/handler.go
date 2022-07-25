@@ -98,7 +98,7 @@ func publishCommandHandler(mr message.Registry, pse *pubSubEngine, onErrorHook f
 	})
 }
 
-func unSubscribeCommandHandler(pse *pubSubEngine) message.Handler {
+func unsubscribeCommandHandler(pse *pubSubEngine) message.Handler {
 	return message.HandlerFunc(func(s message.Sender, msg *message.Message) {
 		unSubsCmd := msg.Payload.(*protocol.UnSubscribeCommand)
 		pse.unsubscribe(unSubsCmd.Topic, s.ConnSlot())
