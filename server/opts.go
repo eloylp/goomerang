@@ -87,6 +87,33 @@ func WithOnWorkerEnd(h func()) Option {
 	}
 }
 
+// WithOnSubscribeHook allows the user to inject a hook which
+// will be executed each successfully subscribe
+// to a specific topic, for a message.
+func WithOnSubscribeHook(f func(topic string)) Option {
+	return func(cfg *Cfg) {
+		cfg.hooks.AppendOnSubscribe(f)
+	}
+}
+
+// WithOnUnsubscribeHook allows the user to inject a hook which
+// will be executed each time successfully unsubscribe
+// from a specific topic, for a message.
+func WithOnUnsubscribeHook(f func(topic string)) Option {
+	return func(cfg *Cfg) {
+		cfg.hooks.AppendOnUnsubscribe(f)
+	}
+}
+
+// WithOnPublishHook allows the user to inject a hook which
+// will be executed each time successfully publish operation
+// takes place for a specific topic and message (fqdn).
+func WithOnPublishHook(f func(topic, fqdn string)) Option {
+	return func(cfg *Cfg) {
+		cfg.hooks.AppendOnPublish(f)
+	}
+}
+
 // WithMaxConcurrency sets the concurrency level for handler
 // execution. Values <= 1 means no concurrency, which means
 // no goroutine scheduling takes place. Defaults to 10.
