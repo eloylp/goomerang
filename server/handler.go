@@ -84,7 +84,23 @@ func mainHandler(s *Server) http.HandlerFunc {
 	}
 }
 
-func publishCommandHandler(mr message.Registry, pse *pubSubEngine, onErrorHook func(err error)) message.Handler {
+func subscribeCommandHandler(pse *pubSubEngine, hook func(topic string)) message.Handler {
+	return message.HandlerFunc(func(s message.Sender, msg *message.Message) {
+		subsCmd := msg.Payload.(*protocol.SubscribeCommand)
+		pse.subscribe(subsCmd.Topic, s)
+		hook(subsCmd.Topic)
+	})
+}
+
+func unsubscribeCommandHandler(pse *pubSubEngine, hook func(topic string)) message.Handler {
+	return message.HandlerFunc(func(s message.Sender, msg *message.Message) {
+		unsubsCmd := msg.Payload.(*protocol.UnSubscribeCommand)
+		pse.unsubscribe(unsubsCmd.Topic, s.ConnSlot())
+		hook(unsubsCmd.Topic)
+	})
+}
+
+func publishCommandHandler(mr message.Registry, pse *pubSubEngine, hook func(topic, fqdn string), onErrorHook func(err error)) message.Handler {
 	return message.HandlerFunc(func(s message.Sender, msg *message.Message) {
 		pubCmd := msg.Payload.(*protocol.PublishCommand)
 		origMsg, err := messaging.MessageFromPublish(mr, msg)
@@ -95,19 +111,6 @@ func publishCommandHandler(mr message.Registry, pse *pubSubEngine, onErrorHook f
 		if err := pse.publish(pubCmd.Topic, origMsg); err != nil {
 			onErrorHook(err)
 		}
-	})
-}
-
-func unsubscribeCommandHandler(pse *pubSubEngine) message.Handler {
-	return message.HandlerFunc(func(s message.Sender, msg *message.Message) {
-		unSubsCmd := msg.Payload.(*protocol.UnSubscribeCommand)
-		pse.unsubscribe(unSubsCmd.Topic, s.ConnSlot())
-	})
-}
-
-func subscribeCommandHandler(pse *pubSubEngine) message.Handler {
-	return message.HandlerFunc(func(s message.Sender, msg *message.Message) {
-		subsCmd := msg.Payload.(*protocol.SubscribeCommand)
-		pse.subscribe(subsCmd.Topic, s)
+		hook(pubCmd.Topic, origMsg.Metadata.Kind)
 	})
 }
