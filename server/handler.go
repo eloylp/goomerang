@@ -100,7 +100,8 @@ func unsubscribeCommandHandler(pse *pubSubEngine, hook func(topic string)) messa
 	})
 }
 
-func publishCommandHandler(mr message.Registry, pse *pubSubEngine, hook func(topic, fqdn string), onErrorHook func(err error)) message.Handler {
+func publishCommandHandler(mr message.Registry, pse *pubSubEngine,
+	hook func(topic, fqdn string), onErrorHook func(err error)) message.Handler {
 	return message.HandlerFunc(func(s message.Sender, msg *message.Message) {
 		pubCmd := msg.Payload.(*protocol.PublishCommand)
 		origMsg, err := messaging.MessageFromPublish(mr, msg)
