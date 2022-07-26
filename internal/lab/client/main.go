@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"log"
+	"math/rand"
 	"net"
 	"net/http"
 	_ "net/http/pprof"
@@ -58,6 +59,10 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+	mc.Handle(&protos.PointV1{}, message.HandlerFunc(func(sender message.Sender, msg *message.Message) {
+		// It's ok, discard from buffer
+		time.Sleep(20 * time.Millisecond)
+	}))
 	mc.Handle(&protos.PointReplyV1{}, message.HandlerFunc(func(s message.Sender, msg *message.Message) {
 		// It's ok, discard from buffer
 		time.Sleep(20 * time.Millisecond)
@@ -93,8 +98,36 @@ func interactions(ctx context.Context, c *client.MeteredClient) {
 		panic(err)
 	}
 	bytes := make([]byte, messageSize)
+	if err := c.Subscribe("topic.a"); err != nil {
+		panic(err)
+	}
+	if err := c.Subscribe("topic.b"); err != nil {
+		panic(err)
+	}
+	go publishMessages(ctx, c, bytes)
 	go sendMessages(ctx, c, bytes)
 	go sendSyncMessages(ctx, c, bytes)
+}
+
+func publishMessages(ctx context.Context, c *client.MeteredClient, bytes []byte) {
+	topics := []string{"topic.a", "topic.b"}
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		default:
+			topic := topics[rand.Intn(2)]
+			err := c.Publish(topic, message.New().SetPayload(&protos.PointV1{
+				X:          34.45,
+				Y:          89.12,
+				Time:       timestamppb.Now(),
+				DeviceData: bytes,
+			}))
+			if err != nil {
+				logrus.WithError(err).Error("error sending message")
+			}
+		}
+	}
 }
 
 func sendMessages(ctx context.Context, c *client.MeteredClient, bytes []byte) {
