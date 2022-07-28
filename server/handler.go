@@ -94,7 +94,7 @@ func subscribeCommandHandler(pse *pubSubEngine, hook func(topic string)) message
 
 func unsubscribeCommandHandler(pse *pubSubEngine, hook func(topic string)) message.Handler {
 	return message.HandlerFunc(func(s message.Sender, msg *message.Message) {
-		unsubsCmd := msg.Payload.(*protocol.UnSubscribeCommand)
+		unsubsCmd := msg.Payload.(*protocol.UnsubscribeCommand)
 		pse.unsubscribe(unsubsCmd.Topic, s.ConnSlot())
 		hook(unsubsCmd.Topic)
 	})

@@ -163,7 +163,7 @@ func (x *SubscribeCommand) GetTopic() string {
 	return ""
 }
 
-type UnSubscribeCommand struct {
+type UnsubscribeCommand struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
@@ -171,8 +171,8 @@ type UnSubscribeCommand struct {
 	Topic string `protobuf:"bytes,1,opt,name=topic,proto3" json:"topic,omitempty"`
 }
 
-func (x *UnSubscribeCommand) Reset() {
-	*x = UnSubscribeCommand{}
+func (x *UnsubscribeCommand) Reset() {
+	*x = UnsubscribeCommand{}
 	if protoimpl.UnsafeEnabled {
 		mi := &file_internal_messaging_protocol_proto_msgTypes[2]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -180,13 +180,13 @@ func (x *UnSubscribeCommand) Reset() {
 	}
 }
 
-func (x *UnSubscribeCommand) String() string {
+func (x *UnsubscribeCommand) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*UnSubscribeCommand) ProtoMessage() {}
+func (*UnsubscribeCommand) ProtoMessage() {}
 
-func (x *UnSubscribeCommand) ProtoReflect() protoreflect.Message {
+func (x *UnsubscribeCommand) ProtoReflect() protoreflect.Message {
 	mi := &file_internal_messaging_protocol_proto_msgTypes[2]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -198,12 +198,12 @@ func (x *UnSubscribeCommand) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use UnSubscribeCommand.ProtoReflect.Descriptor instead.
-func (*UnSubscribeCommand) Descriptor() ([]byte, []int) {
+// Deprecated: Use UnsubscribeCommand.ProtoReflect.Descriptor instead.
+func (*UnsubscribeCommand) Descriptor() ([]byte, []int) {
 	return file_internal_messaging_protocol_proto_rawDescGZIP(), []int{2}
 }
 
-func (x *UnSubscribeCommand) GetTopic() string {
+func (x *UnsubscribeCommand) GetTopic() string {
 	if x != nil {
 		return x.Topic
 	}
@@ -304,7 +304,7 @@ var file_internal_messaging_protocol_proto_rawDesc = []byte{
 	0x65, 0x3a, 0x02, 0x38, 0x01, 0x22, 0x28, 0x0a, 0x10, 0x53, 0x75, 0x62, 0x73, 0x63, 0x72, 0x69,
 	0x62, 0x65, 0x43, 0x6f, 0x6d, 0x6d, 0x61, 0x6e, 0x64, 0x12, 0x14, 0x0a, 0x05, 0x74, 0x6f, 0x70,
 	0x69, 0x63, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x05, 0x74, 0x6f, 0x70, 0x69, 0x63, 0x22,
-	0x2a, 0x0a, 0x12, 0x55, 0x6e, 0x53, 0x75, 0x62, 0x73, 0x63, 0x72, 0x69, 0x62, 0x65, 0x43, 0x6f,
+	0x2a, 0x0a, 0x12, 0x55, 0x6e, 0x73, 0x75, 0x62, 0x73, 0x63, 0x72, 0x69, 0x62, 0x65, 0x43, 0x6f,
 	0x6d, 0x6d, 0x61, 0x6e, 0x64, 0x12, 0x14, 0x0a, 0x05, 0x74, 0x6f, 0x70, 0x69, 0x63, 0x18, 0x01,
 	0x20, 0x01, 0x28, 0x09, 0x52, 0x05, 0x74, 0x6f, 0x70, 0x69, 0x63, 0x22, 0x54, 0x0a, 0x0e, 0x50,
 	0x75, 0x62, 0x6c, 0x69, 0x73, 0x68, 0x43, 0x6f, 0x6d, 0x6d, 0x61, 0x6e, 0x64, 0x12, 0x14, 0x0a,
@@ -334,7 +334,7 @@ var file_internal_messaging_protocol_proto_msgTypes = make([]protoimpl.MessageIn
 var file_internal_messaging_protocol_proto_goTypes = []interface{}{
 	(*Frame)(nil),                 // 0: goomerang.protocol.Frame
 	(*SubscribeCommand)(nil),      // 1: goomerang.protocol.SubscribeCommand
-	(*UnSubscribeCommand)(nil),    // 2: goomerang.protocol.UnSubscribeCommand
+	(*UnsubscribeCommand)(nil),    // 2: goomerang.protocol.UnsubscribeCommand
 	(*PublishCommand)(nil),        // 3: goomerang.protocol.PublishCommand
 	nil,                           // 4: goomerang.protocol.Frame.HeadersEntry
 	(*timestamppb.Timestamp)(nil), // 5: google.protobuf.Timestamp
@@ -380,7 +380,7 @@ func file_internal_messaging_protocol_proto_init() {
 			}
 		}
 		file_internal_messaging_protocol_proto_msgTypes[2].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*UnSubscribeCommand); i {
+			switch v := v.(*UnsubscribeCommand); i {
 			case 0:
 				return &v.state
 			case 1:

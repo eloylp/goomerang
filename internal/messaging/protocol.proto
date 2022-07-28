@@ -19,7 +19,7 @@ message SubscribeCommand {
   string topic = 1;
 }
 
-message UnSubscribeCommand {
+message UnsubscribeCommand {
   string topic = 1;
 }
 

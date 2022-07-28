@@ -228,7 +228,7 @@ func (c *Client) Unsubscribe(topic string) (err error) {
 	if c.status() != ws.StatusRunning {
 		return ErrNotRunning
 	}
-	msg := message.New().SetPayload(&protocol.UnSubscribeCommand{
+	msg := message.New().SetPayload(&protocol.UnsubscribeCommand{
 		Topic: topic,
 	})
 	var data []byte
