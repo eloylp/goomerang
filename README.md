@@ -462,9 +462,9 @@ subscribed.
 ```mermaid
 graph LR;
 MessageBroker-->GoomerangServer;
-GoomerangServer--message.a-->TopicA;
-GoomerangServer--message.b-->TopicB;
-GoomerangServer--message.c-->TopicC;
+GoomerangServer-->TopicA;
+GoomerangServer-->TopicB;
+GoomerangServer-->TopicC;
 TopicA-->Client1;
 TopicA-->Client2;
 TopicB-->Client2;
