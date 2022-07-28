@@ -357,7 +357,7 @@ func main() {
 	s, _ := server.New(server.WithListenAddr("127.0.0.1:8080"))
 
 	msg := message.New().SetPayload(&protos.MessageV1{
-		Message: "a message for everyone !"
+		Message: "a message for everyone !",
 	})
 
 	_, err := s.BroadCast(context.TODO(), msg)
