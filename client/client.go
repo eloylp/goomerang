@@ -224,24 +224,6 @@ func (c *Client) Subscribe(topic string) (err error) {
 	return
 }
 
-func (c *Client) Unsubscribe(topic string) (err error) {
-	if c.status() != ws.StatusRunning {
-		return ErrNotRunning
-	}
-	msg := message.New().SetPayload(&protocol.UnsubscribeCommand{
-		Topic: topic,
-	})
-	var data []byte
-	_, data, err = messaging.Pack(msg)
-	if err != nil {
-		return
-	}
-	if err = c.connSlot.Write(data); err != nil {
-		err = fmt.Errorf("unsubscribe: %v", err)
-	}
-	return
-}
-
 func (c *Client) Publish(topic string, msg *message.Message) (payloadSize int, err error) {
 	if c.status() != ws.StatusRunning {
 		return 0, ErrNotRunning
@@ -258,6 +240,24 @@ func (c *Client) Publish(topic string, msg *message.Message) (payloadSize int, e
 	}
 	if err = c.connSlot.Write(data); err != nil {
 		return payloadSize, fmt.Errorf("send: %v", err)
+	}
+	return
+}
+
+func (c *Client) Unsubscribe(topic string) (err error) {
+	if c.status() != ws.StatusRunning {
+		return ErrNotRunning
+	}
+	msg := message.New().SetPayload(&protocol.UnsubscribeCommand{
+		Topic: topic,
+	})
+	var data []byte
+	_, data, err = messaging.Pack(msg)
+	if err != nil {
+		return
+	}
+	if err = c.connSlot.Write(data); err != nil {
+		err = fmt.Errorf("unsubscribe: %v", err)
 	}
 	return
 }

@@ -33,17 +33,6 @@ func TestOnSubscribeHook(t *testing.T) {
 	hooks.ExecOnSubscribe("topic.a")
 }
 
-func TestOnUnsubscribeHook(t *testing.T) {
-	hooks := &hooks{}
-	hooks.AppendOnUnsubscribe(func(topic string) {
-		assert.Equal(t, "topic.a", topic)
-	})
-	hooks.AppendOnUnsubscribe(func(topic string) {
-		assert.Equal(t, "topic.a", topic)
-	})
-	hooks.ExecOnUnsubscribe("topic.a")
-}
-
 func TestOnPublishHook(t *testing.T) {
 	hooks := &hooks{}
 	hooks.AppendOnPublish(func(topic, fqdn string) {
@@ -55,4 +44,15 @@ func TestOnPublishHook(t *testing.T) {
 		assert.Equal(t, "message.a", fqdn)
 	})
 	hooks.ExecOnPublish("topic.a", "message.a")
+}
+
+func TestOnUnsubscribeHook(t *testing.T) {
+	hooks := &hooks{}
+	hooks.AppendOnUnsubscribe(func(topic string) {
+		assert.Equal(t, "topic.a", topic)
+	})
+	hooks.AppendOnUnsubscribe(func(topic string) {
+		assert.Equal(t, "topic.a", topic)
+	})
+	hooks.ExecOnUnsubscribe("topic.a")
 }

@@ -19,12 +19,12 @@ message SubscribeCommand {
   string topic = 1;
 }
 
-message UnsubscribeCommand {
-  string topic = 1;
-}
-
 message PublishCommand {
   string topic = 1;
   string kind = 2;
   bytes message = 3;
+}
+
+message UnsubscribeCommand {
+  string topic = 1;
 }

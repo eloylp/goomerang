@@ -119,19 +119,19 @@ func NewServerMetrics(c ServerConfig) *ServerMetrics {
 			Help:      "The number of successful subscribe commands processed by the server.",
 		}, []string{"topic"}),
 
-		UnsubscribeCount: prometheus.NewCounterVec(prometheus.CounterOpts{
-			Namespace: "goomerang",
-			Subsystem: "server_pubsub",
-			Name:      "unsubscribe_total",
-			Help:      "The number of successful unsubscribe commands processed by the server.",
-		}, []string{"topic"}),
-
 		PublishCount: prometheus.NewCounterVec(prometheus.CounterOpts{
 			Namespace: "goomerang",
 			Subsystem: "server_pubsub",
 			Name:      "publish_total",
 			Help:      "The number of successful publish commands processed by the server.",
 		}, []string{"topic", "message"}),
+
+		UnsubscribeCount: prometheus.NewCounterVec(prometheus.CounterOpts{
+			Namespace: "goomerang",
+			Subsystem: "server_pubsub",
+			Name:      "unsubscribe_total",
+			Help:      "The number of successful unsubscribe commands processed by the server.",
+		}, []string{"topic"}),
 
 		Errors: prometheus.NewCounter(prometheus.CounterOpts{
 			Namespace: "goomerang",
@@ -153,7 +153,7 @@ func (m *ServerMetrics) Register(r prometheus.Registerer) {
 	r.MustRegister(m.ConfigMaxConcurrency)
 	r.MustRegister(m.CurrentStatus)
 	r.MustRegister(m.SubscribeCount)
-	r.MustRegister(m.UnsubscribeCount)
 	r.MustRegister(m.PublishCount)
+	r.MustRegister(m.UnsubscribeCount)
 	r.MustRegister(m.Errors)
 }

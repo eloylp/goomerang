@@ -74,15 +74,6 @@ func (c *MeteredClient) Subscribe(topic string) error {
 	return nil
 }
 
-func (c *MeteredClient) Unsubscribe(topic string) error {
-	if err := c.c.Unsubscribe(topic); err != nil {
-		c.metrics.Errors.Inc()
-		return err
-	}
-	c.metrics.UnsubscribeCmdCount.WithLabelValues(topic).Inc()
-	return nil
-}
-
 func (c *MeteredClient) Publish(topic string, msg *message.Message) error {
 	if _, err := c.c.Publish(topic, msg); err != nil {
 		c.metrics.Errors.Inc()
@@ -90,6 +81,15 @@ func (c *MeteredClient) Publish(topic string, msg *message.Message) error {
 	}
 	fqdn := messaging.FQDN(msg.Payload)
 	c.metrics.PublishCmdCount.WithLabelValues(topic, fqdn).Inc()
+	return nil
+}
+
+func (c *MeteredClient) Unsubscribe(topic string) error {
+	if err := c.c.Unsubscribe(topic); err != nil {
+		c.metrics.Errors.Inc()
+		return err
+	}
+	c.metrics.UnsubscribeCmdCount.WithLabelValues(topic).Inc()
 	return nil
 }
 
