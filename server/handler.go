@@ -84,7 +84,7 @@ func mainHandler(s *Server) http.HandlerFunc {
 	}
 }
 
-func subscribeCommandHandler(pse *pubSubEngine, hook func(topic string)) message.Handler {
+func subscribeCmdHandler(pse *pubSubEngine, hook func(topic string)) message.Handler {
 	return message.HandlerFunc(func(s message.Sender, msg *message.Message) {
 		subsCmd := msg.Payload.(*protocol.SubscribeCommand)
 		pse.subscribe(subsCmd.Topic, s)
@@ -92,7 +92,7 @@ func subscribeCommandHandler(pse *pubSubEngine, hook func(topic string)) message
 	})
 }
 
-func unsubscribeCommandHandler(pse *pubSubEngine, hook func(topic string)) message.Handler {
+func unsubscribeCmdHandler(pse *pubSubEngine, hook func(topic string)) message.Handler {
 	return message.HandlerFunc(func(s message.Sender, msg *message.Message) {
 		unsubsCmd := msg.Payload.(*protocol.UnsubscribeCommand)
 		pse.unsubscribe(unsubsCmd.Topic, s.ConnSlot())
@@ -100,7 +100,7 @@ func unsubscribeCommandHandler(pse *pubSubEngine, hook func(topic string)) messa
 	})
 }
 
-func publishCommandHandler(mr message.Registry, pse *pubSubEngine,
+func publishCmdHandler(mr message.Registry, pse *pubSubEngine,
 	hook func(topic, fqdn string), onErrorHook func(err error)) message.Handler {
 	return message.HandlerFunc(func(s message.Sender, msg *message.Message) {
 		pubCmd := msg.Payload.(*protocol.PublishCommand)

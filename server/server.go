@@ -285,9 +285,9 @@ func (s *Server) Shutdown(ctx context.Context) (err error) {
 }
 
 func registerBuiltInHandlers(s *Server) {
-	s.Handle(&protocol.SubscribeCommand{}, subscribeCommandHandler(s.pubSubEngine, s.hooks.ExecOnSubscribe))
-	s.Handle(&protocol.PublishCommand{}, publishCommandHandler(s.messageRegistry, s.pubSubEngine, s.hooks.ExecOnPublish, s.hooks.ExecOnError))
-	s.Handle(&protocol.UnsubscribeCommand{}, unsubscribeCommandHandler(s.pubSubEngine, s.hooks.ExecOnUnsubscribe))
+	s.Handle(&protocol.SubscribeCommand{}, subscribeCmdHandler(s.pubSubEngine, s.hooks.ExecOnSubscribe))
+	s.Handle(&protocol.PublishCommand{}, publishCmdHandler(s.messageRegistry, s.pubSubEngine, s.hooks.ExecOnPublish, s.hooks.ExecOnError))
+	s.Handle(&protocol.UnsubscribeCommand{}, unsubscribeCmdHandler(s.pubSubEngine, s.hooks.ExecOnUnsubscribe))
 }
 
 func (s *Server) broadcastClose() {
