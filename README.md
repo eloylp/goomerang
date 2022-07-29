@@ -378,6 +378,11 @@ Clients can send asynchronous messages among them by publishing and subscribing 
 domain**, which
 means that any message published in a given topic will be sent to all subscribed clients, without taking place any kind of load balancing.
 
+On the client side, all messages intended to be received by a subscription, should be properly [handled](#message-handlers).
+
+The server must be aware of all message kinds going through the
+pub/sub system. See [message registration](#messages-registration) for more details.
+
 Let's check and example of the client side API:
 
 ```go
@@ -426,7 +431,7 @@ func main() {
 We can appreciate the `Subscribe(topic string)`, `Publish(topic string, msg *message.Message)` and `Unsubscribe(topic string)` interfaces.
 This three calls will send a command to the server. After that the server will accomplish the required operation.
 
-From the server side API, theres also a method `Publish(topic string, msg *message.Message)` is provided.
+From the server side API, there's also a method `Publish(topic string, msg *message.Message)`:
 
 ```go
 package main
@@ -447,7 +452,7 @@ func main() {
 	msg := message.New().SetPayload(&protos.MessageV1{
 		Message: "a message for everyone !",
 	})
-	// Once clients are connected, server can start streaming messages
+	// Once clients are connected, server can start sending messages
 	// to specific topics.
 	if err := s.Publish("topic.a", msg); err != nil {
 		log.Fatal(err)
@@ -455,8 +460,8 @@ func main() {
 }
 ```
 
-A typical use case for server side publications , would be to consume from a queue and fan out the data to the different topics, in which
-customers would be
+A typical use case for server side publications , would be to consume from a queue and fan out the messages to the different topics, in which
+clients would be
 subscribed.
 
 ```mermaid
