@@ -176,7 +176,7 @@ func (s *Server) BroadCast(ctx context.Context, msg *message.Message) (brResult 
 }
 
 // Publish enables the server to send a message to all
-// subscribed parts in a topic.
+// subscribed clients in a topic.
 func (s *Server) Publish(topic string, msg *message.Message) error {
 	if s.status() != ws.StatusRunning {
 		return ErrNotRunning
