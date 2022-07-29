@@ -216,7 +216,7 @@ func (c *Client) Subscribe(topic string) (err error) {
 	var data []byte
 	_, data, err = messaging.Pack(msg)
 	if err != nil {
-		return
+		return fmt.Errorf("subscribe: %v", err)
 	}
 	if err = c.connSlot.Write(data); err != nil {
 		err = fmt.Errorf("subscribe: %v", err)
@@ -231,15 +231,15 @@ func (c *Client) Publish(topic string, msg *message.Message) (payloadSize int, e
 
 	pubMsg, err := messaging.MessageForPublish(topic, msg)
 	if err != nil {
-		return 0, err
+		return 0, fmt.Errorf("publish: %v", err)
 	}
 	var data []byte
 	payloadSize, data, err = messaging.Pack(pubMsg)
 	if err != nil {
-		return
+		return 0, fmt.Errorf("publish: %v", err)
 	}
 	if err = c.connSlot.Write(data); err != nil {
-		return payloadSize, fmt.Errorf("send: %v", err)
+		return payloadSize, fmt.Errorf("publish: %v", err)
 	}
 	return
 }
@@ -254,7 +254,7 @@ func (c *Client) Unsubscribe(topic string) (err error) {
 	var data []byte
 	_, data, err = messaging.Pack(msg)
 	if err != nil {
-		return
+		return fmt.Errorf("unsubscribe: %v", err)
 	}
 	if err = c.connSlot.Write(data); err != nil {
 		err = fmt.Errorf("unsubscribe: %v", err)
