@@ -210,7 +210,7 @@ func (c *Client) Subscribe(topic string) (err error) {
 	if c.status() != ws.StatusRunning {
 		return ErrNotRunning
 	}
-	msg := message.New().SetPayload(&protocol.SubscribeCommand{
+	msg := message.New().SetPayload(&protocol.SubscribeCmd{
 		Topic: topic,
 	})
 	var data []byte
@@ -248,7 +248,7 @@ func (c *Client) Unsubscribe(topic string) (err error) {
 	if c.status() != ws.StatusRunning {
 		return ErrNotRunning
 	}
-	msg := message.New().SetPayload(&protocol.UnsubscribeCommand{
+	msg := message.New().SetPayload(&protocol.UnsubscribeCmd{
 		Topic: topic,
 	})
 	var data []byte

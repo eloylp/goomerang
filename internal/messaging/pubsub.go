@@ -17,7 +17,7 @@ func MessageForPublish(topic string, msg *message.Message) (*message.Message, er
 	if err != nil {
 		return nil, fmt.Errorf("messageForPublish: %v", err)
 	}
-	pubMsg := message.New().SetPayload(&protocol.PublishCommand{
+	pubMsg := message.New().SetPayload(&protocol.PublishCmd{
 		Topic:   topic,
 		Kind:    msg.Metadata.Kind,
 		Message: data,
@@ -29,7 +29,7 @@ func MessageForPublish(topic string, msg *message.Message) (*message.Message, er
 }
 
 func MessageFromPublish(registry message.Registry, msg *message.Message) (*message.Message, error) {
-	pubCmd, ok := msg.Payload.(*protocol.PublishCommand)
+	pubCmd, ok := msg.Payload.(*protocol.PublishCmd)
 	if !ok {
 		return nil, fmt.Errorf("messageFromPublish: %v", "input message its not a protocol.PublishCommand one")
 	}

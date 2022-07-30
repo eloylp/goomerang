@@ -24,17 +24,17 @@ func TestMessageForPublish(t *testing.T) {
 
 	require.NoError(t, err)
 
-	assert.Equal(t, "goomerang.protocol.PublishCommand", pubMsg.Metadata.Kind)
+	assert.Equal(t, "goomerang.protocol.PublishCmd", pubMsg.Metadata.Kind)
 	assert.Equal(t, "v1", pubMsg.GetHeader("message-k1"))
 	assert.Equal(t, "v2", pubMsg.GetHeader("message-k2"))
-	payloadMsg := pubMsg.Payload.(*protocol.PublishCommand)
+	payloadMsg := pubMsg.Payload.(*protocol.PublishCmd)
 	assert.Equal(t, "topic.a", payloadMsg.Topic)
 	assert.Len(t, payloadMsg.Message, 21)
 	assert.Equal(t, "goomerang.example.MessageV1", payloadMsg.Kind)
 }
 
 func TestMessageFromPublish(t *testing.T) {
-	pubCmd, clientProto := publishCommandFixture(t)
+	pubCmd, clientProto := publishCmdFixture(t)
 
 	mr := message.Registry{}
 	mr.Register(messaging.FQDN(clientProto), clientProto)
@@ -48,7 +48,7 @@ func TestMessageFromPublish(t *testing.T) {
 	assert.Equal(t, clientProto.Message, msgForPublish.Payload.(*protos.MessageV1).Message)
 }
 
-func publishCommandFixture(t *testing.T) (*message.Message, *protos.MessageV1) {
+func publishCmdFixture(t *testing.T) (*message.Message, *protos.MessageV1) {
 	m := &protos.MessageV1{
 		Message: "message for topic.a",
 	}
@@ -57,7 +57,7 @@ func publishCommandFixture(t *testing.T) (*message.Message, *protos.MessageV1) {
 		t.Fatal(err)
 	}
 
-	pubMsg := message.New().SetPayload(&protocol.PublishCommand{
+	pubMsg := message.New().SetPayload(&protocol.PublishCmd{
 		Topic:   "topic.a",
 		Kind:    "goomerang.example.MessageV1",
 		Message: data,
