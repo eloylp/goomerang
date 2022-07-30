@@ -63,6 +63,16 @@ func (a *Arbiter) RequireHappened(event string) *Arbiter {
 	return a
 }
 
+func (a *Arbiter) RequireNotHappened(event string) *Arbiter {
+	require.Eventuallyf(a.t, func() bool {
+		a.l.RLock()
+		defer a.l.RUnlock()
+		_, ok := a.evCount[event]
+		return !ok
+	}, time.Second, time.Millisecond, "event %s happened, but wasn't expected", event)
+	return a
+}
+
 func (a *Arbiter) RequireHappenedInOrder(events ...string) *Arbiter {
 	passed := assert.Eventually(a.t, func() bool {
 		a.l.RLock()

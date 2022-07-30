@@ -63,6 +63,7 @@ CLOSED --> [*]
   at clients and servers.
 * [Middleware support](#middlewares), inspired by the Go HTTP standard lib.
 * [Broadcast messages](#broadcasts) from the server to clients.
+* [Publish and subscribe](#publish-and-subscribe) model.
 * Send [synchronous messages](#synchronous-sends) from the client side, following a request/response pattern.
 * Support for concurrency at a message handler level.
 * Support for configurable [hooks](#hooks) for certain actions.
@@ -357,7 +358,7 @@ func main() {
 	s, _ := server.New(server.WithListenAddr("127.0.0.1:8080"))
 
 	msg := message.New().SetPayload(&protos.MessageV1{
-		Message: "a message for everyone !"
+		Message: "a message for everyone !",
 	})
 
 	_, err := s.BroadCast(context.TODO(), msg)
@@ -370,6 +371,115 @@ func main() {
 From the client side, it is not possible to send broadcasts to all the other connected clients. However, nothing will stop the
 user of the library of creating a handler for enabling this operation in the server. An example can be
 found [here](client_side_broadcast_test.go).
+
+## Publish and subscribe
+
+Clients can send asynchronous messages among them by publishing and subscribing to topics. Currently, **each topic will conform a diffusion
+domain**, which
+means that any message published in a given topic will be sent to all subscribed clients, without taking place any kind of load balancing.
+
+On the client side, all messages intended to be received by a subscription, should be properly [handled](#message-handlers).
+
+The server must be aware of all message kinds going through the
+pub/sub system. See [message registration](#messages-registration) for more details.
+
+Let's check and example of the client side API:
+
+```go
+package main
+
+import (
+	"context"
+	"log"
+
+	"go.eloylp.dev/goomerang/client"
+	"go.eloylp.dev/goomerang/example/protos"
+	"go.eloylp.dev/goomerang/message"
+)
+
+func main() {
+	//...
+	c, err := client.New(
+		client.WithServerAddr("127.0.0.1:8080"),
+	)
+	if err != nil {
+		log.Fatal(err)
+	}
+	if err := c.Connect(context.TODO()); err != nil {
+		log.Fatal(err)
+	}
+
+	// Client subscribes to a topic. Now it will receive all messages
+	// for that topic.
+	if err := c.Subscribe("topic.a"); err != nil {
+		log.Fatal(err)
+	}
+
+	// At any moment, any client can publish a message to a specific topic.
+	msg := message.New().SetPayload(&protos.MessageV1{})
+	if _, err := c.Publish("topic.a", msg); err != nil {
+		log.Fatal(err)
+	}
+	// Finally, client can unsubscribe from a topic at any moment, the
+	// client will stop receiving messages for that topic.
+	if err := c.Unsubscribe("topic.a"); err != nil {
+		log.Fatal(err)
+	}
+}
+```
+
+We can appreciate the `Subscribe(topic string)`, `Publish(topic string, msg *message.Message)` and `Unsubscribe(topic string)` interfaces.
+This three calls will send a command to the server. After that the server will accomplish the required operation.
+
+From the server side API, there's also a method `Publish(topic string, msg *message.Message)`:
+
+```go
+package main
+
+import (
+	"context"
+	"log"
+
+	"go.eloylp.dev/goomerang/message"
+	"go.eloylp.dev/goomerang/server"
+	"go.eloylp.dev/goomerang/example/protos"
+)
+
+func main() {
+	// Create the server
+	s, _ := server.New(server.WithListenAddr("127.0.0.1:8080"))
+
+	msg := message.New().SetPayload(&protos.MessageV1{
+		Message: "a message for everyone !",
+	})
+	// Once clients are connected, server can start sending messages
+	// to specific topics.
+	if err := s.Publish("topic.a", msg); err != nil {
+		log.Fatal(err)
+	}
+}
+```
+
+A typical use case for server side publications , would be to consume from a queue and fan out the messages to the different topics, in which
+clients would be
+subscribed.
+
+```mermaid
+graph LR;
+MessageBroker-->GoomerangServer;
+GoomerangServer-->TopicA;
+GoomerangServer-->TopicB;
+GoomerangServer-->TopicC;
+TopicA-->Client1;
+TopicA-->Client2;
+TopicB-->Client2;
+TopicC-->Client3;
+```
+
+(Graph of Message flow)
+
+The **internal state** of the pub/sub engine its **not replicated across server replicas**. That means the server can't scale out
+horizontally yet.
 
 ## Synchronous sends
 

@@ -33,12 +33,13 @@ func TestNoRaces(t *testing.T) {
 
 	c, connect := PrepareClient(t, client.WithServerAddr(s.Addr()))
 	c.Handle(defaultMsg.Payload, nilHandler)
-
 	connect()
+	failIfErr(t, c.Subscribe("topic.a"))
 
 	c2, connect2 := PrepareClient(t, client.WithServerAddr(s.Addr()))
 	c2.Handle(defaultMsg.Payload, nilHandler)
 	connect2()
+	failIfErr(t, c2.Subscribe("topic.a"))
 
 	// Set test duration of 10 seconds.
 	ctx, cancl := context.WithTimeout(defaultCtx, 10*time.Second)
@@ -56,6 +57,14 @@ func TestNoRaces(t *testing.T) {
 			return
 		}
 		arbiter.ItsAFactThat("s.BroadCast()")
+	})
+
+	go exec.Parallelize(ctx, wg, maxConcurrent, func() {
+		if err := s.Publish("topic.a", defaultMsg); err != nil && err != server.ErrNotRunning {
+			arbiter.ErrorHappened(err)
+			return
+		}
+		arbiter.ItsAFactThat("s.Publish()")
 	})
 
 	go exec.Parallelize(ctx, wg, maxConcurrent, func() {

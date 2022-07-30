@@ -14,3 +14,17 @@ message Frame {
   map<string, string> headers = 6;
   bytes payload = 7;
 }
+
+message SubscribeCmd {
+  string topic = 1;
+}
+
+message PublishCmd {
+  string topic = 1;
+  string kind = 2;
+  bytes message = 3;
+}
+
+message UnsubscribeCmd {
+  string topic = 1;
+}

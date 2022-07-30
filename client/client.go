@@ -14,8 +14,10 @@ import (
 	"github.com/hashicorp/go-multierror"
 	"google.golang.org/protobuf/proto"
 
+	"go.eloylp.dev/goomerang/conn"
 	"go.eloylp.dev/goomerang/internal/conc"
 	"go.eloylp.dev/goomerang/internal/messaging"
+	"go.eloylp.dev/goomerang/internal/messaging/protocol"
 	"go.eloylp.dev/goomerang/message"
 	"go.eloylp.dev/goomerang/ws"
 )
@@ -26,9 +28,8 @@ type Client struct {
 	serverURL         url.URL
 	handlerChainer    *messaging.HandlerChainer
 	messageRegistry   message.Registry
-	writeLock         *sync.Mutex
 	wg                *sync.WaitGroup
-	conn              *websocket.Conn
+	connSlot          *conn.Slot
 	dialer            *websocket.Dialer
 	ctx               context.Context
 	cancl             context.CancelFunc
@@ -63,7 +64,6 @@ func New(opts ...Option) (*Client, error) {
 			WriteBufferSize:   cfg.WriteBufferSize,
 			EnableCompression: cfg.EnableCompression,
 		},
-		writeLock:       &sync.Mutex{},
 		wg:              &sync.WaitGroup{},
 		handlerChainer:  messaging.NewHandlerChainer(),
 		messageRegistry: message.Registry{},
@@ -76,6 +76,10 @@ func New(opts ...Option) (*Client, error) {
 	return c, nil
 }
 
+func (c *Client) ConnSlot() *conn.Slot {
+	return c.connSlot
+}
+
 // Connect tries a connection to the specified server.
 // This method can be called after a client shutdown again
 // in order to retry the connection.
@@ -85,12 +89,12 @@ func (c *Client) Connect(ctx context.Context) error {
 	}
 	c.ctx, c.cancl = context.WithCancel(context.Background())
 	c.handlerChainer.PrepareChains()
-	conn, resp, err := c.dialer.DialContext(ctx, c.serverURL.String(), nil)
+	wsConn, resp, err := c.dialer.DialContext(ctx, c.serverURL.String(), nil)
 	if err != nil {
 		return fmt.Errorf("connect: %v", err)
 	}
 	defer resp.Body.Close()
-	c.conn = conn
+	c.connSlot = conn.NewSlot(wsConn)
 	c.wg.Add(1)
 	go c.receiver()
 	c.wg.Add(1)
@@ -106,10 +110,10 @@ func (c *Client) receiver() {
 		case <-c.ctx.Done():
 			return
 		default:
-			messageType, data, err := c.conn.ReadMessage()
+			messageType, data, err := c.connSlot.Conn().ReadMessage()
 			if err != nil {
 				if websocket.IsCloseError(err, websocket.CloseNormalClosure) {
-					c.receivedCloseFromServer()
+					c.connSlot.SetReceivedClose()
 					if c.status() == ws.StatusClosing {
 						return
 					}
@@ -196,8 +200,64 @@ func (c *Client) Send(msg *message.Message) (payloadSize int, err error) {
 	if err != nil {
 		return
 	}
-	if err = c.writeMessage(data); err != nil {
+	if err = c.connSlot.Write(data); err != nil {
 		return payloadSize, fmt.Errorf("send: %v", err)
+	}
+	return
+}
+
+func (c *Client) Subscribe(topic string) (err error) {
+	if c.status() != ws.StatusRunning {
+		return ErrNotRunning
+	}
+	msg := message.New().SetPayload(&protocol.SubscribeCmd{
+		Topic: topic,
+	})
+	var data []byte
+	_, data, err = messaging.Pack(msg)
+	if err != nil {
+		return fmt.Errorf("subscribe: %v", err)
+	}
+	if err = c.connSlot.Write(data); err != nil {
+		err = fmt.Errorf("subscribe: %v", err)
+	}
+	return
+}
+
+func (c *Client) Publish(topic string, msg *message.Message) (payloadSize int, err error) {
+	if c.status() != ws.StatusRunning {
+		return 0, ErrNotRunning
+	}
+
+	pubMsg, err := messaging.MessageForPublish(topic, msg)
+	if err != nil {
+		return 0, fmt.Errorf("publish: %v", err)
+	}
+	var data []byte
+	payloadSize, data, err = messaging.Pack(pubMsg)
+	if err != nil {
+		return 0, fmt.Errorf("publish: %v", err)
+	}
+	if err = c.connSlot.Write(data); err != nil {
+		return payloadSize, fmt.Errorf("publish: %v", err)
+	}
+	return
+}
+
+func (c *Client) Unsubscribe(topic string) (err error) {
+	if c.status() != ws.StatusRunning {
+		return ErrNotRunning
+	}
+	msg := message.New().SetPayload(&protocol.UnsubscribeCmd{
+		Topic: topic,
+	})
+	var data []byte
+	_, data, err = messaging.Pack(msg)
+	if err != nil {
+		return fmt.Errorf("unsubscribe: %v", err)
+	}
+	if err = c.connSlot.Write(data); err != nil {
+		err = fmt.Errorf("unsubscribe: %v", err)
 	}
 	return
 }
@@ -225,7 +285,7 @@ func (c *Client) SendSync(ctx context.Context, msg *message.Message) (payloadSiz
 			return
 		}
 		c.requestRegistry.createListener(UUID)
-		if err = c.writeMessage(data); err != nil {
+		if err = c.connSlot.Write(data); err != nil {
 			err = fmt.Errorf("sendSync: %v", err)
 			return
 		}
@@ -258,13 +318,13 @@ func (c *Client) close(ctx context.Context, isInitiator bool) (err error) {
 		defer c.hooks.ExecOnclose()
 		defer c.setStatus(ws.StatusClosed)
 		errList := multierror.Append(nil, nil)
-		if err := c.sendClosingSignal(); err != nil {
+		if err := c.connSlot.SendCloseSignal(); err != nil {
 			errList = multierror.Append(nil, fmt.Errorf("close: %v", err))
 		}
 		var serverLooksUnresponsive bool
 		if isInitiator {
 			// Wait for server shutdown handshake, not forever of course.
-			if err := c.waitForServerCloseReply(); err != nil {
+			if err := c.connSlot.WaitReceivedClose(); err != nil {
 				serverLooksUnresponsive = true
 				errList = multierror.Append(nil, fmt.Errorf("close: %v", err))
 			}
@@ -276,7 +336,7 @@ func (c *Client) close(ctx context.Context, isInitiator bool) (err error) {
 		// Client should never close connections : https://datatracker.ietf.org/doc/html/rfc6455#section-7.1.1
 		// Of course, if server did not reply in the close handshake, we ensure the connection close.
 		if serverLooksUnresponsive {
-			if err := c.conn.Close(); err != nil {
+			if err := c.connSlot.Close(); err != nil {
 				errList = multierror.Append(errList, fmt.Errorf("close: %v", err))
 			}
 		}
@@ -318,25 +378,6 @@ func (c *Client) RegisterMessage(msg proto.Message) {
 	c.messageRegistry.Register(messaging.FQDN(msg), msg)
 }
 
-func (c *Client) writeMessage(data []byte) error {
-	c.writeLock.Lock()
-	defer c.writeLock.Unlock()
-	return c.conn.WriteMessage(websocket.BinaryMessage, data)
-}
-
-func (c *Client) sendClosingSignal() error {
-	c.writeLock.Lock()
-	defer c.writeLock.Unlock()
-	err := c.conn.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, ""))
-	// This error is ignored because we suspect once the underlying library receives the close frame,
-	// it tries to prevent sending anything more. But we need to send back the close frame when we
-	// receive it from the server, in order to accomplish the closing handshake.
-	if err == websocket.ErrCloseSent {
-		return nil
-	}
-	return err
-}
-
 func (c *Client) receiveSync(msg *message.Message) error {
 	if err := c.requestRegistry.submitResult(msg.Metadata.UUID, msg); err != nil {
 		return err
@@ -353,30 +394,13 @@ func (c *Client) status() uint32 {
 	return atomic.LoadUint32(&c.currentStatus)
 }
 
-func (c *Client) waitForServerCloseReply() error {
-	ctx, cancl := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancl()
-	select {
-	case <-ctx.Done():
-		return fmt.Errorf("server spent more than 5 seconds to send close. Continuing anyway: %v", ctx.Err())
-	case <-c.chCloseWait:
-		return nil
-	}
-}
-
-func (c *Client) receivedCloseFromServer() {
-	c.chCloseWait <- struct{}{}
-}
-
 func (c *Client) heartbeat() {
 	defer c.wg.Done()
 	ticker := time.NewTicker(c.heartbeatInterval)
 	defer ticker.Stop()
 	pingFn := func() (err error) {
-		c.writeLock.Lock()
-		defer c.writeLock.Unlock()
 		if c.status() == ws.StatusRunning {
-			err = c.conn.WriteMessage(websocket.PingMessage, []byte("ping"))
+			err = c.connSlot.WriteRaw(websocket.PingMessage, []byte("ping"))
 		}
 		return
 	}

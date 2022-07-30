@@ -34,6 +34,9 @@ type ServerMetrics struct {
 	CurrentStatus            prometheus.Gauge
 	ConcurrentWorkers        prometheus.Gauge
 	ConfigMaxConcurrency     prometheus.Gauge
+	SubscribeCount           *prometheus.CounterVec
+	UnsubscribeCount         *prometheus.CounterVec
+	PublishCount             *prometheus.CounterVec
 	Errors                   prometheus.Counter
 }
 
@@ -109,6 +112,27 @@ func NewServerMetrics(c ServerConfig) *ServerMetrics {
 			Help:      "The current status of the server (0 => New, 1 => Running, 2=> Closing, 3 => closed)",
 		}),
 
+		SubscribeCount: prometheus.NewCounterVec(prometheus.CounterOpts{
+			Namespace: "goomerang",
+			Subsystem: "server_pubsub",
+			Name:      "subscribe_total",
+			Help:      "The number of successful subscribe commands processed by the server.",
+		}, []string{"topic"}),
+
+		PublishCount: prometheus.NewCounterVec(prometheus.CounterOpts{
+			Namespace: "goomerang",
+			Subsystem: "server_pubsub",
+			Name:      "publish_total",
+			Help:      "The number of successful publish commands processed by the server.",
+		}, []string{"topic", "message"}),
+
+		UnsubscribeCount: prometheus.NewCounterVec(prometheus.CounterOpts{
+			Namespace: "goomerang",
+			Subsystem: "server_pubsub",
+			Name:      "unsubscribe_total",
+			Help:      "The number of successful unsubscribe commands processed by the server.",
+		}, []string{"topic"}),
+
 		Errors: prometheus.NewCounter(prometheus.CounterOpts{
 			Namespace: "goomerang",
 			Subsystem: "server",
@@ -128,5 +152,8 @@ func (m *ServerMetrics) Register(r prometheus.Registerer) {
 	r.MustRegister(m.ConcurrentWorkers)
 	r.MustRegister(m.ConfigMaxConcurrency)
 	r.MustRegister(m.CurrentStatus)
+	r.MustRegister(m.SubscribeCount)
+	r.MustRegister(m.PublishCount)
+	r.MustRegister(m.UnsubscribeCount)
 	r.MustRegister(m.Errors)
 }

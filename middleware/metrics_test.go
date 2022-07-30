@@ -15,6 +15,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"go.eloylp.dev/goomerang/conn"
 	"go.eloylp.dev/goomerang/example/protos"
 	"go.eloylp.dev/goomerang/message"
 	"go.eloylp.dev/goomerang/metrics"
@@ -132,6 +133,10 @@ func TestMetricsIfNotSendsMessageBack(t *testing.T) {
 }
 
 type fakeSender struct{}
+
+func (f *fakeSender) ConnSlot() *conn.Slot {
+	panic("implement me")
+}
 
 func (f *fakeSender) Send(msg *message.Message) (payloadSize int, err error) {
 	msg.Metadata = message.Metadata{

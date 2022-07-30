@@ -13,8 +13,10 @@ import (
 	"github.com/hashicorp/go-multierror"
 	"google.golang.org/protobuf/proto"
 
+	"go.eloylp.dev/goomerang/conn"
 	"go.eloylp.dev/goomerang/internal/conc"
 	"go.eloylp.dev/goomerang/internal/messaging"
+	"go.eloylp.dev/goomerang/internal/messaging/protocol"
 	"go.eloylp.dev/goomerang/message"
 	"go.eloylp.dev/goomerang/ws"
 )
@@ -23,11 +25,12 @@ import (
 // elements.
 type Server struct {
 	intServer       *http.Server
-	connRegistry    map[*websocket.Conn]connSlot
+	connRegistry    map[*websocket.Conn]*conn.Slot
 	serverL         *sync.RWMutex
 	wg              *sync.WaitGroup
 	ctx             context.Context
 	cancl           context.CancelFunc
+	pubSubEngine    *pubSubEngine
 	wsUpgrader      *websocket.Upgrader
 	handlerChainer  *messaging.HandlerChainer
 	messageRegistry message.Registry
@@ -58,11 +61,12 @@ func New(opts ...Option) (*Server, error) {
 			ReadTimeout:       cfg.HTTPReadTimeout,
 			WriteTimeout:      cfg.HTTPWriteTimeout,
 		},
-		connRegistry: map[*websocket.Conn]connSlot{},
+		connRegistry: map[*websocket.Conn]*conn.Slot{},
 		serverL:      &sync.RWMutex{},
 		wg:           &sync.WaitGroup{},
 		ctx:          ctx,
 		cancl:        cancl,
+		pubSubEngine: newPubSubEngine(),
 		wsUpgrader: &websocket.Upgrader{
 			HandshakeTimeout:  cfg.HandshakeTimeout,
 			ReadBufferSize:    cfg.ReadBufferSize,
@@ -148,10 +152,10 @@ func (s *Server) BroadCast(ctx context.Context, msg *message.Message) (brResult 
 
 		brResult = make([]BroadcastResult, 0, len(s.connRegistry))
 
-		for conn := range s.connRegistry {
-			cs := s.connRegistry[conn]
+		for c := range s.connRegistry {
+			cs := s.connRegistry[c]
 			start := time.Now()
-			if err := cs.write(data); err != nil && errCount < maxErrors {
+			if err := cs.Write(data); err != nil && errCount < maxErrors {
 				errs = append(errs, fmt.Errorf("broadCast: %v", err))
 				errCount++
 				continue
@@ -169,6 +173,18 @@ func (s *Server) BroadCast(ctx context.Context, msg *message.Message) (brResult 
 	case <-ch:
 		return
 	}
+}
+
+// Publish enables the server to send a message to all
+// subscribed clients in a topic.
+func (s *Server) Publish(topic string, msg *message.Message) error {
+	if s.status() != ws.StatusRunning {
+		return ErrNotRunning
+	}
+	if err := s.pubSubEngine.publish(topic, msg); err != nil {
+		return fmt.Errorf("publish: %v", err)
+	}
+	return nil
 }
 
 // Run will start the server with all the previously
@@ -190,6 +206,7 @@ func (s *Server) Run() (err error) {
 	if err != nil {
 		return fmt.Errorf("run: %v", err)
 	}
+	registerBuiltInHandlers(s)
 	s.setStatus(ws.StatusRunning)
 	s.handlerChainer.PrepareChains()
 
@@ -206,6 +223,20 @@ func (s *Server) Run() (err error) {
 		return err
 	}
 	return nil
+}
+
+// RegisterMessage will make the server aware of a specific kind of
+// protocol buffer message. This is specially needed when
+// the user sends messages with methods like SendSync(),
+// as the client needs to know how to decode the incoming reply.
+//
+// If the kind of message it's already registered with the Handle()
+// method, then the user can omit this registration.
+//
+// This is specially needed in order to make the server aware
+// of the messages published in pub/sub patterns.
+func (s *Server) RegisterMessage(msg proto.Message) {
+	s.messageRegistry.Register(messaging.FQDN(msg), msg)
 }
 
 // Addr provides the listener address. It will
@@ -253,18 +284,24 @@ func (s *Server) Shutdown(ctx context.Context) (err error) {
 	}
 }
 
+func registerBuiltInHandlers(s *Server) {
+	s.Handle(&protocol.SubscribeCmd{}, subscribeCmdHandler(s.pubSubEngine, s.hooks.ExecOnSubscribe))
+	s.Handle(&protocol.PublishCmd{}, publishCmdHandler(s.messageRegistry, s.pubSubEngine, s.hooks.ExecOnPublish, s.hooks.ExecOnError))
+	s.Handle(&protocol.UnsubscribeCmd{}, unsubscribeCmdHandler(s.pubSubEngine, s.hooks.ExecOnUnsubscribe))
+}
+
 func (s *Server) broadcastClose() {
 	s.serverL.RLock()
 	defer s.serverL.RUnlock()
 	wg := sync.WaitGroup{}
 	for _, cs := range s.connRegistry {
 		wg.Add(1)
-		go func(cs connSlot) {
+		go func(cs *conn.Slot) {
 			defer wg.Done()
-			if err := cs.sendCloseSignal(); err != nil {
+			if err := cs.SendCloseSignal(); err != nil {
 				s.hooks.ExecOnError(err)
 			}
-			if err := cs.waitReceivedClose(); err != nil {
+			if err := cs.WaitReceivedClose(); err != nil {
 				s.hooks.ExecOnError(err)
 			}
 		}(cs)
@@ -272,7 +309,7 @@ func (s *Server) broadcastClose() {
 	wg.Wait()
 }
 
-func (s *Server) processMessage(cs connSlot, data []byte, sOpts message.Sender) (err error) {
+func (s *Server) processMessage(cs *conn.Slot, data []byte) (err error) {
 	frame, err := messaging.UnPack(data)
 	if err != nil {
 		return err
@@ -287,10 +324,10 @@ func (s *Server) processMessage(cs connSlot, data []byte, sOpts message.Sender) 
 		return err
 	}
 	if msg.Metadata.IsSync {
-		handler.Handle(&SyncSender{cs, msg.Metadata.UUID}, msg)
+		handler.Handle(&SyncSender{cs, s.status, msg.Metadata.UUID}, msg)
 		return nil
 	}
-	handler.Handle(sOpts, msg)
+	handler.Handle(&stdSender{cs, s.status}, msg)
 	return nil
 }
 

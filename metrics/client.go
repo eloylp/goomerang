@@ -34,6 +34,9 @@ type ClientMetrics struct {
 	CurrentStatus               prometheus.Gauge
 	ConcurrentWorkers           prometheus.Gauge
 	ConfigMaxConcurrency        prometheus.Gauge
+	SubscribeCmdCount           *prometheus.CounterVec
+	UnsubscribeCmdCount         *prometheus.CounterVec
+	PublishCmdCount             *prometheus.CounterVec
 	Errors                      prometheus.Counter
 }
 
@@ -109,6 +112,27 @@ func NewClientMetrics(c ClientConfig) *ClientMetrics {
 			Help:      "The configured maximum number of parallel workers in the client",
 		}),
 
+		SubscribeCmdCount: prometheus.NewCounterVec(prometheus.CounterOpts{
+			Namespace: "goomerang",
+			Subsystem: "client_pubsub",
+			Name:      "subscribe_cmd_sent_total",
+			Help:      "The number of subscribe commands sent by the client to the server.",
+		}, []string{"topic"}),
+
+		PublishCmdCount: prometheus.NewCounterVec(prometheus.CounterOpts{
+			Namespace: "goomerang",
+			Subsystem: "client_pubsub",
+			Name:      "publish_cmd_sent_total",
+			Help:      "The number of publish commands sent by the client to the server.",
+		}, []string{"topic", "message"}),
+
+		UnsubscribeCmdCount: prometheus.NewCounterVec(prometheus.CounterOpts{
+			Namespace: "goomerang",
+			Subsystem: "client_pubsub",
+			Name:      "unsubscribe_cmd_sent_total",
+			Help:      "The number of unsubscribe commands sent by the client to the server.",
+		}, []string{"topic"}),
+
 		Errors: prometheus.NewCounter(prometheus.CounterOpts{
 			Namespace: "goomerang",
 			Subsystem: "client",
@@ -128,5 +152,8 @@ func (m *ClientMetrics) Register(r prometheus.Registerer) {
 	r.MustRegister(m.CurrentStatus)
 	r.MustRegister(m.ConcurrentWorkers)
 	r.MustRegister(m.ConfigMaxConcurrency)
+	r.MustRegister(m.SubscribeCmdCount)
+	r.MustRegister(m.PublishCmdCount)
+	r.MustRegister(m.UnsubscribeCmdCount)
 	r.MustRegister(m.Errors)
 }
