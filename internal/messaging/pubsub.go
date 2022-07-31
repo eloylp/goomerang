@@ -22,10 +22,16 @@ func MessageForPublish(topic string, msg *message.Message) (*message.Message, er
 		Kind:    msg.Metadata.Kind,
 		Message: data,
 	})
-	for k, v := range msg.Header {
-		pubMsg.SetHeader(fmt.Sprintf("%s%s", userMessageHeadersPrefix, k), v)
-	}
+	pubMsg.Header = packHeaders(msg.Header)
 	return pubMsg, nil
+}
+
+func packHeaders(headers message.Header) message.Header {
+	packedHeaders := message.Header{}
+	for k, v := range headers {
+		packedHeaders.Set(fmt.Sprintf("%s%s", userMessageHeadersPrefix, k), v)
+	}
+	return packedHeaders
 }
 
 func MessageFromPublish(registry message.Registry, msg *message.Message) (*message.Message, error) {
@@ -41,11 +47,17 @@ func MessageFromPublish(registry message.Registry, msg *message.Message) (*messa
 		return nil, fmt.Errorf("messageFromPublish: %v", err)
 	}
 	pubMsg := message.New().SetPayload(clientMsg)
-	for k, v := range msg.Header {
+	pubMsg.Header = unpackHeaders(msg.Header)
+	return pubMsg, nil
+}
+
+func unpackHeaders(headers message.Header) message.Header {
+	unpackedHeaders := message.Header{}
+	for k, v := range headers {
 		if strings.HasPrefix(k, userMessageHeadersPrefix) {
 			key := strings.TrimPrefix(k, userMessageHeadersPrefix)
-			pubMsg.SetHeader(key, v)
+			unpackedHeaders.Set(key, v)
 		}
 	}
-	return pubMsg, nil
+	return unpackedHeaders
 }
