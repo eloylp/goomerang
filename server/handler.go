@@ -84,6 +84,22 @@ func mainHandler(s *Server) http.HandlerFunc {
 	}
 }
 
+func broadcastCmdHandler(s *Server) message.Handler {
+	return message.HandlerFunc(func(sender message.Sender, msg *message.Message) {
+		origMsg, err := messaging.MessageFromBroadcast(s.messageRegistry, msg)
+		if err != nil {
+			s.hooks.ExecOnError(err)
+			return
+		}
+		brResult, err := s.BroadCast(s.ctx, origMsg)
+		if err != nil {
+			s.hooks.ExecOnError(err)
+			return
+		}
+		s.hooks.ExecOnBroadcast(origMsg.Metadata.Kind, brResult)
+	})
+}
+
 func subscribeCmdHandler(pse *pubSubEngine, hook func(topic string)) message.Handler {
 	return message.HandlerFunc(func(s message.Sender, msg *message.Message) {
 		subsCmd := msg.Payload.(*protocol.SubscribeCmd)
