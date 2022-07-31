@@ -15,6 +15,11 @@ message Frame {
   bytes payload = 7;
 }
 
+message BroadcastCmd {
+  string kind = 2;
+  bytes message = 3;
+}
+
 message SubscribeCmd {
   string topic = 1;
 }
