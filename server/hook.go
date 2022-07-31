@@ -7,6 +7,7 @@ import (
 type hooks struct {
 	config.Hooks
 	onConfiguration []func(cfg *Cfg)
+	onBroadcast     []func(fqdn string, result []BroadcastResult)
 	onSubscribe     []func(topic string)
 	onPublish       []func(topic, fqdn string)
 	onUnsubscribe   []func(topic string)
@@ -29,6 +30,16 @@ func (h *hooks) AppendOnSubscribe(f func(topic string)) {
 func (h *hooks) ExecOnSubscribe(topic string) {
 	for _, f := range h.onSubscribe {
 		f(topic)
+	}
+}
+
+func (h *hooks) AppendOnBroadcast(f func(fqdn string, result []BroadcastResult)) {
+	h.onBroadcast = append(h.onBroadcast, f)
+}
+
+func (h *hooks) ExecOnBroadcast(fqdn string, result []BroadcastResult) {
+	for _, f := range h.onBroadcast {
+		f(fqdn, result)
 	}
 }
 

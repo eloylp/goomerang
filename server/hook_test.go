@@ -4,6 +4,7 @@ package server
 
 import (
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -20,6 +21,25 @@ func TestOnConfigurationHook(t *testing.T) {
 	hooks.ExecOnConfiguration(defCfg)
 	assert.True(t, defCfg.EnableCompression)
 	assert.Equal(t, 1000, defCfg.WriteBufferSize)
+}
+
+func TestOnBroadcastHook(t *testing.T) {
+	hooks := &hooks{}
+	results := []BroadcastResult{
+		{
+			Size:     23,
+			Duration: 3 * time.Second,
+		},
+	}
+	hooks.AppendOnBroadcast(func(fqdn string, result []BroadcastResult) {
+		assert.Equal(t, results, result)
+		assert.Equal(t, "sales.bill", fqdn)
+	})
+	hooks.AppendOnBroadcast(func(fqdn string, result []BroadcastResult) {
+		assert.Equal(t, results, result)
+		assert.Equal(t, "sales.bill", fqdn)
+	})
+	hooks.ExecOnBroadcast("sales.bill", results)
 }
 
 func TestOnSubscribeHook(t *testing.T) {
