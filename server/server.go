@@ -140,6 +140,7 @@ func (s *Server) BroadCast(ctx context.Context, msg *message.Message) (brResult 
 		payloadSize, data, err = messaging.Pack(msg)
 
 		if err != nil {
+			err = fmt.Errorf("broadcast: %v", err)
 			return
 		}
 
