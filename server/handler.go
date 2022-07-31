@@ -111,6 +111,7 @@ func publishCmdHandler(mr message.Registry, pse *pubSubEngine,
 		}
 		if err := pse.publish(pubCmd.Topic, origMsg); err != nil {
 			onErrorHook(err)
+			return
 		}
 		hook(pubCmd.Topic, origMsg.Metadata.Kind)
 	})
