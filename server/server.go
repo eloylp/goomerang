@@ -133,6 +133,7 @@ func (s *Server) BroadCast(ctx context.Context, msg *message.Message) (brResult 
 	}
 	ch := make(chan struct{})
 	go func() {
+		now := time.Now()
 		defer close(ch)
 
 		var data []byte
@@ -166,7 +167,9 @@ func (s *Server) BroadCast(ctx context.Context, msg *message.Message) (brResult 
 				Duration: time.Since(start),
 			})
 		}
-		err = multierror.Append(err, errs...).ErrorOrNil()
+		if err = multierror.Append(err, errs...).ErrorOrNil(); err == nil {
+			s.hooks.ExecOnBroadcast(messaging.FQDN(msg.Payload), brResult, time.Since(now))
+		}
 	}()
 	select {
 	case <-ctx.Done():

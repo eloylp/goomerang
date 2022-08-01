@@ -70,23 +70,11 @@ func (s *MeteredServer) Publish(topic string, msg *message.Message) error {
 }
 
 func (s *MeteredServer) BroadCast(ctx context.Context, msg *message.Message) (brResult []BroadcastResult, err error) {
-	start := time.Now()
 	brResult, err = s.s.BroadCast(ctx, msg)
 	if err != nil {
 		s.metrics.Errors.Inc()
-		return
 	}
-	fqdn := messaging.FQDN(msg.Payload)
-	measureBroadcastOp(s.metrics, fqdn, brResult, time.Since(start))
 	return
-}
-
-func measureBroadcastOp(m *metrics.ServerMetrics, fqdn string, brResult []BroadcastResult, duration time.Duration) {
-	m.MessageBroadcastSentTime.WithLabelValues(fqdn).Observe(duration.Seconds())
-	for i := 0; i < len(brResult); i++ {
-		m.MessageSentSize.WithLabelValues(fqdn).Observe(float64(brResult[i].Size))
-		m.MessageSentTime.WithLabelValues(fqdn).Observe(brResult[i].Duration.Seconds())
-	}
 }
 
 func (s *MeteredServer) Run() (err error) {
@@ -124,6 +112,14 @@ func workerEndMetricHook(m *metrics.ServerMetrics) func() {
 func configurationMaxConcurrentMetricHook(m *metrics.ServerMetrics) func(cfg *Cfg) {
 	return func(cfg *Cfg) {
 		m.ConfigMaxConcurrency.Set(float64(cfg.MaxConcurrency))
+	}
+}
+
+func measureBroadcastOp(m *metrics.ServerMetrics, fqdn string, brResult []BroadcastResult, duration time.Duration) {
+	m.MessageBroadcastSentTime.WithLabelValues(fqdn).Observe(duration.Seconds())
+	for i := 0; i < len(brResult); i++ {
+		m.MessageSentSize.WithLabelValues(fqdn).Observe(float64(brResult[i].Size))
+		m.MessageSentTime.WithLabelValues(fqdn).Observe(brResult[i].Duration.Seconds())
 	}
 }
 
