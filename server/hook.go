@@ -1,13 +1,15 @@
 package server
 
 import (
+	"time"
+
 	"go.eloylp.dev/goomerang/internal/config"
 )
 
 type hooks struct {
 	config.Hooks
 	onConfiguration []func(cfg *Cfg)
-	onBroadcast     []func(fqdn string, result []BroadcastResult)
+	onBroadcast     []func(fqdn string, result []BroadcastResult, duration time.Duration)
 	onSubscribe     []func(topic string)
 	onPublish       []func(topic, fqdn string)
 	onUnsubscribe   []func(topic string)
@@ -33,13 +35,13 @@ func (h *hooks) ExecOnSubscribe(topic string) {
 	}
 }
 
-func (h *hooks) AppendOnBroadcast(f func(fqdn string, result []BroadcastResult)) {
+func (h *hooks) AppendOnBroadcast(f func(fqdn string, result []BroadcastResult, duration time.Duration)) {
 	h.onBroadcast = append(h.onBroadcast, f)
 }
 
-func (h *hooks) ExecOnBroadcast(fqdn string, result []BroadcastResult) {
+func (h *hooks) ExecOnBroadcast(fqdn string, result []BroadcastResult, duration time.Duration) {
 	for _, f := range h.onBroadcast {
-		f(fqdn, result)
+		f(fqdn, result, duration)
 	}
 }
 

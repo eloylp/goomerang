@@ -31,15 +31,18 @@ func TestOnBroadcastHook(t *testing.T) {
 			Duration: 3 * time.Second,
 		},
 	}
-	hooks.AppendOnBroadcast(func(fqdn string, result []BroadcastResult) {
+	d := time.Second
+	hooks.AppendOnBroadcast(func(fqdn string, result []BroadcastResult, duration time.Duration) {
 		assert.Equal(t, results, result)
 		assert.Equal(t, "sales.bill", fqdn)
+		assert.Equal(t, d, duration)
 	})
-	hooks.AppendOnBroadcast(func(fqdn string, result []BroadcastResult) {
+	hooks.AppendOnBroadcast(func(fqdn string, result []BroadcastResult, duration time.Duration) {
 		assert.Equal(t, results, result)
 		assert.Equal(t, "sales.bill", fqdn)
+		assert.Equal(t, d, duration)
 	})
-	hooks.ExecOnBroadcast("sales.bill", results)
+	hooks.ExecOnBroadcast("sales.bill", results, d)
 }
 
 func TestOnSubscribeHook(t *testing.T) {

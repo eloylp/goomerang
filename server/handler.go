@@ -3,6 +3,7 @@ package server
 import (
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/gorilla/websocket"
 
@@ -91,12 +92,13 @@ func broadcastCmdHandler(s *Server) message.Handler {
 			s.hooks.ExecOnError(err)
 			return
 		}
+		now := time.Now()
 		brResult, err := s.BroadCast(s.ctx, origMsg)
 		if err != nil {
 			s.hooks.ExecOnError(err)
 			return
 		}
-		s.hooks.ExecOnBroadcast(origMsg.Metadata.Kind, brResult)
+		s.hooks.ExecOnBroadcast(origMsg.Metadata.Kind, brResult, time.Since(now))
 	})
 }
 
