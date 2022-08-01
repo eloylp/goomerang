@@ -93,7 +93,7 @@ func broadcastCmdHandler(s *Server) message.Handler {
 			return
 		}
 		now := time.Now()
-		brResult, err := s.BroadCast(s.ctx, origMsg)
+		brResult, err := s.Broadcast(s.ctx, origMsg)
 		if err != nil {
 			s.hooks.ExecOnError(err)
 			return

@@ -69,8 +69,8 @@ func (s *MeteredServer) Publish(topic string, msg *message.Message) error {
 	return nil
 }
 
-func (s *MeteredServer) BroadCast(ctx context.Context, msg *message.Message) (brResult []BroadcastResult, err error) {
-	brResult, err = s.s.BroadCast(ctx, msg)
+func (s *MeteredServer) Broadcast(ctx context.Context, msg *message.Message) (brResult []BroadcastResult, err error) {
+	brResult, err = s.s.Broadcast(ctx, msg)
 	if err != nil {
 		s.metrics.Errors.Inc()
 	}
