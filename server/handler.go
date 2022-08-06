@@ -99,6 +99,7 @@ func broadcastCmdHandler(s *Server) message.Handler {
 			return
 		}
 		s.hooks.ExecOnBroadcast(origMsg.Metadata.Kind, brResult, time.Since(now))
+		s.hooks.ExecOnClientBroadcast(origMsg.Metadata.Kind)
 	})
 }
 

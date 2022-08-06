@@ -45,6 +45,17 @@ func TestOnBroadcastHook(t *testing.T) {
 	hooks.ExecOnBroadcast("sales.bill", results, d)
 }
 
+func TestOnClientBroadcastHook(t *testing.T) {
+	hooks := &hooks{}
+	hooks.AppendOnClientBroadcast(func(fqdn string) {
+		assert.Equal(t, "sales.bill", fqdn)
+	})
+	hooks.AppendOnClientBroadcast(func(fqdn string) {
+		assert.Equal(t, "sales.bill", fqdn)
+	})
+	hooks.ExecOnClientBroadcast("sales.bill")
+}
+
 func TestOnSubscribeHook(t *testing.T) {
 	hooks := &hooks{}
 	hooks.AppendOnSubscribe(func(topic string) {

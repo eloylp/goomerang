@@ -133,7 +133,6 @@ func (s *Server) Broadcast(ctx context.Context, msg *message.Message) (brResult 
 	}
 	ch := make(chan struct{})
 	go func() {
-		now := time.Now()
 		defer close(ch)
 
 		var data []byte
@@ -167,9 +166,7 @@ func (s *Server) Broadcast(ctx context.Context, msg *message.Message) (brResult 
 				Duration: time.Since(start),
 			})
 		}
-		if err = multierror.Append(err, errs...).ErrorOrNil(); err == nil {
-			s.hooks.ExecOnBroadcast(messaging.FQDN(msg.Payload), brResult, time.Since(now))
-		}
+		err = multierror.Append(err, errs...).ErrorOrNil()
 	}()
 	select {
 	case <-ctx.Done():

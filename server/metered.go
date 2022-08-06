@@ -39,6 +39,7 @@ func NewMetered(m *metrics.ServerMetrics, opts ...Option) (*MeteredServer, error
 		WithOnUnsubscribeHook(unsubscribeHook(m)),
 		WithOnPublishHook(publishHook(m)),
 		WithOnBroadcastHook(broadcastHook(m)),
+		WithOnClientBroadcastHook(clientBroadcastHook(m)),
 		WithOnErrorHook(func(err error) {
 			m.Errors.Inc()
 		}),
@@ -70,10 +71,12 @@ func (s *MeteredServer) Publish(topic string, msg *message.Message) error {
 }
 
 func (s *MeteredServer) Broadcast(ctx context.Context, msg *message.Message) (brResult []BroadcastResult, err error) {
+	now := time.Now()
 	brResult, err = s.s.Broadcast(ctx, msg)
 	if err != nil {
 		s.metrics.Errors.Inc()
 	}
+	measureBroadcastOp(s.metrics, messaging.FQDN(msg.Payload), brResult, time.Since(now))
 	return
 }
 
@@ -126,6 +129,12 @@ func measureBroadcastOp(m *metrics.ServerMetrics, fqdn string, brResult []Broadc
 func broadcastHook(m *metrics.ServerMetrics) func(fqdn string, result []BroadcastResult, duration time.Duration) {
 	return func(fqdn string, result []BroadcastResult, duration time.Duration) {
 		measureBroadcastOp(m, fqdn, result, duration)
+	}
+}
+
+func clientBroadcastHook(m *metrics.ServerMetrics) func(fqdn string) {
+	return func(fqdn string) {
+		m.BroadcastClientCount.WithLabelValues(fqdn).Inc()
 	}
 }
 

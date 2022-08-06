@@ -34,7 +34,7 @@ type ServerMetrics struct {
 	CurrentStatus            prometheus.Gauge
 	ConcurrentWorkers        prometheus.Gauge
 	ConfigMaxConcurrency     prometheus.Gauge
-	BroadcastCount           *prometheus.CounterVec
+	BroadcastClientCount     *prometheus.CounterVec
 	SubscribeCount           *prometheus.CounterVec
 	UnsubscribeCount         *prometheus.CounterVec
 	PublishCount             *prometheus.CounterVec
@@ -113,11 +113,11 @@ func NewServerMetrics(c ServerConfig) *ServerMetrics {
 			Help:      "The current status of the server (0 => New, 1 => Running, 2=> Closing, 3 => closed)",
 		}),
 
-		BroadcastCount: prometheus.NewCounterVec(prometheus.CounterOpts{
+		BroadcastClientCount: prometheus.NewCounterVec(prometheus.CounterOpts{
 			Namespace: "goomerang",
 			Subsystem: "server",
-			Name:      "broadcasts_total",
-			Help:      "The number of successful broadcast commands processed by the server.",
+			Name:      "broadcasts_client_total",
+			Help:      "The number of successful broadcast commands processed by the server (requested from client side).",
 		}, []string{"message"}),
 
 		SubscribeCount: prometheus.NewCounterVec(prometheus.CounterOpts{
@@ -159,7 +159,7 @@ func (m *ServerMetrics) Register(r prometheus.Registerer) {
 	r.MustRegister(m.MessageBroadcastSentTime)
 	r.MustRegister(m.ConcurrentWorkers)
 	r.MustRegister(m.ConfigMaxConcurrency)
-	r.MustRegister(m.BroadcastCount)
+	r.MustRegister(m.BroadcastClientCount)
 	r.MustRegister(m.CurrentStatus)
 	r.MustRegister(m.SubscribeCount)
 	r.MustRegister(m.PublishCount)
