@@ -67,69 +67,16 @@ func TestNoRaces(t *testing.T) {
 		arbiter.ItsAFactThat("s.Publish()")
 	})
 
-	go exec.Parallelize(ctx, wg, maxConcurrent, func() {
-		if _, err := c.Send(defaultMsg); err != nil && err != client.ErrNotRunning {
-			arbiter.ErrorHappened(err)
-			return
-		}
-		arbiter.ItsAFactThat("c.Send()")
-	})
+	// Warm up client execution paths.
+	execClientSend(ctx, wg, maxConcurrent, c, arbiter)
+	execClientSendSync(ctx, wg, maxConcurrent, c, arbiter)
+	execClientBroadcast(ctx, wg, maxConcurrent, c, arbiter)
+	execClientPublish(ctx, wg, maxConcurrent, c, arbiter)
 
-	go exec.Parallelize(ctx, wg, maxConcurrent, func() {
-		if _, _, err := c.SendSync(defaultCtx, defaultMsg); err != nil && err != client.ErrNotRunning {
-			arbiter.ErrorHappened(err)
-			return
-		}
-		arbiter.ItsAFactThat("c.SendSync()")
-	})
-
-	go exec.Parallelize(ctx, wg, maxConcurrent, func() {
-		if _, err := c.Broadcast(defaultMsg); err != nil && err != client.ErrNotRunning {
-			arbiter.ErrorHappened(err)
-			return
-		}
-		arbiter.ItsAFactThat("c.Broadcast()")
-	})
-
-	go exec.Parallelize(ctx, wg, maxConcurrent, func() {
-		if _, err := c.Publish("topic.a", defaultMsg); err != nil && err != client.ErrNotRunning {
-			arbiter.ErrorHappened(err)
-			return
-		}
-		arbiter.ItsAFactThat("c.Publish()")
-	})
-
-	go exec.Parallelize(ctx, wg, maxConcurrent, func() {
-		if _, err := c2.Send(defaultMsg); err != nil && err != client.ErrNotRunning {
-			arbiter.ErrorHappened(err)
-			return
-		}
-		arbiter.ItsAFactThat("c2.Send()")
-	})
-
-	go exec.Parallelize(ctx, wg, maxConcurrent, func() {
-		if _, _, err := c2.SendSync(defaultCtx, defaultMsg); err != nil && err != client.ErrNotRunning {
-			arbiter.ErrorHappened(err)
-			return
-		}
-		arbiter.ItsAFactThat("c2.SendSync()")
-	})
-
-	go exec.Parallelize(ctx, wg, maxConcurrent, func() {
-		if _, err := c2.Broadcast(defaultMsg); err != nil && err != client.ErrNotRunning {
-			arbiter.ErrorHappened(err)
-			return
-		}
-		arbiter.ItsAFactThat("c2.Broadcast()")
-	})
-
-	go exec.Parallelize(ctx, wg, maxConcurrent, func() {
-		if _, err := c2.Publish("topic.a", defaultMsg); err != nil && err != client.ErrNotRunning {
-			arbiter.ErrorHappened(err)
-			return
-		}
-		arbiter.ItsAFactThat("c2.Publish()")
-	})
+	execClientSend(ctx, wg, maxConcurrent, c2, arbiter)
+	execClientSendSync(ctx, wg, maxConcurrent, c2, arbiter)
+	execClientBroadcast(ctx, wg, maxConcurrent, c2, arbiter)
+	execClientPublish(ctx, wg, maxConcurrent, c2, arbiter)
 
 	<-ctx.Done()
 
@@ -142,4 +89,44 @@ func TestNoRaces(t *testing.T) {
 	// Have minimum feedback of what happened.
 	t.Logf("Registered errors: %v", arbiter.Errors())
 	t.Logf("Registered events: %v", arbiter.EvCount())
+}
+
+func execClientSend(ctx context.Context, wg *sync.WaitGroup, maxConcurrent int, c *client.Client, arbiter *test.Arbiter) {
+	go exec.Parallelize(ctx, wg, maxConcurrent, func() {
+		if _, err := c.Send(defaultMsg); err != nil && err != client.ErrNotRunning {
+			arbiter.ErrorHappened(err)
+			return
+		}
+		arbiter.ItsAFactThat("c.Send()")
+	})
+}
+
+func execClientSendSync(ctx context.Context, wg *sync.WaitGroup, maxConcurrent int, c *client.Client, arbiter *test.Arbiter) {
+	go exec.Parallelize(ctx, wg, maxConcurrent, func() {
+		if _, _, err := c.SendSync(defaultCtx, defaultMsg); err != nil && err != client.ErrNotRunning {
+			arbiter.ErrorHappened(err)
+			return
+		}
+		arbiter.ItsAFactThat("c.SendSync()")
+	})
+}
+
+func execClientBroadcast(ctx context.Context, wg *sync.WaitGroup, maxConcurrent int, c *client.Client, arbiter *test.Arbiter) {
+	go exec.Parallelize(ctx, wg, maxConcurrent, func() {
+		if _, err := c.Broadcast(defaultMsg); err != nil && err != client.ErrNotRunning {
+			arbiter.ErrorHappened(err)
+			return
+		}
+		arbiter.ItsAFactThat("c.Broadcast()")
+	})
+}
+
+func execClientPublish(ctx context.Context, wg *sync.WaitGroup, maxConcurrent int, c *client.Client, arbiter *test.Arbiter) {
+	go exec.Parallelize(ctx, wg, maxConcurrent, func() {
+		if _, err := c.Publish("topic.a", defaultMsg); err != nil && err != client.ErrNotRunning {
+			arbiter.ErrorHappened(err)
+			return
+		}
+		arbiter.ItsAFactThat("c.Publish()")
+	})
 }
