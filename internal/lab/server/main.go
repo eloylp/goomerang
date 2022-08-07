@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"log"
+	"math/rand"
 	"net/http"
 	_ "net/http/pprof"
 	"os"
@@ -69,7 +70,7 @@ func main() {
 		}
 	}()
 	ctx, cancl := context.WithCancel(context.Background())
-	go interactions(ctx, ms)
+	interactions(ctx, ms)
 
 	ch := make(chan os.Signal, 1)
 	signal.Notify(ch, os.Interrupt, syscall.SIGTERM)
@@ -88,12 +89,37 @@ func interactions(ctx context.Context, s *server.MeteredServer) {
 		panic(err)
 	}
 	bytes := make([]byte, messageSize)
+	go publishMessages(ctx, s, bytes)
+	go broadcastMessages(ctx, s, bytes)
+}
+
+func publishMessages(ctx context.Context, s *server.MeteredServer, bytes []byte) {
+	topics := []string{"topic.a", "topic.b"}
 	for {
 		select {
 		case <-ctx.Done():
 			return
 		default:
-			_, err := s.BroadCast(context.Background(), message.New().SetPayload(&protos.BroadcastV1{
+			topic := topics[rand.Intn(2)]
+
+			err := s.Publish(topic, message.New().SetPayload(&protos.BroadcastV1{
+				Message: "Broadcasting !",
+				Data:    bytes,
+			}))
+			if err != nil {
+				logrus.WithError(err).Error("error broadcasting message")
+			}
+		}
+	}
+}
+
+func broadcastMessages(ctx context.Context, s *server.MeteredServer, bytes []byte) {
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		default:
+			_, err := s.Broadcast(context.Background(), message.New().SetPayload(&protos.BroadcastV1{
 				Message: "Broadcasting !",
 				Data:    bytes,
 			}))

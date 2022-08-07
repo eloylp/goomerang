@@ -65,6 +65,44 @@ func (c *MeteredClient) Send(msg *message.Message) (payloadSize int, err error) 
 	return
 }
 
+func (c *MeteredClient) Broadcast(msg *message.Message) error {
+	if _, err := c.c.Broadcast(msg); err != nil {
+		c.metrics.Errors.Inc()
+		return err
+	}
+	fqdn := messaging.FQDN(msg.Payload)
+	c.metrics.BroadcastCmdCount.WithLabelValues(fqdn).Inc()
+	return nil
+}
+
+func (c *MeteredClient) Subscribe(topic string) error {
+	if err := c.c.Subscribe(topic); err != nil {
+		c.metrics.Errors.Inc()
+		return err
+	}
+	c.metrics.SubscribeCmdCount.WithLabelValues(topic).Inc()
+	return nil
+}
+
+func (c *MeteredClient) Publish(topic string, msg *message.Message) error {
+	if _, err := c.c.Publish(topic, msg); err != nil {
+		c.metrics.Errors.Inc()
+		return err
+	}
+	fqdn := messaging.FQDN(msg.Payload)
+	c.metrics.PublishCmdCount.WithLabelValues(topic, fqdn).Inc()
+	return nil
+}
+
+func (c *MeteredClient) Unsubscribe(topic string) error {
+	if err := c.c.Unsubscribe(topic); err != nil {
+		c.metrics.Errors.Inc()
+		return err
+	}
+	c.metrics.UnsubscribeCmdCount.WithLabelValues(topic).Inc()
+	return nil
+}
+
 func (c *MeteredClient) SendSync(ctx context.Context, msg *message.Message) (payloadSize int, response *message.Message, err error) {
 	start := time.Now()
 	payloadSize, response, err = c.c.SendSync(ctx, msg)

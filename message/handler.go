@@ -1,5 +1,9 @@
 package message
 
+import (
+	"go.eloylp.dev/goomerang/conn"
+)
+
 type Handler interface {
 	Handle(sender Sender, msg *Message)
 }
@@ -14,4 +18,5 @@ func (h HandlerFunc) Handle(sender Sender, msg *Message) {
 
 type Sender interface {
 	Send(msg *Message) (payloadSize int, err error)
+	ConnSlot() *conn.Slot
 }

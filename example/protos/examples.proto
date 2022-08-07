@@ -23,10 +23,3 @@ message ReplyV1 {
 message BadReplyV1 {
   string message = 1;
 }
-
-// BroadCastV1 represent a broadcast message
-// the server will send to all clients.
-message BroadCastV1 {
-  bytes broadcasted_message = 1;
-  string kind = 2;
-}

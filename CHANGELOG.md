@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.0] - 2022-08-10
+
+### Added
+
+* [Add pub/sub capabilities](https://github.com/eloylp/goomerang/issues/3)
+* [Proper broadcast interfaces for clients](https://github.com/eloylp/goomerang/issues/7)
+
 ## [0.1.0] - 2022-07-10
 
 ### Added
@@ -24,5 +31,5 @@ First version of the library. In which we are adding:
 * Customizable TLS configuration.
 * Observability tools.
 
-[Unreleased]: https://github.com/eloylp/goomerang/compare/v0.1.0...HEAD
-[0.1.0]: https://github.com/eloylp/goomerang/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/eloylp/goomerang/compare/v0.2.0...HEAD
+[0.1.0]: https://github.com/eloylp/goomerang/compare/v0.1.0...v0.2.0

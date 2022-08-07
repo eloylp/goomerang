@@ -41,5 +41,4 @@ messages:
 	mkdir -p internal/message/protocol
 	mkdir -p internal/message/test
 	mv internal/messaging/go.eloylp.dev/goomerang/internal/protocol/*.pb.go internal/messaging/protocol
-	mv internal/messaging/go.eloylp.dev/goomerang/internal/test/*.pb.go internal/messaging/test
 	rm -rf internal/messaging/go.eloylp.dev

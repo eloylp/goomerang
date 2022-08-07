@@ -13,36 +13,9 @@ import (
 	"go.eloylp.dev/goomerang/server"
 )
 
-func TestServerCanBroadCastMessages(t *testing.T) {
-	arbiter := test.NewArbiter(t)
-	s, waitAndRun := PrepareServer(t)
-	waitAndRun()
-	defer s.Shutdown(defaultCtx)
-
-	c1, connect1 := PrepareClient(t, client.WithServerAddr(s.Addr()))
-	defer c1.Close(defaultCtx)
-	c1.Handle(defaultMsg.Payload, message.HandlerFunc(func(ops message.Sender, msg *message.Message) {
-		arbiter.ItsAFactThat("CLIENT1_RECEIVED_SERVER_GREET")
-	}))
-	connect1()
-	c2, connect2 := PrepareClient(t, client.WithServerAddr(s.Addr()))
-	defer c2.Close(defaultCtx)
-	c2.Handle(defaultMsg.Payload, message.HandlerFunc(func(ops message.Sender, msg *message.Message) {
-		arbiter.ItsAFactThat("CLIENT2_RECEIVED_SERVER_GREET")
-	}))
-	connect2()
-	brResult, err := s.BroadCast(defaultCtx, defaultMsg)
-	require.NoError(t, err)
-	require.Len(t, brResult, 2)
-	require.Equal(t, 12, brResult[0].Size)
-	require.NotEmpty(t, brResult[0].Duration)
-	require.Equal(t, 12, brResult[1].Size)
-	require.NotEmpty(t, brResult[1].Duration)
-	arbiter.RequireHappened("CLIENT1_RECEIVED_SERVER_GREET")
-	arbiter.RequireHappened("CLIENT2_RECEIVED_SERVER_GREET")
-}
-
 func TestClientsCanInterceptClosedConnection(t *testing.T) {
+	t.Parallel()
+
 	s, run := PrepareServer(t)
 	run()
 	c1, connect1 := PrepareClient(t, client.WithServerAddr(s.Addr()))

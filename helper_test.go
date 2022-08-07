@@ -163,3 +163,9 @@ func noErrorHook(a *test.Arbiter) func(err error) {
 		a.ErrorHappened(err)
 	}
 }
+
+func failIfErr(t *testing.T, err error) {
+	if err != nil {
+		t.Fatal(err)
+	}
+}

@@ -33,12 +33,13 @@ func TestNoRaces(t *testing.T) {
 
 	c, connect := PrepareClient(t, client.WithServerAddr(s.Addr()))
 	c.Handle(defaultMsg.Payload, nilHandler)
-
 	connect()
+	failIfErr(t, c.Subscribe("topic.a"))
 
 	c2, connect2 := PrepareClient(t, client.WithServerAddr(s.Addr()))
 	c2.Handle(defaultMsg.Payload, nilHandler)
 	connect2()
+	failIfErr(t, c2.Subscribe("topic.a"))
 
 	// Set test duration of 10 seconds.
 	ctx, cancl := context.WithTimeout(defaultCtx, 10*time.Second)
@@ -51,11 +52,19 @@ func TestNoRaces(t *testing.T) {
 	// Stress all parts of the system through the public API. All uses cases at the same time.
 	const maxConcurrent = 20
 	go exec.Parallelize(ctx, wg, maxConcurrent, func() {
-		if _, err := s.BroadCast(defaultCtx, defaultMsg); err != nil && err != server.ErrNotRunning {
+		if _, err := s.Broadcast(defaultCtx, defaultMsg); err != nil && err != server.ErrNotRunning {
 			arbiter.ErrorHappened(err)
 			return
 		}
-		arbiter.ItsAFactThat("s.BroadCast()")
+		arbiter.ItsAFactThat("s.Broadcast()")
+	})
+
+	go exec.Parallelize(ctx, wg, maxConcurrent, func() {
+		if err := s.Publish("topic.a", defaultMsg); err != nil && err != server.ErrNotRunning {
+			arbiter.ErrorHappened(err)
+			return
+		}
+		arbiter.ItsAFactThat("s.Publish()")
 	})
 
 	go exec.Parallelize(ctx, wg, maxConcurrent, func() {
