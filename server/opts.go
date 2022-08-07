@@ -96,8 +96,8 @@ func WithOnBroadcastHook(f func(fqdn string, result []BroadcastResult, duration 
 }
 
 // WithOnClientBroadcastHook allows the user to inject a hook which
-// will be executed each successfully broadcast triggered
-// by a client broadcast command.
+// will be executed each time a broadcast command arrives from
+// the client.
 func WithOnClientBroadcastHook(f func(fqdn string)) Option {
 	return func(cfg *Cfg) {
 		cfg.hooks.AppendOnClientBroadcast(f)
