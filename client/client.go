@@ -206,6 +206,26 @@ func (c *Client) Send(msg *message.Message) (payloadSize int, err error) {
 	return
 }
 
+func (c *Client) Broadcast(msg *message.Message) (payloadSize int, err error) {
+	if c.status() != ws.StatusRunning {
+		return 0, ErrNotRunning
+	}
+
+	brMsg, err := messaging.MessageForBroadcast(msg)
+	if err != nil {
+		return 0, fmt.Errorf("broadcast: %v", err)
+	}
+	var data []byte
+	payloadSize, data, err = messaging.Pack(brMsg)
+	if err != nil {
+		return 0, fmt.Errorf("broadcast: %v", err)
+	}
+	if err = c.connSlot.Write(data); err != nil {
+		return payloadSize, fmt.Errorf("broadcast: %v", err)
+	}
+	return
+}
+
 func (c *Client) Subscribe(topic string) (err error) {
 	if c.status() != ws.StatusRunning {
 		return ErrNotRunning

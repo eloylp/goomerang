@@ -38,6 +38,8 @@ func NewMetered(m *metrics.ServerMetrics, opts ...Option) (*MeteredServer, error
 		WithOnSubscribeHook(subscribeHook(m)),
 		WithOnUnsubscribeHook(unsubscribeHook(m)),
 		WithOnPublishHook(publishHook(m)),
+		WithOnBroadcastHook(broadcastHook(m)),
+		WithOnClientBroadcastHook(clientBroadcastHook(m)),
 		WithOnErrorHook(func(err error) {
 			m.Errors.Inc()
 		}),
@@ -68,19 +70,13 @@ func (s *MeteredServer) Publish(topic string, msg *message.Message) error {
 	return nil
 }
 
-func (s *MeteredServer) BroadCast(ctx context.Context, msg *message.Message) (brResult []BroadcastResult, err error) {
-	start := time.Now()
-	brResult, err = s.s.BroadCast(ctx, msg)
+func (s *MeteredServer) Broadcast(ctx context.Context, msg *message.Message) (brResult []BroadcastResult, err error) {
+	now := time.Now()
+	brResult, err = s.s.Broadcast(ctx, msg)
 	if err != nil {
 		s.metrics.Errors.Inc()
-		return
 	}
-	fqdn := messaging.FQDN(msg.Payload)
-	s.metrics.MessageBroadcastSentTime.WithLabelValues(fqdn).Observe(time.Since(start).Seconds())
-	for i := 0; i < len(brResult); i++ {
-		s.metrics.MessageSentSize.WithLabelValues(fqdn).Observe(float64(brResult[i].Size))
-		s.metrics.MessageSentTime.WithLabelValues(fqdn).Observe(brResult[i].Duration.Seconds())
-	}
+	measureBroadcastOp(s.metrics, messaging.FQDN(msg.Payload), brResult, time.Since(now))
 	return
 }
 
@@ -119,6 +115,26 @@ func workerEndMetricHook(m *metrics.ServerMetrics) func() {
 func configurationMaxConcurrentMetricHook(m *metrics.ServerMetrics) func(cfg *Cfg) {
 	return func(cfg *Cfg) {
 		m.ConfigMaxConcurrency.Set(float64(cfg.MaxConcurrency))
+	}
+}
+
+func measureBroadcastOp(m *metrics.ServerMetrics, fqdn string, brResult []BroadcastResult, duration time.Duration) {
+	m.MessageBroadcastSentTime.WithLabelValues(fqdn).Observe(duration.Seconds())
+	for i := 0; i < len(brResult); i++ {
+		m.MessageSentSize.WithLabelValues(fqdn).Observe(float64(brResult[i].Size))
+		m.MessageSentTime.WithLabelValues(fqdn).Observe(brResult[i].Duration.Seconds())
+	}
+}
+
+func broadcastHook(m *metrics.ServerMetrics) func(fqdn string, result []BroadcastResult, duration time.Duration) {
+	return func(fqdn string, result []BroadcastResult, duration time.Duration) {
+		measureBroadcastOp(m, fqdn, result, duration)
+	}
+}
+
+func clientBroadcastHook(m *metrics.ServerMetrics) func(fqdn string) {
+	return func(fqdn string) {
+		m.BroadcastClientCount.WithLabelValues(fqdn).Inc()
 	}
 }
 

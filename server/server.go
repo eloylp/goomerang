@@ -110,7 +110,7 @@ type BroadcastResult struct {
 	Duration time.Duration
 }
 
-// BroadCast will try to send the provided message to all
+// Broadcast will try to send the provided message to all
 // connected clients.
 //
 // In case the provided context is canceled, the operation
@@ -127,7 +127,7 @@ type BroadcastResult struct {
 // feedback, such as time distribution.
 //
 // Calling this method it's intended to be thread safe.
-func (s *Server) BroadCast(ctx context.Context, msg *message.Message) (brResult []BroadcastResult, err error) {
+func (s *Server) Broadcast(ctx context.Context, msg *message.Message) (brResult []BroadcastResult, err error) {
 	if s.status() != ws.StatusRunning {
 		return []BroadcastResult{}, ErrNotRunning
 	}
@@ -140,6 +140,7 @@ func (s *Server) BroadCast(ctx context.Context, msg *message.Message) (brResult 
 		payloadSize, data, err = messaging.Pack(msg)
 
 		if err != nil {
+			err = fmt.Errorf("broadcast: %v", err)
 			return
 		}
 
@@ -285,6 +286,7 @@ func (s *Server) Shutdown(ctx context.Context) (err error) {
 }
 
 func registerBuiltInHandlers(s *Server) {
+	s.Handle(&protocol.BroadcastCmd{}, broadcastCmdHandler(s))
 	s.Handle(&protocol.SubscribeCmd{}, subscribeCmdHandler(s.pubSubEngine, s.hooks.ExecOnSubscribe))
 	s.Handle(&protocol.PublishCmd{}, publishCmdHandler(s.messageRegistry, s.pubSubEngine, s.hooks.ExecOnPublish, s.hooks.ExecOnError))
 	s.Handle(&protocol.UnsubscribeCmd{}, unsubscribeCmdHandler(s.pubSubEngine, s.hooks.ExecOnUnsubscribe))

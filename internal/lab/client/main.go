@@ -104,20 +104,19 @@ func interactions(ctx context.Context, c *client.MeteredClient) {
 	if err := c.Subscribe("topic.b"); err != nil {
 		panic(err)
 	}
-	go publishMessages(ctx, c, bytes)
 	go sendMessages(ctx, c, bytes)
+	go broadcastMessages(ctx, c, bytes)
+	go publishMessages(ctx, c, bytes)
 	go sendSyncMessages(ctx, c, bytes)
 }
 
-func publishMessages(ctx context.Context, c *client.MeteredClient, bytes []byte) {
-	topics := []string{"topic.a", "topic.b"}
+func sendMessages(ctx context.Context, c *client.MeteredClient, bytes []byte) {
 	for {
 		select {
 		case <-ctx.Done():
 			return
 		default:
-			topic := topics[rand.Intn(2)]
-			err := c.Publish(topic, message.New().SetPayload(&protos.PointV1{
+			_, err := c.Send(message.New().SetPayload(&protos.PointV1{
 				X:          34.45,
 				Y:          89.12,
 				Time:       timestamppb.Now(),
@@ -130,13 +129,34 @@ func publishMessages(ctx context.Context, c *client.MeteredClient, bytes []byte)
 	}
 }
 
-func sendMessages(ctx context.Context, c *client.MeteredClient, bytes []byte) {
+func broadcastMessages(ctx context.Context, c *client.MeteredClient, bytes []byte) {
 	for {
 		select {
 		case <-ctx.Done():
 			return
 		default:
-			_, err := c.Send(message.New().SetPayload(&protos.PointV1{
+			err := c.Broadcast(message.New().SetPayload(&protos.PointV1{
+				X:          34.45,
+				Y:          89.12,
+				Time:       timestamppb.Now(),
+				DeviceData: bytes,
+			}))
+			if err != nil {
+				logrus.WithError(err).Error("error broadcasting message")
+			}
+		}
+	}
+}
+
+func publishMessages(ctx context.Context, c *client.MeteredClient, bytes []byte) {
+	topics := []string{"topic.a", "topic.b"}
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		default:
+			topic := topics[rand.Intn(2)]
+			err := c.Publish(topic, message.New().SetPayload(&protos.PointV1{
 				X:          34.45,
 				Y:          89.12,
 				Time:       timestamppb.Now(),

@@ -2,15 +2,12 @@ package messaging
 
 import (
 	"fmt"
-	"strings"
 
 	"google.golang.org/protobuf/proto"
 
 	"go.eloylp.dev/goomerang/internal/messaging/protocol"
 	"go.eloylp.dev/goomerang/message"
 )
-
-const userMessageHeadersPrefix = "message-"
 
 func MessageForPublish(topic string, msg *message.Message) (*message.Message, error) {
 	data, err := proto.Marshal(msg.Payload)
@@ -22,9 +19,7 @@ func MessageForPublish(topic string, msg *message.Message) (*message.Message, er
 		Kind:    msg.Metadata.Kind,
 		Message: data,
 	})
-	for k, v := range msg.Header {
-		pubMsg.SetHeader(fmt.Sprintf("%s%s", userMessageHeadersPrefix, k), v)
-	}
+	pubMsg.Header = packHeaders(msg.Header)
 	return pubMsg, nil
 }
 
@@ -41,11 +36,6 @@ func MessageFromPublish(registry message.Registry, msg *message.Message) (*messa
 		return nil, fmt.Errorf("messageFromPublish: %v", err)
 	}
 	pubMsg := message.New().SetPayload(clientMsg)
-	for k, v := range msg.Header {
-		if strings.HasPrefix(k, userMessageHeadersPrefix) {
-			key := strings.TrimPrefix(k, userMessageHeadersPrefix)
-			pubMsg.SetHeader(key, v)
-		}
-	}
+	pubMsg.Header = unpackHeaders(msg.Header)
 	return pubMsg, nil
 }

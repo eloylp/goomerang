@@ -87,6 +87,23 @@ func WithOnWorkerEnd(h func()) Option {
 	}
 }
 
+// WithOnBroadcastHook allows the user to inject a hook which
+// will be executed on each successfully broadcast operation.
+func WithOnBroadcastHook(f func(fqdn string, result []BroadcastResult, duration time.Duration)) Option {
+	return func(cfg *Cfg) {
+		cfg.hooks.AppendOnBroadcast(f)
+	}
+}
+
+// WithOnClientBroadcastHook allows the user to inject a hook which
+// will be executed each time a broadcast command arrives from
+// the client.
+func WithOnClientBroadcastHook(f func(fqdn string)) Option {
+	return func(cfg *Cfg) {
+		cfg.hooks.AppendOnClientBroadcast(f)
+	}
+}
+
 // WithOnSubscribeHook allows the user to inject a hook which
 // will be executed each successfully subscribe
 // to a specific topic, for a message.

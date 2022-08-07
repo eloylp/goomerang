@@ -65,6 +65,16 @@ func (c *MeteredClient) Send(msg *message.Message) (payloadSize int, err error) 
 	return
 }
 
+func (c *MeteredClient) Broadcast(msg *message.Message) error {
+	if _, err := c.c.Broadcast(msg); err != nil {
+		c.metrics.Errors.Inc()
+		return err
+	}
+	fqdn := messaging.FQDN(msg.Payload)
+	c.metrics.BroadcastCmdCount.WithLabelValues(fqdn).Inc()
+	return nil
+}
+
 func (c *MeteredClient) Subscribe(topic string) error {
 	if err := c.c.Subscribe(topic); err != nil {
 		c.metrics.Errors.Inc()

@@ -90,7 +90,7 @@ func interactions(ctx context.Context, s *server.MeteredServer) {
 	}
 	bytes := make([]byte, messageSize)
 	go publishMessages(ctx, s, bytes)
-	go sendMessages(ctx, s, bytes)
+	go broadcastMessages(ctx, s, bytes)
 }
 
 func publishMessages(ctx context.Context, s *server.MeteredServer, bytes []byte) {
@@ -113,13 +113,13 @@ func publishMessages(ctx context.Context, s *server.MeteredServer, bytes []byte)
 	}
 }
 
-func sendMessages(ctx context.Context, s *server.MeteredServer, bytes []byte) {
+func broadcastMessages(ctx context.Context, s *server.MeteredServer, bytes []byte) {
 	for {
 		select {
 		case <-ctx.Done():
 			return
 		default:
-			_, err := s.BroadCast(context.Background(), message.New().SetPayload(&protos.BroadcastV1{
+			_, err := s.Broadcast(context.Background(), message.New().SetPayload(&protos.BroadcastV1{
 				Message: "Broadcasting !",
 				Data:    bytes,
 			}))

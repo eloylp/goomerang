@@ -3,6 +3,7 @@ package server
 import (
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/gorilla/websocket"
 
@@ -84,6 +85,24 @@ func mainHandler(s *Server) http.HandlerFunc {
 	}
 }
 
+func broadcastCmdHandler(s *Server) message.Handler {
+	return message.HandlerFunc(func(sender message.Sender, msg *message.Message) {
+		origMsg, err := messaging.MessageFromBroadcast(s.messageRegistry, msg)
+		if err != nil {
+			s.hooks.ExecOnError(err)
+			return
+		}
+		now := time.Now()
+		brResult, err := s.Broadcast(s.ctx, origMsg)
+		if err != nil {
+			s.hooks.ExecOnError(err)
+			return
+		}
+		s.hooks.ExecOnBroadcast(origMsg.Metadata.Kind, brResult, time.Since(now))
+		s.hooks.ExecOnClientBroadcast(origMsg.Metadata.Kind)
+	})
+}
+
 func subscribeCmdHandler(pse *pubSubEngine, hook func(topic string)) message.Handler {
 	return message.HandlerFunc(func(s message.Sender, msg *message.Message) {
 		subsCmd := msg.Payload.(*protocol.SubscribeCmd)
@@ -111,6 +130,7 @@ func publishCmdHandler(mr message.Registry, pse *pubSubEngine,
 		}
 		if err := pse.publish(pubCmd.Topic, origMsg); err != nil {
 			onErrorHook(err)
+			return
 		}
 		hook(pubCmd.Topic, origMsg.Metadata.Kind)
 	})

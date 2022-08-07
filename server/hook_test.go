@@ -4,6 +4,7 @@ package server
 
 import (
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -20,6 +21,39 @@ func TestOnConfigurationHook(t *testing.T) {
 	hooks.ExecOnConfiguration(defCfg)
 	assert.True(t, defCfg.EnableCompression)
 	assert.Equal(t, 1000, defCfg.WriteBufferSize)
+}
+
+func TestOnBroadcastHook(t *testing.T) {
+	hooks := &hooks{}
+	results := []BroadcastResult{
+		{
+			Size:     23,
+			Duration: 3 * time.Second,
+		},
+	}
+	d := time.Second
+	hooks.AppendOnBroadcast(func(fqdn string, result []BroadcastResult, duration time.Duration) {
+		assert.Equal(t, results, result)
+		assert.Equal(t, "sales.bill", fqdn)
+		assert.Equal(t, d, duration)
+	})
+	hooks.AppendOnBroadcast(func(fqdn string, result []BroadcastResult, duration time.Duration) {
+		assert.Equal(t, results, result)
+		assert.Equal(t, "sales.bill", fqdn)
+		assert.Equal(t, d, duration)
+	})
+	hooks.ExecOnBroadcast("sales.bill", results, d)
+}
+
+func TestOnClientBroadcastHook(t *testing.T) {
+	hooks := &hooks{}
+	hooks.AppendOnClientBroadcast(func(fqdn string) {
+		assert.Equal(t, "sales.bill", fqdn)
+	})
+	hooks.AppendOnClientBroadcast(func(fqdn string) {
+		assert.Equal(t, "sales.bill", fqdn)
+	})
+	hooks.ExecOnClientBroadcast("sales.bill")
 }
 
 func TestOnSubscribeHook(t *testing.T) {
