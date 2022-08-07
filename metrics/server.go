@@ -116,7 +116,7 @@ func NewServerMetrics(c ServerConfig) *ServerMetrics {
 		BroadcastClientCount: prometheus.NewCounterVec(prometheus.CounterOpts{
 			Namespace: "goomerang",
 			Subsystem: "server",
-			Name:      "broadcasts_client_total",
+			Name:      "broadcast_client_total",
 			Help:      "The number of successful broadcast commands processed by the server (requested from client side).",
 		}, []string{"message"}),
 

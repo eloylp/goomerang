@@ -2106,7 +2106,7 @@
                 "uid": "PBFA97CFB590B2093"
               },
               "editorMode": "code",
-              "expr": "sum by (message) (rate(goomerang_server_broadcasts_client_total{instance=~\"$servers\"}[$__rate_interval]))",
+              "expr": "sum by (message) (rate(goomerang_server_broadcast_client_total{instance=~\"$servers\"}[$__rate_interval]))",
               "legendFormat": "{{topic}}",
               "range": true,
               "refId": "A"
