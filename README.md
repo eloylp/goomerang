@@ -62,7 +62,7 @@ CLOSED --> [*]
 * [Protocol buffers](https://developers.google.com/protocol-buffers/) as first class citizen. Register [message handlers](#message-handlers)
   at clients and servers.
 * [Middleware support](#middlewares), inspired by the Go HTTP standard lib.
-* [Broadcast messages](#broadcasts) from the server to clients.
+* [Message Broadcasting](#broadcasts) feature.
 * [Publish and subscribe](#publish-and-subscribe) model.
 * Send [synchronous messages](#synchronous-sends) from the client side, following a request/response pattern.
 * Support for concurrency at a message handler level.
@@ -338,7 +338,56 @@ order to not crash the entire process if a panic arises at some point in the han
 
 ## Broadcasts
 
-From the server side perspective, it's possible to send a message to all connected clients. This can be useful for a number of cases, like
+This library allows sending a message to all connected clients via the broadcast interface. This interfaces can be found in both
+implementations, the client and the server.
+
+From the client side perspective, the only thing to do is to call the `c.Broadcast(msg)` method:
+
+```go
+package main
+
+import (
+	"context"
+	"log"
+
+	"go.eloylp.dev/goomerang/client"
+	"go.eloylp.dev/goomerang/example/protos"
+	"go.eloylp.dev/goomerang/message"
+)
+
+func main() {
+	//...
+	c, err := client.New(
+		client.WithServerAddr("127.0.0.1:8080"),
+	)
+	if err != nil {
+		log.Fatal(err)
+	}
+	if err := c.Connect(context.TODO()); err != nil {
+		log.Fatal(err)
+	}
+	msg := message.New().SetPayload(&protos.MessageV1{
+		Message: "my message !",
+	})
+	if _, err := c.Broadcast(msg); err != nil {
+		log.Fatal(err)
+	}
+}
+```
+
+The above call to `c.Broadcast(msg)` sends a command to the server which will send the message to all connected clients. That means
+the message being broadcasted needs to be be properly [registered](#messages-registration) in all peers.
+
+```mermaid
+graph LR;
+Client1-->GoomerangServer;
+GoomerangServer-->Client1;
+GoomerangServer-->Client2;
+GoomerangServer-->Client3;
+```
+
+From the server side perspective, it's also possible to send a message to all connected clients. This can be useful for a number of cases,
+like
 push notifications. Here's and example on how to do it:
 
 ```go
@@ -348,13 +397,12 @@ import (
 	"context"
 	"log"
 
+	"go.eloylp.dev/goomerang/example/protos"
 	"go.eloylp.dev/goomerang/message"
 	"go.eloylp.dev/goomerang/server"
-	"go.eloylp.dev/goomerang/example/protos"
 )
 
 func main() {
-	// Create the server
 	s, _ := server.New(server.WithListenAddr("127.0.0.1:8080"))
 
 	msg := message.New().SetPayload(&protos.MessageV1{
@@ -368,9 +416,14 @@ func main() {
 }
 ```
 
-From the client side, it is not possible to send broadcasts to all the other connected clients. However, nothing will stop the
-user of the library of creating a handler for enabling this operation in the server. An example can be
-found [here](client_side_broadcast_test.go).
+In contrast with client side broadcasts, server side broadcasts will start the broadcasting operation immediately.
+
+```mermaid
+graph LR;
+GoomerangServer-->Client1;
+GoomerangServer-->Client2;
+GoomerangServer-->Client3;
+```
 
 ## Publish and subscribe
 
@@ -460,7 +513,8 @@ func main() {
 }
 ```
 
-A typical use case for server side publications , would be to consume from a queue and fan out the messages to the different topics, in which
+A typical use case for server side publications , would be to consume from a queue and fan out the messages to the different topics, in
+which
 clients would be
 subscribed.
 
