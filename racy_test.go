@@ -92,6 +92,14 @@ func TestNoRaces(t *testing.T) {
 	})
 
 	go exec.Parallelize(ctx, wg, maxConcurrent, func() {
+		if _, err := c.Publish("topic.a", defaultMsg); err != nil && err != client.ErrNotRunning {
+			arbiter.ErrorHappened(err)
+			return
+		}
+		arbiter.ItsAFactThat("c.Publish()")
+	})
+
+	go exec.Parallelize(ctx, wg, maxConcurrent, func() {
 		if _, err := c2.Send(defaultMsg); err != nil && err != client.ErrNotRunning {
 			arbiter.ErrorHappened(err)
 			return
@@ -113,6 +121,14 @@ func TestNoRaces(t *testing.T) {
 			return
 		}
 		arbiter.ItsAFactThat("c2.Broadcast()")
+	})
+
+	go exec.Parallelize(ctx, wg, maxConcurrent, func() {
+		if _, err := c2.Publish("topic.a", defaultMsg); err != nil && err != client.ErrNotRunning {
+			arbiter.ErrorHappened(err)
+			return
+		}
+		arbiter.ItsAFactThat("c2.Publish()")
 	})
 
 	<-ctx.Done()
