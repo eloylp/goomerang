@@ -287,6 +287,8 @@ go.eloylp.dev/goomerang v0.1.1-0.20220801205327-9222d5adf6f0 h1:SVzD4H5is9CW3U9P
 go.eloylp.dev/goomerang v0.1.1-0.20220801205327-9222d5adf6f0/go.mod h1:jNN5qVMm+M8geJxxpto6miJZFJd6KLkaKB295BadTm8=
 go.eloylp.dev/goomerang v0.1.1-0.20220806200050-fd5f01fe4fb0 h1:5osvnJyTAErjuUsglhD1oOVbji4ccB2G3L52lv8mGUE=
 go.eloylp.dev/goomerang v0.1.1-0.20220806200050-fd5f01fe4fb0/go.mod h1:jNN5qVMm+M8geJxxpto6miJZFJd6KLkaKB295BadTm8=
+go.eloylp.dev/goomerang v0.1.1-0.20220807153457-780a90470fe3 h1:VM30qonQYGC+ooDzIXqP2C92olXm5uY4q72QEaK61lc=
+go.eloylp.dev/goomerang v0.1.1-0.20220807153457-780a90470fe3/go.mod h1:jNN5qVMm+M8geJxxpto6miJZFJd6KLkaKB295BadTm8=
 go.opencensus.io v0.21.0/go.mod h1:mSImk1erAIZhrmZN+AvHh14ztQfjbGwt4TtuofqLduU=
 go.opencensus.io v0.22.0/go.mod h1:+kGneAE2xo2IficOXnaByMWTGM9T73dGwxeWcUqIpI8=
 go.opencensus.io v0.22.2/go.mod h1:yxeiOL68Rb0Xd1ddK5vPZ/oVn4vY4Ynel7k9FzqtOIw=
