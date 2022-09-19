@@ -13,7 +13,7 @@ lint-fix:
 
 .PHONY: test
 test:
-	go test -v -count=1 -race -tags unit,integration,racy,long -shuffle on -coverprofile=cover.out ./...
+	go test -v -count=1 -race -tags unit,integration -shuffle on -coverprofile=cover.out ./...
 
 .PHONY: test-unit
 test-unit:
@@ -32,7 +32,7 @@ test-long:
 	go test -v -count=1 -race -tags long -shuffle on ./...
 
 .PHONY: cover
-cover: test
+cover: test test-long test-racy
 	@go tool cover -html=cover.out -o=cover.html
 
 .PHONY: messages
