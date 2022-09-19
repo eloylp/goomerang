@@ -1,4 +1,4 @@
-//go:build longrunning
+//go:build long
 
 package goomerang_test
 

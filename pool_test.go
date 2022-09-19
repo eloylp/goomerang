@@ -1,3 +1,5 @@
+//go:build integration
+
 package goomerang_test
 
 import (
