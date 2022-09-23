@@ -5,11 +5,11 @@ all: lint test
 
 .PHONY: lint
 lint:
-	golangci-lint run -v
+	golangci-lint run --build-tags unit,integration,racy,long -v
 
 .PHONY: lint-fix
 lint-fix:
-	golangci-lint run --build-tags racy -v --fix
+	golangci-lint run --build-tags unit,integration,racy,long -v --fix
 
 .PHONY: test
 test:
