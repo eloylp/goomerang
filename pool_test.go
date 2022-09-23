@@ -23,7 +23,7 @@ func TestWorkerPoolUsage(t *testing.T) {
 func WorkerPoolTest(maxConcurrency int, shouldBeActive bool) func(t *testing.T) {
 	return func(t *testing.T) {
 		arbiter := test.NewArbiter(t)
-		s, run := PrepareServer(t,
+		s, run := Server(t,
 			server.WithMaxConcurrency(maxConcurrency),
 			server.WithOnWorkerStart(func() {
 				arbiter.ItsAFactThat("SERVER_POOL_WORKER_STARTED")
@@ -35,7 +35,7 @@ func WorkerPoolTest(maxConcurrency int, shouldBeActive bool) func(t *testing.T) 
 		run()
 		defer s.Shutdown(defaultCtx)
 
-		c, connect := PrepareClient(t,
+		c, connect := Client(t,
 			client.WithServerAddr(s.Addr()),
 			client.WithMaxConcurrency(maxConcurrency),
 			client.WithOnWorkerStart(func() {
@@ -70,7 +70,7 @@ func WorkerPoolTest(maxConcurrency int, shouldBeActive bool) func(t *testing.T) 
 
 func TestSendVariousMessagesWithNoConcurrency(t *testing.T) {
 	arbiter := test.NewArbiter(t)
-	s, run := PrepareServer(t, server.WithMaxConcurrency(0))
+	s, run := Server(t, server.WithMaxConcurrency(0))
 	defer s.Shutdown(defaultCtx)
 
 	s.Handle(defaultMsg.Payload, message.HandlerFunc(func(s message.Sender, msg *message.Message) {
@@ -78,7 +78,7 @@ func TestSendVariousMessagesWithNoConcurrency(t *testing.T) {
 		_, _ = s.Send(msg)
 	}))
 	run()
-	c, connect := PrepareClient(t,
+	c, connect := Client(t,
 		client.WithServerAddr(s.Addr()),
 		client.WithMaxConcurrency(0),
 	)

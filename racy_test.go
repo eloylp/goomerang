@@ -27,16 +27,16 @@ func TestNoRaces(t *testing.T) {
 	t.Parallel()
 
 	// Bring up 2 clients and one server.
-	s, run := PrepareServer(t)
+	s, run := Server(t)
 	s.Handle(defaultMsg.Payload, echoHandler)
 	run()
 
-	c, connect := PrepareClient(t, client.WithServerAddr(s.Addr()))
+	c, connect := Client(t, client.WithServerAddr(s.Addr()))
 	c.Handle(defaultMsg.Payload, nilHandler)
 	connect()
 	failIfErr(t, c.Subscribe("topic.a"))
 
-	c2, connect2 := PrepareClient(t, client.WithServerAddr(s.Addr()))
+	c2, connect2 := Client(t, client.WithServerAddr(s.Addr()))
 	c2.Handle(defaultMsg.Payload, nilHandler)
 	connect2()
 	failIfErr(t, c2.Subscribe("topic.a"))

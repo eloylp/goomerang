@@ -20,7 +20,7 @@ import (
 
 func TestRoundTrip(t *testing.T) {
 	arbiter := test.NewArbiter(t)
-	s, run := PrepareServer(t)
+	s, run := Server(t)
 	defer s.Shutdown(defaultCtx)
 
 	s.Handle(defaultMsg.Payload, message.HandlerFunc(func(s message.Sender, msg *message.Message) {
@@ -31,7 +31,7 @@ func TestRoundTrip(t *testing.T) {
 		arbiter.ItsAFactThat("SERVER_RECEIVED_MSG")
 	}))
 	run()
-	c, connect := PrepareClient(t, client.WithServerAddr(s.Addr()))
+	c, connect := Client(t, client.WithServerAddr(s.Addr()))
 	defer c.Close(defaultCtx)
 
 	c.Handle(defaultMsg.Payload, message.HandlerFunc(func(c message.Sender, msg *message.Message) {
@@ -69,7 +69,7 @@ func TestSecuredRoundTrip(t *testing.T) {
 	run()
 	certPool := x509.NewCertPool()
 	certPool.AddCert(certificate.Leaf)
-	c, connect := PrepareClient(t,
+	c, connect := Client(t,
 		client.WithServerAddr(s.Addr()),
 		client.WithTLSConfig(&tls.Config{
 			RootCAs: certPool,
@@ -91,7 +91,7 @@ func TestSecuredRoundTrip(t *testing.T) {
 
 func TestMiddlewares(t *testing.T) {
 	arbiter := test.NewArbiter(t)
-	s, run := PrepareServer(t)
+	s, run := Server(t)
 	defer s.Shutdown(defaultCtx)
 	s.Middleware(func(h message.Handler) message.Handler {
 		return message.HandlerFunc(func(s message.Sender, msg *message.Message) {
@@ -108,7 +108,7 @@ func TestMiddlewares(t *testing.T) {
 		}
 	}))
 	run()
-	c, connect := PrepareClient(t, client.WithServerAddr(s.Addr()))
+	c, connect := Client(t, client.WithServerAddr(s.Addr()))
 	defer c.Close(defaultCtx)
 
 	c.Middleware(func(h message.Handler) message.Handler {
@@ -135,7 +135,7 @@ func TestMiddlewares(t *testing.T) {
 
 func TestHeadersAreSent(t *testing.T) {
 	arbiter := test.NewArbiter(t)
-	s, run := PrepareServer(t)
+	s, run := Server(t)
 	defer s.Shutdown(defaultCtx)
 
 	m := defaultMsg.Payload
@@ -149,7 +149,7 @@ func TestHeadersAreSent(t *testing.T) {
 	}))
 	run()
 
-	c, connect := PrepareClient(t, client.WithServerAddr(s.Addr()))
+	c, connect := Client(t, client.WithServerAddr(s.Addr()))
 	defer c.Close(defaultCtx)
 
 	c.Handle(m, message.HandlerFunc(func(sender message.Sender, msg *message.Message) {
@@ -170,7 +170,7 @@ func TestHeadersAreSent(t *testing.T) {
 }
 
 func TestUserCanAccessServerRegistry(t *testing.T) {
-	s, _ := PrepareServer(t)
+	s, _ := Server(t)
 	s.Handle(defaultMsg.Payload, nilHandler)
 	msg, err := s.Registry().Message(defaultMsg.Metadata.Kind)
 	require.NoError(t, err)

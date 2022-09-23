@@ -14,8 +14,10 @@ import (
 func TestMessageRegistry(t *testing.T) {
 	msg := &protos.MessageV1{}
 	r := message.Registry{}
+
 	r.Register("m1", msg)
 	res, err := r.Message("m1")
+
 	require.NoError(t, err)
 	require.EqualValues(t, msg, res)
 	require.NotSame(t, msg, res.(*protos.MessageV1))

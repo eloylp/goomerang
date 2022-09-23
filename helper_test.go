@@ -67,7 +67,7 @@ func mustWaitTCPService(addr string, interval, maxWait time.Duration) {
 	}
 }
 
-func PrepareServer(t *testing.T, opts ...server.Option) (s *server.Server, run func()) {
+func Server(t *testing.T, opts ...server.Option) (s *server.Server, run func()) {
 	t.Helper()
 	is := configureServer(t, opts)
 	return is, func() {
@@ -114,7 +114,7 @@ func PrepareTLSServer(t *testing.T, opts ...server.Option) (s *server.Server, ru
 	}
 }
 
-func PrepareClient(t *testing.T, opts ...client.Option) (c *client.Client, connect func()) {
+func Client(t *testing.T, opts ...client.Option) (c *client.Client, connect func()) {
 	c, err := client.New(opts...)
 	if err != nil {
 		t.Fatal(err)

@@ -18,12 +18,12 @@ import (
 func TestClientsCanInterceptClosedConnection(t *testing.T) {
 	t.Parallel()
 
-	s, run := PrepareServer(t)
+	s, run := Server(t)
 	run()
-	c1, connect1 := PrepareClient(t, client.WithServerAddr(s.Addr()))
+	c1, connect1 := Client(t, client.WithServerAddr(s.Addr()))
 	defer c1.Close(defaultCtx)
 	connect1()
-	c2, connect2 := PrepareClient(t, client.WithServerAddr(s.Addr()))
+	c2, connect2 := Client(t, client.WithServerAddr(s.Addr()))
 	defer c2.Close(defaultCtx)
 	connect2()
 	s.Shutdown(defaultCtx)
@@ -36,7 +36,7 @@ func TestClientsCanInterceptClosedConnection(t *testing.T) {
 
 func TestServerSupportMultipleClients(t *testing.T) {
 	arbiter := test.NewArbiter(t)
-	s, run := PrepareServer(t, server.WithOnErrorHook(func(err error) {
+	s, run := Server(t, server.WithOnErrorHook(func(err error) {
 		arbiter.ErrorHappened(err)
 	}))
 	s.Handle(defaultMsg.Payload, message.HandlerFunc(func(ops message.Sender, msg *message.Message) {
@@ -56,7 +56,7 @@ func TestServerSupportMultipleClients(t *testing.T) {
 	run()
 	defer s.Shutdown(defaultCtx)
 
-	c1, connect1 := PrepareClient(t, client.WithServerAddr(s.Addr()))
+	c1, connect1 := Client(t, client.WithServerAddr(s.Addr()))
 	c1.Handle(defaultMsg.Payload, message.HandlerFunc(func(ops message.Sender, msg *message.Message) {
 		pongMsg, ok := msg.Payload.(*protos.MessageV1)
 		if !ok {
@@ -67,7 +67,7 @@ func TestServerSupportMultipleClients(t *testing.T) {
 	}))
 	connect1()
 	defer c1.Close(defaultCtx)
-	c2, connect2 := PrepareClient(t, client.WithServerAddr(s.Addr()))
+	c2, connect2 := Client(t, client.WithServerAddr(s.Addr()))
 	c2.Handle(defaultMsg.Payload, message.HandlerFunc(func(ops message.Sender, msg *message.Message) {
 		pongMsg, ok := msg.Payload.(*protos.MessageV1)
 		if !ok {

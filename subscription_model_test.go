@@ -17,11 +17,11 @@ func TestSubscriptionsFromClientSide(t *testing.T) {
 	t.Parallel()
 
 	arbiter := test.NewArbiter(t)
-	s, run := PrepareServer(t, server.WithOnErrorHook(noErrorHook(arbiter)))
+	s, run := Server(t, server.WithOnErrorHook(noErrorHook(arbiter)))
 	s.RegisterMessage(defaultMsg.Payload)
 	run()
 	defer s.Shutdown(defaultCtx)
-	c1, connect1 := PrepareClient(t,
+	c1, connect1 := Client(t,
 		client.WithServerAddr(s.Addr()),
 		client.WithOnErrorHook(noErrorHook(arbiter)),
 	)
@@ -33,7 +33,7 @@ func TestSubscriptionsFromClientSide(t *testing.T) {
 	failIfErr(t, c1.Subscribe("topic.a"))
 	defer c1.Close(defaultCtx)
 
-	c2, connect2 := PrepareClient(t,
+	c2, connect2 := Client(t,
 		client.WithServerAddr(s.Addr()),
 		client.WithOnErrorHook(noErrorHook(arbiter)),
 	)
@@ -45,7 +45,7 @@ func TestSubscriptionsFromClientSide(t *testing.T) {
 	failIfErr(t, c2.Subscribe("topic.a"))
 	defer c2.Close(defaultCtx)
 
-	c3, connect3 := PrepareClient(t,
+	c3, connect3 := Client(t,
 		client.WithServerAddr(s.Addr()),
 		client.WithOnErrorHook(noErrorHook(arbiter)),
 	)
@@ -65,10 +65,10 @@ func TestServerPublish(t *testing.T) {
 	t.Parallel()
 
 	arbiter := test.NewArbiter(t)
-	s, run := PrepareServer(t, server.WithOnErrorHook(noErrorHook(arbiter)))
+	s, run := Server(t, server.WithOnErrorHook(noErrorHook(arbiter)))
 	run()
 	defer s.Shutdown(defaultCtx)
-	c1, connect1 := PrepareClient(t,
+	c1, connect1 := Client(t,
 		client.WithServerAddr(s.Addr()),
 		client.WithOnErrorHook(noErrorHook(arbiter)),
 	)
@@ -80,7 +80,7 @@ func TestServerPublish(t *testing.T) {
 	failIfErr(t, c1.Subscribe("topic.a"))
 	defer c1.Close(defaultCtx)
 
-	c2, connect2 := PrepareClient(t,
+	c2, connect2 := Client(t,
 		client.WithServerAddr(s.Addr()),
 		client.WithOnErrorHook(noErrorHook(arbiter)),
 	)

@@ -18,17 +18,17 @@ func TestServerSideBroadcast(t *testing.T) {
 	t.Parallel()
 
 	arbiter := test.NewArbiter(t)
-	s, waitAndRun := PrepareServer(t)
+	s, waitAndRun := Server(t)
 	waitAndRun()
 	defer s.Shutdown(defaultCtx)
 
-	c1, connect1 := PrepareClient(t, client.WithServerAddr(s.Addr()))
+	c1, connect1 := Client(t, client.WithServerAddr(s.Addr()))
 	defer c1.Close(defaultCtx)
 	c1.Handle(defaultMsg.Payload, message.HandlerFunc(func(ops message.Sender, msg *message.Message) {
 		arbiter.ItsAFactThat("CLIENT1_RECEIVED_SERVER_GREET")
 	}))
 	connect1()
-	c2, connect2 := PrepareClient(t, client.WithServerAddr(s.Addr()))
+	c2, connect2 := Client(t, client.WithServerAddr(s.Addr()))
 	defer c2.Close(defaultCtx)
 	c2.Handle(defaultMsg.Payload, message.HandlerFunc(func(ops message.Sender, msg *message.Message) {
 		arbiter.ItsAFactThat("CLIENT2_RECEIVED_SERVER_GREET")
@@ -49,18 +49,18 @@ func TestClientSideBroadCast(t *testing.T) {
 	t.Parallel()
 
 	arbiter := test.NewArbiter(t)
-	s, waitAndRun := PrepareServer(t, server.WithOnErrorHook(noErrorHook(arbiter)))
+	s, waitAndRun := Server(t, server.WithOnErrorHook(noErrorHook(arbiter)))
 	s.RegisterMessage(defaultMsg.Payload)
 	waitAndRun()
 	defer s.Shutdown(defaultCtx)
 
-	c1, connect1 := PrepareClient(t, client.WithServerAddr(s.Addr()), client.WithOnErrorHook(noErrorHook(arbiter)))
+	c1, connect1 := Client(t, client.WithServerAddr(s.Addr()), client.WithOnErrorHook(noErrorHook(arbiter)))
 	defer c1.Close(defaultCtx)
 	c1.Handle(defaultMsg.Payload, message.HandlerFunc(func(ops message.Sender, msg *message.Message) {
 		arbiter.ItsAFactThat("CLIENT1_RECEIVED_SERVER_GREET")
 	}))
 	connect1()
-	c2, connect2 := PrepareClient(t, client.WithServerAddr(s.Addr()))
+	c2, connect2 := Client(t, client.WithServerAddr(s.Addr()))
 	defer c2.Close(defaultCtx)
 	c2.Handle(defaultMsg.Payload, message.HandlerFunc(func(ops message.Sender, msg *message.Message) {
 		arbiter.ItsAFactThat("CLIENT2_RECEIVED_SERVER_GREET")
