@@ -35,7 +35,7 @@ func (m *Message) GetHeader(k string) string {
 	return m.Header.Get(k)
 }
 
-func (m Message) String() string {
+func (m *Message) String() string {
 	return fmt.Sprintf("metadata: %s headers: %s - payload: %s", m.Metadata, m.Header, m.Payload)
 }
 
