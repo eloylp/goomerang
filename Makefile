@@ -1,3 +1,6 @@
+ALL_TESTS_TAGS=unit,integration,racy,long
+DEV_TESTS_TAGS=unit,integration
+
 .DEFAULT_GOAL := all
 
 .PHONY: all
@@ -5,15 +8,15 @@ all: lint test
 
 .PHONY: lint
 lint:
-	golangci-lint run --build-tags unit,integration,racy,long -v
+	golangci-lint run --build-tags ${ALL_TESTS_TAGS} -v
 
 .PHONY: lint-fix
 lint-fix:
-	golangci-lint run --build-tags unit,integration,racy,long -v --fix
+	golangci-lint run --build-tags ${ALL_TESTS_TAGS} -v --fix
 
 .PHONY: test
 test:
-	go test -v -count=1 -race -tags unit,integration -shuffle on -coverprofile=cover.out ./...
+	go test -v -count=1 -race -tags ${DEV_TESTS_TAGS} -shuffle on -coverprofile=cover.out ./...
 
 .PHONY: test-unit
 test-unit:
