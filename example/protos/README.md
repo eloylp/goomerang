@@ -22,5 +22,5 @@ the [proto compiler](https://github.com/protocolbuffers/protobuf#protocol-compil
 
 Then create the IDLs. The protos found in the [README.md](../../README.md) examples, can be found on this repo [IDL](examples.proto).
 
-Once we have the IDLs ready, we can use the protocol buffer compiler for generating the resultant code that should be shared with clients
-and servers. An example on this repo [Makefile](Makefile) is provided.
+Once we have the IDLs ready, we can use the protocol buffer compiler for generating the resultant code, that should be shared with clients
+and servers. An example of the coomands are provided on this repo [Makefile](Makefile) .
