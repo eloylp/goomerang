@@ -5,6 +5,9 @@ package goomerang_test
 import (
 	"crypto/tls"
 	"crypto/x509"
+	"fmt"
+	"io"
+	"net/http"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -175,4 +178,44 @@ func TestUserCanAccessServerRegistry(t *testing.T) {
 	msg, err := s.Registry().Message(defaultMsg.Metadata.Kind)
 	require.NoError(t, err)
 	assert.Equal(t, messaging.FQDN(defaultMsg.Payload), messaging.FQDN(msg))
+}
+
+func TestUserCanConfigureCustomHTTPRoutes(t *testing.T) {
+	t.Parallel()
+
+	s, err := server.New(server.WithListenAddr("127.0.0.1:0"))
+	require.NoError(t, err)
+
+	s.Router().Handle("/my-endpoint", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		_, _ = w.Write([]byte("hi!"))
+	}))
+
+	// Run the server
+	go func() {
+		_ = s.Run()
+	}()
+	waitForServer(t, s)
+	defer s.Shutdown(defaultCtx)
+
+	// Make the request to the custom endpoint
+	url := fmt.Sprintf("http://%s/my-endpoint", s.Addr())
+	resp, err := http.Get(url)
+	require.NoError(t, err)
+	defer resp.Body.Close()
+
+	body, err := io.ReadAll(resp.Body)
+	require.NoError(t, err)
+
+	assert.Equal(t, "hi!", string(body))
+}
+
+func TestUserCannotConfigureCustomHTTPRoutesOnceRunning(t *testing.T) {
+	t.Parallel()
+
+	s, run := Server(t)
+	run()
+	defer s.Shutdown(defaultCtx)
+	assert.Panics(t, func() {
+		s.Router()
+	})
 }

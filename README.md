@@ -72,6 +72,7 @@ CLOSED --> [*]
 * [Ping/pong](https://datatracker.ietf.org/doc/html/rfc6455#section-5.5.2) messages out of the box in clients and server. Keep alive
   connections.
 * Customizable TLS configuration.
+* Ability to introduce [custom HTTP routes](#custom-http-routes).
 * Custom errors are exposed, ability to build retry systems on top of the public API.
 * [Observability tools](#observability), that will help instrumenting clients and servers.
 
@@ -608,6 +609,34 @@ $ cat /proc/sys/net/ipv4/tcp_rmem
 4096	131072	6291456
 ```
 
+## Custom HTTP routes
+
+Many times we want to run more HTTP handler logic in the same port of websockets.
+This library provides such ability, allowing users to register custom handlers at the
+beginning of the server setup. Here's an example of a health endpoint:
+
+```go
+package main
+
+import (
+	"net/http"
+	"go.eloylp.dev/goomerang/server"
+)
+
+func main() {
+	s, _ := server.New(server.WithListenAddr("127.0.0.1:8080"))
+	// Obtain the router + normal handler registration
+	s.Router().Handle("/health", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// Do more checks
+		_, _ = w.Write([]byte("ok"))
+	}))
+}
+```
+
+⚠ As an important note, currently the paths `/ws` and `/wss` are reserved for library use.
+
+The exposed router is the one provided by the [gorilla mux project](https://github.com/gorilla/mux).
+
 ## Hooks
 
 Sometimes getting feedback from internal parts of the system its difficult. Specially in processing loops, where in case of errors we cannot
@@ -714,7 +743,8 @@ Note left of S: Status = Closed
 S->>S: Return to user
 ```
 
-As we can see the process is similar, but in this case, the shutdown process its executed over all clients connections at the same time, in parallel.
+As we can see the process is similar, but in this case, the shutdown process its executed over all clients connections at the same time, in
+parallel.
 
 ## Observability
 

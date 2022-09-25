@@ -2,6 +2,7 @@ package server
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net"
 	"net/http"
@@ -224,6 +225,16 @@ func (s *Server) Run() (err error) {
 		return err
 	}
 	return nil
+}
+
+// Router provides access to the underlying HTTP router.
+// The routes /ws and /wss are reserved for library
+// operations.
+func (s *Server) Router() *http.ServeMux {
+	if s.status() != ws.StatusNew {
+		panic(errors.New("custom handlers can only be implemented before running"))
+	}
+	return s.intServer.Handler.(*http.ServeMux)
 }
 
 // RegisterMessage will make the server aware of a specific kind of
