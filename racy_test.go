@@ -42,7 +42,7 @@ func TestNoRaces(t *testing.T) {
 	failIfErr(t, c2.Subscribe("topic.a"))
 
 	// Set test duration of 10 seconds.
-	ctx, cancl := context.WithTimeout(defaultCtx, 20*time.Second)
+	ctx, cancl := context.WithTimeout(defaultCtx, 10*time.Second)
 	defer cancl()
 
 	wg := &sync.WaitGroup{}
