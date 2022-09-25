@@ -1,3 +1,5 @@
+//go:build integration
+
 package goomerang_test
 
 import (
@@ -13,17 +15,17 @@ import (
 
 func TestSendSync(t *testing.T) {
 	arbiter := test.NewArbiter(t)
-	s, run := PrepareServer(t)
+	s, run := Server(t)
 	defer s.Shutdown(defaultCtx)
 
-	s.Handle(defaultMsg.Payload, message.HandlerFunc(func(s message.Sender, msg *message.Message) {
+	s.Handle(defaultMsg().Payload, message.HandlerFunc(func(s message.Sender, msg *message.Message) {
 		m := message.New().SetPayload(&protos.ReplyV1{Message: "pong !"})
 		if _, err := s.Send(m); err != nil {
 			arbiter.ErrorHappened(err)
 		}
 	}))
 	run()
-	c, connect := PrepareClient(t, client.WithServerAddr(s.Addr()))
+	c, connect := Client(t, client.WithServerAddr(s.Addr()))
 	connect()
 	defer c.Close(defaultCtx)
 

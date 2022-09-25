@@ -5,6 +5,9 @@ package goomerang_test
 import (
 	"crypto/tls"
 	"crypto/x509"
+	"fmt"
+	"io"
+	"net/http"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -19,27 +22,29 @@ import (
 )
 
 func TestRoundTrip(t *testing.T) {
+	t.Parallel()
+
 	arbiter := test.NewArbiter(t)
-	s, run := PrepareServer(t)
+	s, run := Server(t)
 	defer s.Shutdown(defaultCtx)
 
-	s.Handle(defaultMsg.Payload, message.HandlerFunc(func(s message.Sender, msg *message.Message) {
+	s.Handle(defaultMsg().Payload, message.HandlerFunc(func(s message.Sender, msg *message.Message) {
 		_ = msg.Payload.(*protos.MessageV1)
-		if _, err := s.Send(defaultMsg); err != nil {
+		if _, err := s.Send(defaultMsg()); err != nil {
 			arbiter.ErrorHappened(err)
 		}
 		arbiter.ItsAFactThat("SERVER_RECEIVED_MSG")
 	}))
 	run()
-	c, connect := PrepareClient(t, client.WithServerAddr(s.Addr()))
+	c, connect := Client(t, client.WithServerAddr(s.Addr()))
 	defer c.Close(defaultCtx)
 
-	c.Handle(defaultMsg.Payload, message.HandlerFunc(func(c message.Sender, msg *message.Message) {
+	c.Handle(defaultMsg().Payload, message.HandlerFunc(func(c message.Sender, msg *message.Message) {
 		_ = msg.Payload.(*protos.MessageV1)
 		arbiter.ItsAFactThat("CLIENT_RECEIVED_REPLY")
 	}))
 	connect()
-	payloadSize, err := c.Send(defaultMsg)
+	payloadSize, err := c.Send(defaultMsg())
 	require.NoError(t, err)
 	require.NotEmpty(t, payloadSize)
 	arbiter.RequireNoErrors()
@@ -48,6 +53,8 @@ func TestRoundTrip(t *testing.T) {
 }
 
 func TestSecuredRoundTrip(t *testing.T) {
+	t.Parallel()
+
 	arbiter := test.NewArbiter(t)
 	// Get self-signed certificate.
 	certificate := SelfSignedCert(t)
@@ -57,11 +64,11 @@ func TestSecuredRoundTrip(t *testing.T) {
 	}))
 
 	defer s.Shutdown(defaultCtx)
-	msg := defaultMsg.Payload
+	msg := defaultMsg().Payload
 
 	s.Handle(msg, message.HandlerFunc(func(s message.Sender, msg *message.Message) {
 		_ = msg.Payload.(*protos.MessageV1)
-		if _, err := s.Send(defaultMsg); err != nil {
+		if _, err := s.Send(defaultMsg()); err != nil {
 			arbiter.ErrorHappened(err)
 		}
 		arbiter.ItsAFactThat("SERVER_RECEIVED_MSG")
@@ -69,7 +76,7 @@ func TestSecuredRoundTrip(t *testing.T) {
 	run()
 	certPool := x509.NewCertPool()
 	certPool.AddCert(certificate.Leaf)
-	c, connect := PrepareClient(t,
+	c, connect := Client(t,
 		client.WithServerAddr(s.Addr()),
 		client.WithTLSConfig(&tls.Config{
 			RootCAs: certPool,
@@ -81,7 +88,7 @@ func TestSecuredRoundTrip(t *testing.T) {
 		arbiter.ItsAFactThat("CLIENT_RECEIVED_REPLY")
 	}))
 	connect()
-	payloadSize, err := c.Send(defaultMsg)
+	payloadSize, err := c.Send(defaultMsg())
 	assert.NoError(t, err)
 	assert.NotEmpty(t, payloadSize)
 	arbiter.RequireNoErrors()
@@ -90,8 +97,10 @@ func TestSecuredRoundTrip(t *testing.T) {
 }
 
 func TestMiddlewares(t *testing.T) {
+	t.Parallel()
+
 	arbiter := test.NewArbiter(t)
-	s, run := PrepareServer(t)
+	s, run := Server(t)
 	defer s.Shutdown(defaultCtx)
 	s.Middleware(func(h message.Handler) message.Handler {
 		return message.HandlerFunc(func(s message.Sender, msg *message.Message) {
@@ -99,7 +108,7 @@ func TestMiddlewares(t *testing.T) {
 			h.Handle(s, msg)
 		})
 	})
-	s.Handle(defaultMsg.Payload, message.HandlerFunc(func(s message.Sender, msg *message.Message) {
+	s.Handle(defaultMsg().Payload, message.HandlerFunc(func(s message.Sender, msg *message.Message) {
 		arbiter.ItsAFactThat("SERVER_HANDLER_EXECUTED")
 		if _, err := s.Send(&message.Message{
 			Payload: msg.Payload,
@@ -108,7 +117,7 @@ func TestMiddlewares(t *testing.T) {
 		}
 	}))
 	run()
-	c, connect := PrepareClient(t, client.WithServerAddr(s.Addr()))
+	c, connect := Client(t, client.WithServerAddr(s.Addr()))
 	defer c.Close(defaultCtx)
 
 	c.Middleware(func(h message.Handler) message.Handler {
@@ -118,11 +127,11 @@ func TestMiddlewares(t *testing.T) {
 		})
 	})
 
-	c.Handle(defaultMsg.Payload, message.HandlerFunc(func(c message.Sender, msg *message.Message) {
+	c.Handle(defaultMsg().Payload, message.HandlerFunc(func(c message.Sender, msg *message.Message) {
 		arbiter.ItsAFactThat("CLIENT_RECEIVED_REPLY")
 	}))
 	connect()
-	_, err := c.Send(defaultMsg)
+	_, err := c.Send(defaultMsg())
 	require.NoError(t, err)
 	arbiter.RequireNoErrors()
 	arbiter.RequireHappenedInOrder(
@@ -134,11 +143,13 @@ func TestMiddlewares(t *testing.T) {
 }
 
 func TestHeadersAreSent(t *testing.T) {
+	t.Parallel()
+
 	arbiter := test.NewArbiter(t)
-	s, run := PrepareServer(t)
+	s, run := Server(t)
 	defer s.Shutdown(defaultCtx)
 
-	m := defaultMsg.Payload
+	m := defaultMsg().Payload
 	s.Handle(m, message.HandlerFunc(func(s message.Sender, msg *message.Message) {
 		if msg.Header.Get("h1") == "v1" { //nolint: goconst
 			arbiter.ItsAFactThat("SERVER_RECEIVED_MSG_HEADERS")
@@ -149,7 +160,7 @@ func TestHeadersAreSent(t *testing.T) {
 	}))
 	run()
 
-	c, connect := PrepareClient(t, client.WithServerAddr(s.Addr()))
+	c, connect := Client(t, client.WithServerAddr(s.Addr()))
 	defer c.Close(defaultCtx)
 
 	c.Handle(m, message.HandlerFunc(func(sender message.Sender, msg *message.Message) {
@@ -170,9 +181,49 @@ func TestHeadersAreSent(t *testing.T) {
 }
 
 func TestUserCanAccessServerRegistry(t *testing.T) {
-	s, _ := PrepareServer(t)
-	s.Handle(defaultMsg.Payload, nilHandler)
-	msg, err := s.Registry().Message(defaultMsg.Metadata.Kind)
+	s, _ := Server(t)
+	s.Handle(defaultMsg().Payload, nilHandler)
+	msg, err := s.Registry().Message(defaultMsg().Metadata.Kind)
 	require.NoError(t, err)
-	assert.Equal(t, messaging.FQDN(defaultMsg.Payload), messaging.FQDN(msg))
+	assert.Equal(t, messaging.FQDN(defaultMsg().Payload), messaging.FQDN(msg))
+}
+
+func TestUserCanConfigureCustomHTTPRoutes(t *testing.T) {
+	t.Parallel()
+
+	s, err := server.New(server.WithListenAddr("127.0.0.1:0"))
+	require.NoError(t, err)
+
+	s.Router().Handle("/my-endpoint", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		_, _ = w.Write([]byte("hi!"))
+	}))
+
+	// Run the server
+	go func() {
+		_ = s.Run()
+	}()
+	waitForServer(t, s)
+	defer s.Shutdown(defaultCtx)
+
+	// Make the request to the custom endpoint
+	url := fmt.Sprintf("http://%s/my-endpoint", s.Addr())
+	resp, err := http.Get(url)
+	require.NoError(t, err)
+	defer resp.Body.Close()
+
+	body, err := io.ReadAll(resp.Body)
+	require.NoError(t, err)
+
+	assert.Equal(t, "hi!", string(body))
+}
+
+func TestUserCannotConfigureCustomHTTPRoutesOnceRunning(t *testing.T) {
+	t.Parallel()
+
+	s, run := Server(t)
+	run()
+	defer s.Shutdown(defaultCtx)
+	assert.Panics(t, func() {
+		s.Router()
+	})
 }

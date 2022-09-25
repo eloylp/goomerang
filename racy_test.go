@@ -27,17 +27,17 @@ func TestNoRaces(t *testing.T) {
 	t.Parallel()
 
 	// Bring up 2 clients and one server.
-	s, run := PrepareServer(t)
-	s.Handle(defaultMsg.Payload, echoHandler)
+	s, run := Server(t)
+	s.Handle(defaultMsg().Payload, echoHandler)
 	run()
 
-	c, connect := PrepareClient(t, client.WithServerAddr(s.Addr()))
-	c.Handle(defaultMsg.Payload, nilHandler)
+	c, connect := Client(t, client.WithServerAddr(s.Addr()))
+	c.Handle(defaultMsg().Payload, nilHandler)
 	connect()
 	failIfErr(t, c.Subscribe("topic.a"))
 
-	c2, connect2 := PrepareClient(t, client.WithServerAddr(s.Addr()))
-	c2.Handle(defaultMsg.Payload, nilHandler)
+	c2, connect2 := Client(t, client.WithServerAddr(s.Addr()))
+	c2.Handle(defaultMsg().Payload, nilHandler)
 	connect2()
 	failIfErr(t, c2.Subscribe("topic.a"))
 
@@ -50,9 +50,9 @@ func TestNoRaces(t *testing.T) {
 	arbiter := test.NewArbiter(t)
 
 	// Stress all parts of the system through the public API. All uses cases at the same time.
-	const maxConcurrent = 20
+	const maxConcurrent = 10
 	go exec.Parallelize(ctx, wg, maxConcurrent, func() {
-		if _, err := s.Broadcast(defaultCtx, defaultMsg); err != nil && err != server.ErrNotRunning {
+		if _, err := s.Broadcast(defaultCtx, defaultMsg()); err != nil && err != server.ErrNotRunning {
 			arbiter.ErrorHappened(err)
 			return
 		}
@@ -60,7 +60,7 @@ func TestNoRaces(t *testing.T) {
 	})
 
 	go exec.Parallelize(ctx, wg, maxConcurrent, func() {
-		if err := s.Publish("topic.a", defaultMsg); err != nil && err != server.ErrNotRunning {
+		if err := s.Publish("topic.a", defaultMsg()); err != nil && err != server.ErrNotRunning {
 			arbiter.ErrorHappened(err)
 			return
 		}
@@ -93,7 +93,7 @@ func TestNoRaces(t *testing.T) {
 
 func execClientSend(ctx context.Context, wg *sync.WaitGroup, maxConcurrent int, c *client.Client, arbiter *test.Arbiter) {
 	go exec.Parallelize(ctx, wg, maxConcurrent, func() {
-		if _, err := c.Send(defaultMsg); err != nil && err != client.ErrNotRunning {
+		if _, err := c.Send(defaultMsg()); err != nil && err != client.ErrNotRunning {
 			arbiter.ErrorHappened(err)
 			return
 		}
@@ -103,7 +103,7 @@ func execClientSend(ctx context.Context, wg *sync.WaitGroup, maxConcurrent int, 
 
 func execClientSendSync(ctx context.Context, wg *sync.WaitGroup, maxConcurrent int, c *client.Client, arbiter *test.Arbiter) {
 	go exec.Parallelize(ctx, wg, maxConcurrent, func() {
-		if _, _, err := c.SendSync(defaultCtx, defaultMsg); err != nil && err != client.ErrNotRunning {
+		if _, _, err := c.SendSync(defaultCtx, defaultMsg()); err != nil && err != client.ErrNotRunning {
 			arbiter.ErrorHappened(err)
 			return
 		}
@@ -113,7 +113,7 @@ func execClientSendSync(ctx context.Context, wg *sync.WaitGroup, maxConcurrent i
 
 func execClientBroadcast(ctx context.Context, wg *sync.WaitGroup, maxConcurrent int, c *client.Client, arbiter *test.Arbiter) {
 	go exec.Parallelize(ctx, wg, maxConcurrent, func() {
-		if _, err := c.Broadcast(defaultMsg); err != nil && err != client.ErrNotRunning {
+		if _, err := c.Broadcast(defaultMsg()); err != nil && err != client.ErrNotRunning {
 			arbiter.ErrorHappened(err)
 			return
 		}
@@ -123,7 +123,7 @@ func execClientBroadcast(ctx context.Context, wg *sync.WaitGroup, maxConcurrent 
 
 func execClientPublish(ctx context.Context, wg *sync.WaitGroup, maxConcurrent int, c *client.Client, arbiter *test.Arbiter) {
 	go exec.Parallelize(ctx, wg, maxConcurrent, func() {
-		if _, err := c.Publish("topic.a", defaultMsg); err != nil && err != client.ErrNotRunning {
+		if _, err := c.Publish("topic.a", defaultMsg()); err != nil && err != client.ErrNotRunning {
 			arbiter.ErrorHappened(err)
 			return
 		}

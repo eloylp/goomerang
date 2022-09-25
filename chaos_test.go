@@ -18,8 +18,8 @@ func TestClientReturnsKnownErrOnConnFailure(t *testing.T) {
 
 	arbiter := test.NewArbiter(t)
 
-	s, run := PrepareServer(t)
-	s.Handle(defaultMsg.Payload, echoHandler)
+	s, run := Server(t)
+	s.Handle(defaultMsg().Payload, echoHandler)
 	run()
 	defer s.Shutdown(defaultCtx)
 
@@ -27,7 +27,7 @@ func TestClientReturnsKnownErrOnConnFailure(t *testing.T) {
 	require.NoError(t, err)
 	defer goomerangProxy.Delete()
 
-	c, connect := PrepareClient(t,
+	c, connect := Client(t,
 		client.WithServerAddr(goomerangProxy.Listen),
 		client.WithOnCloseHook(func() {
 			arbiter.ItsAFactThat("CLIENT_ONCLOSE_HOOK")
@@ -40,12 +40,12 @@ func TestClientReturnsKnownErrOnConnFailure(t *testing.T) {
 	require.NoError(t, goomerangProxy.Disable())
 
 	require.Eventually(t, func() bool {
-		_, err := c.Send(defaultMsg)
+		_, err := c.Send(defaultMsg())
 		return errors.Is(err, client.ErrNotRunning)
 	}, time.Second, time.Millisecond, "it was expected client to return ErrNotRunning")
 
 	require.Eventually(t, func() bool {
-		_, _, err = c.SendSync(defaultCtx, defaultMsg)
+		_, _, err = c.SendSync(defaultCtx, defaultMsg())
 		return errors.Is(err, client.ErrNotRunning)
 	}, time.Second, time.Millisecond, "it was expected client to return ErrNotRunning")
 

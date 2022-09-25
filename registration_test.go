@@ -1,3 +1,5 @@
+//go:build integration
+
 package goomerang_test
 
 import (
@@ -20,10 +22,10 @@ func TestHandlerRegistrationMoment(t *testing.T) {
 		registerClientDumbHandler(c)
 	})
 	t.Run("Client CANNOT register handlers AFTER run", func(t *testing.T) {
-		s, run := PrepareServer(t)
+		s, run := Server(t)
 		run()
 		defer s.Shutdown(defaultCtx)
-		c, connect := PrepareClient(t, client.WithServerAddr(s.Addr()))
+		c, connect := Client(t, client.WithServerAddr(s.Addr()))
 		connect()
 		defer c.Close(defaultCtx)
 		assert.Panics(t, func() {
@@ -37,10 +39,10 @@ func TestHandlerRegistrationMoment(t *testing.T) {
 		registerClientDumbMiddleware(c)
 	})
 	t.Run("Client CANNOT register middlewares AFTER run", func(t *testing.T) {
-		s, run := PrepareServer(t)
+		s, run := Server(t)
 		run()
 		defer s.Shutdown(defaultCtx)
-		c, connect := PrepareClient(t, client.WithServerAddr(s.Addr()))
+		c, connect := Client(t, client.WithServerAddr(s.Addr()))
 		connect()
 		defer c.Close(defaultCtx)
 		assert.Panics(t, func() {
@@ -54,10 +56,10 @@ func TestHandlerRegistrationMoment(t *testing.T) {
 		registerServerDumbHandler(s)
 	})
 	t.Run("Server CANNOT register handlers AFTER run", func(t *testing.T) {
-		s, run := PrepareServer(t)
+		s, run := Server(t)
 		run()
 		defer s.Shutdown(defaultCtx)
-		c, connect := PrepareClient(t, client.WithServerAddr(s.Addr()))
+		c, connect := Client(t, client.WithServerAddr(s.Addr()))
 		connect()
 		defer c.Close(defaultCtx)
 		assert.Panics(t, func() {
@@ -71,10 +73,10 @@ func TestHandlerRegistrationMoment(t *testing.T) {
 		registerServerDumbMiddleware(s)
 	})
 	t.Run("Server CANNOT register middlewares AFTER run", func(t *testing.T) {
-		s, run := PrepareServer(t)
+		s, run := Server(t)
 		run()
 		defer s.Shutdown(defaultCtx)
-		c, connect := PrepareClient(t, client.WithServerAddr(s.Addr()))
+		c, connect := Client(t, client.WithServerAddr(s.Addr()))
 		connect()
 		defer c.Close(defaultCtx)
 		assert.Panics(t, func() {
