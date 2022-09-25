@@ -28,11 +28,11 @@ test-integration:
 
 .PHONY: test-racy
 test-racy:
-	go test -v -count=1 -race -tags racy -shuffle on ./...
+	go test -v -race -tags racy -shuffle on ./...
 
 .PHONY: test-long
 test-long:
-	go test -v -count=1 -race -tags long -shuffle on ./...
+	go test -v -race -tags long -shuffle on ./...
 
 .PHONY: cover
 cover: test test-long test-racy
