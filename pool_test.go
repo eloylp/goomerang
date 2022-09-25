@@ -31,7 +31,7 @@ func WorkerPoolTest(maxConcurrency int, shouldBeActive bool) func(t *testing.T) 
 			server.WithOnWorkerEnd(func() {
 				arbiter.ItsAFactThat("SERVER_POOL_WORKER_ENDED")
 			}))
-		s.Handle(defaultMsg.Payload, nilHandler)
+		s.Handle(defaultMsg().Payload, nilHandler)
 		run()
 		defer s.Shutdown(defaultCtx)
 
@@ -45,13 +45,13 @@ func WorkerPoolTest(maxConcurrency int, shouldBeActive bool) func(t *testing.T) 
 				arbiter.ItsAFactThat("CLIENT_POOL_WORKER_ENDED")
 			}),
 		)
-		c.Handle(defaultMsg.Payload, nilHandler)
+		c.Handle(defaultMsg().Payload, nilHandler)
 		connect()
 		defer c.Close(defaultCtx)
 
-		_, err := c.Send(defaultMsg)
+		_, err := c.Send(defaultMsg())
 		require.NoError(t, err)
-		_, err = s.Broadcast(defaultCtx, defaultMsg)
+		_, err = s.Broadcast(defaultCtx, defaultMsg())
 		require.NoError(t, err)
 		if shouldBeActive {
 			arbiter.RequireHappenedInOrder(
@@ -73,7 +73,7 @@ func TestSendVariousMessagesWithNoConcurrency(t *testing.T) {
 	s, run := Server(t, server.WithMaxConcurrency(0))
 	defer s.Shutdown(defaultCtx)
 
-	s.Handle(defaultMsg.Payload, message.HandlerFunc(func(s message.Sender, msg *message.Message) {
+	s.Handle(defaultMsg().Payload, message.HandlerFunc(func(s message.Sender, msg *message.Message) {
 		arbiter.ItsAFactThat("SERVER_RECEIVED_MSG")
 		_, _ = s.Send(msg)
 	}))
@@ -84,14 +84,14 @@ func TestSendVariousMessagesWithNoConcurrency(t *testing.T) {
 	)
 	defer c.Close(defaultCtx)
 
-	c.Handle(defaultMsg.Payload, message.HandlerFunc(func(c message.Sender, msg *message.Message) {
+	c.Handle(defaultMsg().Payload, message.HandlerFunc(func(c message.Sender, msg *message.Message) {
 		arbiter.ItsAFactThat("CLIENT_RECEIVED_MSG")
 	}))
 	connect()
 
-	_, err := c.Send(defaultMsg)
+	_, err := c.Send(defaultMsg())
 	require.NoError(t, err)
-	_, err = c.Send(defaultMsg)
+	_, err = c.Send(defaultMsg())
 	require.NoError(t, err)
 
 	arbiter.RequireNoErrors()

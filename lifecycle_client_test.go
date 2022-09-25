@@ -128,10 +128,10 @@ func TestClientCannotSendMessagesIfNotRunning(t *testing.T) {
 
 	// Cannot send if not connected
 	c, connect := Client(t, client.WithServerAddr(s.Addr()))
-	_, err := c.Send(defaultMsg)
+	_, err := c.Send(defaultMsg())
 	assert.ErrorIs(t, err, client.ErrNotRunning, "should not send messages if not connected")
 
-	_, _, err = c.SendSync(defaultCtx, defaultMsg)
+	_, _, err = c.SendSync(defaultCtx, defaultMsg())
 	assert.ErrorIs(t, err, client.ErrNotRunning, "should not send sync messages if not connected")
 
 	connect()
@@ -140,10 +140,10 @@ func TestClientCannotSendMessagesIfNotRunning(t *testing.T) {
 	require.NoError(t, err)
 
 	// Cannot send if closed
-	_, err = c.Send(defaultMsg)
+	_, err = c.Send(defaultMsg())
 	assert.ErrorIs(t, err, client.ErrNotRunning, "should not send messages on closed status")
 
-	_, _, err = c.SendSync(defaultCtx, defaultMsg)
+	_, _, err = c.SendSync(defaultCtx, defaultMsg())
 	assert.ErrorIs(t, err, client.ErrNotRunning, "should not send sync messages on closed status")
 }
 
@@ -170,7 +170,7 @@ func TestClientHandlerCannotSendIfClosed(t *testing.T) {
 	run()
 	defer s.Shutdown(defaultCtx)
 	c, connect := Client(t, client.WithServerAddr(s.Addr()))
-	c.Handle(defaultMsg.Payload, message.HandlerFunc(func(s message.Sender, msg *message.Message) {
+	c.Handle(defaultMsg().Payload, message.HandlerFunc(func(s message.Sender, msg *message.Message) {
 		// Let's wait the close before sending.
 		// We expect an error here.
 		time.Sleep(50 * time.Millisecond)
@@ -182,7 +182,7 @@ func TestClientHandlerCannotSendIfClosed(t *testing.T) {
 
 	// We provoke the handler execution of the client
 	// with a broadcast message.
-	_, err := s.Broadcast(defaultCtx, defaultMsg)
+	_, err := s.Broadcast(defaultCtx, defaultMsg())
 	require.NoError(t, err)
 
 	// We close the client, now the internal status changed.

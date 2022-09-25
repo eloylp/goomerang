@@ -18,7 +18,7 @@ func TestSendSync(t *testing.T) {
 	s, run := Server(t)
 	defer s.Shutdown(defaultCtx)
 
-	s.Handle(defaultMsg.Payload, message.HandlerFunc(func(s message.Sender, msg *message.Message) {
+	s.Handle(defaultMsg().Payload, message.HandlerFunc(func(s message.Sender, msg *message.Message) {
 		m := message.New().SetPayload(&protos.ReplyV1{Message: "pong !"})
 		if _, err := s.Send(m); err != nil {
 			arbiter.ErrorHappened(err)

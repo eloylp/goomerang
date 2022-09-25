@@ -18,14 +18,14 @@ func TestSubscriptionsFromClientSide(t *testing.T) {
 
 	arbiter := test.NewArbiter(t)
 	s, run := Server(t, server.WithOnErrorHook(noErrorHook(arbiter)))
-	s.RegisterMessage(defaultMsg.Payload)
+	s.RegisterMessage(defaultMsg().Payload)
 	run()
 	defer s.Shutdown(defaultCtx)
 	c1, connect1 := Client(t,
 		client.WithServerAddr(s.Addr()),
 		client.WithOnErrorHook(noErrorHook(arbiter)),
 	)
-	c1.Handle(defaultMsg.Payload, message.HandlerFunc(func(_ message.Sender, msg *message.Message) {
+	c1.Handle(defaultMsg().Payload, message.HandlerFunc(func(_ message.Sender, msg *message.Message) {
 		_ = msg.Payload.(*protos.MessageV1)
 		arbiter.ItsAFactThat("CLIENT1_RECEIVED_MESSAGE")
 	}))
@@ -37,7 +37,7 @@ func TestSubscriptionsFromClientSide(t *testing.T) {
 		client.WithServerAddr(s.Addr()),
 		client.WithOnErrorHook(noErrorHook(arbiter)),
 	)
-	c2.Handle(defaultMsg.Payload, message.HandlerFunc(func(_ message.Sender, msg *message.Message) {
+	c2.Handle(defaultMsg().Payload, message.HandlerFunc(func(_ message.Sender, msg *message.Message) {
 		_ = msg.Payload.(*protos.MessageV1)
 		arbiter.ItsAFactThat("CLIENT2_RECEIVED_MESSAGE")
 	}))
@@ -50,7 +50,7 @@ func TestSubscriptionsFromClientSide(t *testing.T) {
 		client.WithOnErrorHook(noErrorHook(arbiter)),
 	)
 	connect3()
-	if _, err := c3.Publish("topic.a", defaultMsg); err != nil {
+	if _, err := c3.Publish("topic.a", defaultMsg()); err != nil {
 		failIfErr(t, err)
 	}
 	defer c3.Close(defaultCtx)
@@ -72,7 +72,7 @@ func TestServerPublish(t *testing.T) {
 		client.WithServerAddr(s.Addr()),
 		client.WithOnErrorHook(noErrorHook(arbiter)),
 	)
-	c1.Handle(defaultMsg.Payload, message.HandlerFunc(func(_ message.Sender, msg *message.Message) {
+	c1.Handle(defaultMsg().Payload, message.HandlerFunc(func(_ message.Sender, msg *message.Message) {
 		_ = msg.Payload.(*protos.MessageV1)
 		arbiter.ItsAFactThat("CLIENT1_RECEIVED_MESSAGE")
 	}))
@@ -84,7 +84,7 @@ func TestServerPublish(t *testing.T) {
 		client.WithServerAddr(s.Addr()),
 		client.WithOnErrorHook(noErrorHook(arbiter)),
 	)
-	c2.Handle(defaultMsg.Payload, message.HandlerFunc(func(_ message.Sender, msg *message.Message) {
+	c2.Handle(defaultMsg().Payload, message.HandlerFunc(func(_ message.Sender, msg *message.Message) {
 		_ = msg.Payload.(*protos.MessageV1)
 		arbiter.ItsAFactThat("CLIENT2_RECEIVED_MESSAGE")
 	}))
@@ -94,7 +94,7 @@ func TestServerPublish(t *testing.T) {
 
 	time.Sleep(500 * time.Millisecond) // wait for subscriptions to happen
 
-	failIfErr(t, s.Publish("topic.a", defaultMsg))
+	failIfErr(t, s.Publish("topic.a", defaultMsg()))
 
 	arbiter.RequireNoErrors()
 	arbiter.RequireHappened("CLIENT1_RECEIVED_MESSAGE")

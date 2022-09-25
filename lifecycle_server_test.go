@@ -98,7 +98,7 @@ func TestServerCannotSendMessagesIfNotRunning(t *testing.T) {
 
 	s, run := Server(t)
 
-	_, err := s.Broadcast(defaultCtx, defaultMsg)
+	_, err := s.Broadcast(defaultCtx, defaultMsg())
 	assert.ErrorIs(t, err, server.ErrNotRunning, "should not broadcast messages if not connected")
 
 	run()
@@ -106,7 +106,7 @@ func TestServerCannotSendMessagesIfNotRunning(t *testing.T) {
 	err = s.Shutdown(defaultCtx)
 	require.NoError(t, err)
 
-	_, err = s.Broadcast(defaultCtx, defaultMsg)
+	_, err = s.Broadcast(defaultCtx, defaultMsg())
 	assert.ErrorIs(t, err, server.ErrNotRunning, "should not broadcast messages on closed status")
 }
 
@@ -154,7 +154,7 @@ func TestServerHandlerCannotSendIfClosed(t *testing.T) {
 
 	arbiter := test.NewArbiter(t)
 	s, run := Server(t)
-	s.Handle(defaultMsg.Payload, message.HandlerFunc(func(s message.Sender, msg *message.Message) {
+	s.Handle(defaultMsg().Payload, message.HandlerFunc(func(s message.Sender, msg *message.Message) {
 		// We wait for the closed state to send,
 		// as we expect an error.
 		time.Sleep(50 * time.Millisecond)
@@ -167,7 +167,7 @@ func TestServerHandlerCannotSendIfClosed(t *testing.T) {
 	connect()
 	defer c.Close(defaultCtx)
 	// We send the message, in order to invoke the handler.
-	_, err := c.Send(defaultMsg)
+	_, err := c.Send(defaultMsg())
 	require.NoError(t, err)
 	// While the handler is sleeping before sending,
 	// we close the server, so changin its internal

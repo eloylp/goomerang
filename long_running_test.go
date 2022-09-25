@@ -23,7 +23,7 @@ func TestNoErrorsTransferringMessages(t *testing.T) {
 	// Server
 	serverArbiter := test.NewArbiter(t)
 	s, run := Server(t, server.WithOnErrorHook(noErrorHook(serverArbiter)))
-	s.Handle(defaultMsg.Payload, message.HandlerFunc(func(sender message.Sender, msg *message.Message) {
+	s.Handle(defaultMsg().Payload, message.HandlerFunc(func(sender message.Sender, msg *message.Message) {
 		reply := &protos.ReplyV1{
 			Message: "return back !",
 		}

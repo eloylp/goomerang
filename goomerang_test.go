@@ -28,9 +28,9 @@ func TestRoundTrip(t *testing.T) {
 	s, run := Server(t)
 	defer s.Shutdown(defaultCtx)
 
-	s.Handle(defaultMsg.Payload, message.HandlerFunc(func(s message.Sender, msg *message.Message) {
+	s.Handle(defaultMsg().Payload, message.HandlerFunc(func(s message.Sender, msg *message.Message) {
 		_ = msg.Payload.(*protos.MessageV1)
-		if _, err := s.Send(defaultMsg); err != nil {
+		if _, err := s.Send(defaultMsg()); err != nil {
 			arbiter.ErrorHappened(err)
 		}
 		arbiter.ItsAFactThat("SERVER_RECEIVED_MSG")
@@ -39,12 +39,12 @@ func TestRoundTrip(t *testing.T) {
 	c, connect := Client(t, client.WithServerAddr(s.Addr()))
 	defer c.Close(defaultCtx)
 
-	c.Handle(defaultMsg.Payload, message.HandlerFunc(func(c message.Sender, msg *message.Message) {
+	c.Handle(defaultMsg().Payload, message.HandlerFunc(func(c message.Sender, msg *message.Message) {
 		_ = msg.Payload.(*protos.MessageV1)
 		arbiter.ItsAFactThat("CLIENT_RECEIVED_REPLY")
 	}))
 	connect()
-	payloadSize, err := c.Send(defaultMsg)
+	payloadSize, err := c.Send(defaultMsg())
 	require.NoError(t, err)
 	require.NotEmpty(t, payloadSize)
 	arbiter.RequireNoErrors()
@@ -64,11 +64,11 @@ func TestSecuredRoundTrip(t *testing.T) {
 	}))
 
 	defer s.Shutdown(defaultCtx)
-	msg := defaultMsg.Payload
+	msg := defaultMsg().Payload
 
 	s.Handle(msg, message.HandlerFunc(func(s message.Sender, msg *message.Message) {
 		_ = msg.Payload.(*protos.MessageV1)
-		if _, err := s.Send(defaultMsg); err != nil {
+		if _, err := s.Send(defaultMsg()); err != nil {
 			arbiter.ErrorHappened(err)
 		}
 		arbiter.ItsAFactThat("SERVER_RECEIVED_MSG")
@@ -88,7 +88,7 @@ func TestSecuredRoundTrip(t *testing.T) {
 		arbiter.ItsAFactThat("CLIENT_RECEIVED_REPLY")
 	}))
 	connect()
-	payloadSize, err := c.Send(defaultMsg)
+	payloadSize, err := c.Send(defaultMsg())
 	assert.NoError(t, err)
 	assert.NotEmpty(t, payloadSize)
 	arbiter.RequireNoErrors()
@@ -108,7 +108,7 @@ func TestMiddlewares(t *testing.T) {
 			h.Handle(s, msg)
 		})
 	})
-	s.Handle(defaultMsg.Payload, message.HandlerFunc(func(s message.Sender, msg *message.Message) {
+	s.Handle(defaultMsg().Payload, message.HandlerFunc(func(s message.Sender, msg *message.Message) {
 		arbiter.ItsAFactThat("SERVER_HANDLER_EXECUTED")
 		if _, err := s.Send(&message.Message{
 			Payload: msg.Payload,
@@ -127,11 +127,11 @@ func TestMiddlewares(t *testing.T) {
 		})
 	})
 
-	c.Handle(defaultMsg.Payload, message.HandlerFunc(func(c message.Sender, msg *message.Message) {
+	c.Handle(defaultMsg().Payload, message.HandlerFunc(func(c message.Sender, msg *message.Message) {
 		arbiter.ItsAFactThat("CLIENT_RECEIVED_REPLY")
 	}))
 	connect()
-	_, err := c.Send(defaultMsg)
+	_, err := c.Send(defaultMsg())
 	require.NoError(t, err)
 	arbiter.RequireNoErrors()
 	arbiter.RequireHappenedInOrder(
@@ -149,7 +149,7 @@ func TestHeadersAreSent(t *testing.T) {
 	s, run := Server(t)
 	defer s.Shutdown(defaultCtx)
 
-	m := defaultMsg.Payload
+	m := defaultMsg().Payload
 	s.Handle(m, message.HandlerFunc(func(s message.Sender, msg *message.Message) {
 		if msg.Header.Get("h1") == "v1" { //nolint: goconst
 			arbiter.ItsAFactThat("SERVER_RECEIVED_MSG_HEADERS")
@@ -182,10 +182,10 @@ func TestHeadersAreSent(t *testing.T) {
 
 func TestUserCanAccessServerRegistry(t *testing.T) {
 	s, _ := Server(t)
-	s.Handle(defaultMsg.Payload, nilHandler)
-	msg, err := s.Registry().Message(defaultMsg.Metadata.Kind)
+	s.Handle(defaultMsg().Payload, nilHandler)
+	msg, err := s.Registry().Message(defaultMsg().Metadata.Kind)
 	require.NoError(t, err)
-	assert.Equal(t, messaging.FQDN(defaultMsg.Payload), messaging.FQDN(msg))
+	assert.Equal(t, messaging.FQDN(defaultMsg().Payload), messaging.FQDN(msg))
 }
 
 func TestUserCanConfigureCustomHTTPRoutes(t *testing.T) {
