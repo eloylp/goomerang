@@ -10,7 +10,7 @@ require (
 	github.com/prometheus/client_golang v1.13.0
 	github.com/sirupsen/logrus v1.9.0
 	github.com/stretchr/testify v1.8.0
-	go.eloylp.dev/kit v0.0.0-20220611185037-377c3e0b4294
+	go.eloylp.dev/kit v0.0.0-20220925212840-32638ec4a9e1
 	google.golang.org/protobuf v1.28.1
 )
 
