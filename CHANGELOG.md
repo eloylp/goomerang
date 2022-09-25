@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.0] - 2022-09-25
+
+### Added
+
+* [Ability to register custom HTTP docs](https://github.com/eloylp/goomerang/pull/11)
+* Docs improvements.
+* Testing infrastructure improvements.
+
 ## [0.2.0] - 2022-08-10
 
 ### Added
@@ -31,5 +39,10 @@ First version of the library. In which we are adding:
 * Customizable TLS configuration.
 * Observability tools.
 
-[Unreleased]: https://github.com/eloylp/goomerang/compare/v0.2.0...HEAD
-[0.1.0]: https://github.com/eloylp/goomerang/compare/v0.1.0...v0.2.0
+[Unreleased]: https://github.com/eloylp/goomerang/compare/v0.3.0...HEAD
+
+[0.3.0]: https://github.com/eloylp/goomerang/compare/v0.2.0...v0.3.0
+
+[0.2.0]: https://github.com/eloylp/goomerang/compare/v0.1.0...v0.2.0
+
+[0.1.0]: https://github.com/eloylp/goomerang/releases/tag/v0.1.0
