@@ -22,6 +22,8 @@ import (
 )
 
 func TestRoundTrip(t *testing.T) {
+	t.Parallel()
+
 	arbiter := test.NewArbiter(t)
 	s, run := Server(t)
 	defer s.Shutdown(defaultCtx)
@@ -51,6 +53,8 @@ func TestRoundTrip(t *testing.T) {
 }
 
 func TestSecuredRoundTrip(t *testing.T) {
+	t.Parallel()
+
 	arbiter := test.NewArbiter(t)
 	// Get self-signed certificate.
 	certificate := SelfSignedCert(t)
@@ -93,6 +97,8 @@ func TestSecuredRoundTrip(t *testing.T) {
 }
 
 func TestMiddlewares(t *testing.T) {
+	t.Parallel()
+
 	arbiter := test.NewArbiter(t)
 	s, run := Server(t)
 	defer s.Shutdown(defaultCtx)
@@ -137,6 +143,8 @@ func TestMiddlewares(t *testing.T) {
 }
 
 func TestHeadersAreSent(t *testing.T) {
+	t.Parallel()
+
 	arbiter := test.NewArbiter(t)
 	s, run := Server(t)
 	defer s.Shutdown(defaultCtx)
