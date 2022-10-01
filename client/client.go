@@ -295,27 +295,37 @@ func (c *Client) SendSync(ctx context.Context, msg *message.Message) (payloadSiz
 	if c.status() != ws.StatusRunning {
 		return 0, nil, ErrNotRunning
 	}
-	ch := make(chan struct{})
+
+	type resp struct {
+		payloadSize int
+		msg         *message.Message
+		err         error
+	}
+
+	ch := make(chan resp, 1)
 	go func() {
 		defer close(ch)
 		UUID := uuid.New().String()
 		var data []byte
-		payloadSize, data, err = messaging.Pack(msg, messaging.FrameWithUUID(UUID), messaging.FrameIsSync())
+		payloadSize, data, err := messaging.Pack(msg, messaging.FrameWithUUID(UUID), messaging.FrameIsSync())
 		if err != nil {
 			return
 		}
 		c.requestRegistry.createListener(UUID)
 		if err = c.connSlot.Write(data); err != nil {
-			err = fmt.Errorf("sendSync: %v", err)
+			ch <- resp{err: fmt.Errorf("sendSync: %v", err)}
 			return
 		}
-		response, err = c.requestRegistry.resultFor(ctx, UUID)
+		r := resp{}
+		r.msg, r.err = c.requestRegistry.resultFor(ctx, UUID)
+		r.payloadSize = payloadSize
+		ch <- r
 	}()
 	select {
 	case <-ctx.Done():
 		return 0, nil, ctx.Err()
-	case <-ch:
-		return
+	case r := <-ch:
+		return r.payloadSize, r.msg, r.err
 	}
 }
 

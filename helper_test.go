@@ -17,7 +17,7 @@ import (
 	"go.eloylp.dev/goomerang/client"
 	"go.eloylp.dev/goomerang/example/protos"
 	"go.eloylp.dev/goomerang/internal/test"
-	"go.eloylp.dev/goomerang/message"
+	message "go.eloylp.dev/goomerang/message"
 	"go.eloylp.dev/goomerang/server"
 	"go.eloylp.dev/goomerang/ws"
 )
@@ -31,10 +31,12 @@ var (
 	proxyServer *toxiproxy.ApiServer
 	proxyClient *toxiClient.Client
 	defaultCtx  = context.Background()
-	defaultMsg  = message.New().
+	defaultMsg  = func() *message.Message {
+		return message.New().
 			SetPayload(&protos.MessageV1{
-			Message: "a message!",
-		})
+				Message: "a message!",
+			})
+	}
 	echoHandler = message.HandlerFunc(func(s message.Sender, msg *message.Message) {
 		s.Send(msg)
 	})
@@ -67,7 +69,7 @@ func mustWaitTCPService(addr string, interval, maxWait time.Duration) {
 	}
 }
 
-func PrepareServer(t *testing.T, opts ...server.Option) (s *server.Server, run func()) {
+func Server(t *testing.T, opts ...server.Option) (s *server.Server, run func()) {
 	t.Helper()
 	is := configureServer(t, opts)
 	return is, func() {
@@ -114,7 +116,7 @@ func PrepareTLSServer(t *testing.T, opts ...server.Option) (s *server.Server, ru
 	}
 }
 
-func PrepareClient(t *testing.T, opts ...client.Option) (c *client.Client, connect func()) {
+func Client(t *testing.T, opts ...client.Option) (c *client.Client, connect func()) {
 	c, err := client.New(opts...)
 	if err != nil {
 		t.Fatal(err)

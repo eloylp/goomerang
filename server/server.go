@@ -2,6 +2,7 @@ package server
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net"
 	"net/http"
@@ -131,16 +132,21 @@ func (s *Server) Broadcast(ctx context.Context, msg *message.Message) (brResult 
 	if s.status() != ws.StatusRunning {
 		return []BroadcastResult{}, ErrNotRunning
 	}
-	ch := make(chan struct{})
+
+	type resp struct {
+		brResult []BroadcastResult
+		err      error
+	}
+	ch := make(chan resp, 1)
 	go func() {
 		defer close(ch)
 
 		var data []byte
 		var payloadSize int
-		payloadSize, data, err = messaging.Pack(msg)
+		payloadSize, data, err := messaging.Pack(msg)
 
 		if err != nil {
-			err = fmt.Errorf("broadcast: %v", err)
+			ch <- resp{err: fmt.Errorf("broadcast: %v", err)}
 			return
 		}
 
@@ -151,7 +157,7 @@ func (s *Server) Broadcast(ctx context.Context, msg *message.Message) (brResult 
 		s.serverL.RLock()
 		defer s.serverL.RUnlock()
 
-		brResult = make([]BroadcastResult, 0, len(s.connRegistry))
+		brResult := make([]BroadcastResult, 0, len(s.connRegistry))
 
 		for c := range s.connRegistry {
 			cs := s.connRegistry[c]
@@ -167,12 +173,13 @@ func (s *Server) Broadcast(ctx context.Context, msg *message.Message) (brResult 
 			})
 		}
 		err = multierror.Append(err, errs...).ErrorOrNil()
+		ch <- resp{brResult, err}
 	}()
 	select {
 	case <-ctx.Done():
 		return []BroadcastResult{}, ctx.Err()
-	case <-ch:
-		return
+	case r := <-ch:
+		return r.brResult, r.err
 	}
 }
 
@@ -226,6 +233,16 @@ func (s *Server) Run() (err error) {
 	return nil
 }
 
+// Router provides access to the underlying HTTP router.
+// The routes /ws and /wss are reserved for library
+// operations.
+func (s *Server) Router() *http.ServeMux {
+	if s.status() != ws.StatusNew {
+		panic(errors.New("custom handlers can only be implemented before running"))
+	}
+	return s.intServer.Handler.(*http.ServeMux)
+}
+
 // RegisterMessage will make the server aware of a specific kind of
 // protocol buffer message. This is specially needed when
 // the user sends messages with methods like SendSync(),
@@ -266,22 +283,22 @@ func (s *Server) Shutdown(ctx context.Context) (err error) {
 	}
 	s.setStatus(ws.StatusClosing)
 	defer s.setStatus(ws.StatusClosed)
-	ch := make(chan struct{})
+	ch := make(chan error, 1)
 	go func() {
 		defer close(ch)
 		defer s.hooks.ExecOnclose()
 
 		s.broadcastClose()
 		s.cancl() // This will finish all connections, as will cancel all receiver goroutines. See uses.
-		err = s.intServer.Shutdown(ctx)
+		ch <- s.intServer.Shutdown(ctx)
 		s.workerPool.Wait() // Wait for in flight user handlers
 		s.wg.Wait()         // Wait for in flight server handlers
 	}()
 	select {
 	case <-ctx.Done():
 		return ctx.Err()
-	case <-ch:
-		return
+	case rerr := <-ch:
+		return rerr
 	}
 }
 

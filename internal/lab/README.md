@@ -18,7 +18,7 @@ Client2-->ToxiProxy;
 ToxiProxy-->Server;
 ```
 
-It's completely up to the developer to tweak the above schema at discretion. Let's just try to only commit final states.
+It's completely up to the developer to tweak the above schema at discretion. Let's just try to only commit final states, so other developers doesn't need to struggle in order to make it work !
 
 In order to bring up the environment just:
 

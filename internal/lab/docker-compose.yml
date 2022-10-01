@@ -2,7 +2,7 @@ version: "3.8"
 services:
 
   server:
-    image: golang:1.8-alpine
+    image: golang:1.9-alpine
     container_name: server
     depends_on:
       - prometheus
@@ -10,7 +10,7 @@ services:
     command:
       - /app/server
     volumes:
-      - ./server/server:/app/server:z
+      - ./server/server:/app/server:Z
     environment:
       - LISTEN_ADDR=0.0.0.0:8080
       - PPROF_LISTEN_ADDR=0.0.0.0:6060
@@ -21,17 +21,17 @@ services:
       - 8080 # serving port
       - 9971 # metrics
     ports:
-      - "127.0.0.1:6060:6060" ## Go pprof
+      - "6060:6060" ## Go pprof
     networks:
       - lab
 
   proxy:
     container_name: proxy
-    image: golang:1.8-alpine
+    image: golang:1.9-alpine
     command:
       - /app/proxy
     volumes:
-      - ./proxy/proxy:/app/proxy:z
+      - ./proxy/proxy:/app/proxy:Z
     depends_on:
       - prometheus
       - grafana
@@ -46,11 +46,11 @@ services:
 
   client: &client
     container_name: client
-    image: golang:1.8-alpine
+    image: golang:1.9-alpine
     command:
       - /app/client
     volumes:
-      - ./client/client:/app/client:z
+      - ./client/client:/app/client:Z
     environment:
       - TARGET_ADDR=server:8080
       - PPROF_LISTEN_ADDR=0.0.0.0:6060
@@ -64,7 +64,7 @@ services:
     expose:
       - 9971 # metrics
     ports:
-      - "127.0.0.1:6061:6060" ## Go pprof
+      - "6061:6060" ## Go pprof
     networks:
       - lab
 
@@ -76,13 +76,13 @@ services:
     container_name: client2
     <<: *client
     ports:
-      - "127.0.0.1:6062:6060" ## Go pprof
+      - "6062:6060" ## Go pprof
 
   prometheus:
     image: prom/prometheus:v2.35.0
     container_name: prometheus
     volumes:
-      - ./prometheus:/etc/prometheus:z
+      - ./prometheus:/etc/prometheus:Z
       - prometheus_data:/prometheus
     command:
       - '--config.file=/etc/prometheus/prometheus.yml'
@@ -93,7 +93,7 @@ services:
       - '--web.enable-lifecycle'
     restart: unless-stopped
     ports:
-      - "127.0.0.1:9090:9090"
+      - "9090:9090"
     networks:
       - lab
 
@@ -103,8 +103,8 @@ services:
       - prometheus
     container_name: grafana
     volumes:
-      - grafana_data:/var/lib/grafana:z
-      - ./grafana/provisioning:/etc/grafana/provisioning:z
+      - grafana_data:/var/lib/grafana:Z
+      - ./grafana/provisioning:/etc/grafana/provisioning:Z
     environment:
       - GF_USERS_ALLOW_SIGN_UP=false
       - GF_AUTH_ANONYMOUS_ENABLED=true
@@ -112,7 +112,7 @@ services:
       - GF_AUTH_DISABLE_LOGIN_FORM=true
     restart: unless-stopped
     ports:
-      - "127.0.0.1:3000:3000"
+      - "3000:3000"
     networks:
       - lab
 

@@ -1,3 +1,6 @@
+ALL_TESTS_TAGS=unit,integration,racy,long
+DEV_TESTS_TAGS=unit,integration
+
 .DEFAULT_GOAL := all
 
 .PHONY: all
@@ -5,34 +8,34 @@ all: lint test
 
 .PHONY: lint
 lint:
-	golangci-lint run -v
+	golangci-lint run --build-tags ${ALL_TESTS_TAGS} -v
 
 .PHONY: lint-fix
 lint-fix:
-	golangci-lint run --build-tags racy -v --fix
+	golangci-lint run --build-tags ${ALL_TESTS_TAGS} -v --fix
 
 .PHONY: test
 test:
-	go test -v -count=1 -race -tags unit,integration,racy,long -shuffle on -coverprofile=cover.out ./...
+	go test -v -race -tags ${DEV_TESTS_TAGS} -shuffle on -coverprofile=cover.out ./...
 
 .PHONY: test-unit
 test-unit:
-	go test -v -count=1 -race -tags unit -shuffle on ./...
+	go test -v -race -tags unit -shuffle on ./...
 
 .PHONY: test-integration
 test-integration:
-	go test -v -count=1 -race -tags integration -shuffle on ./...
+	go test -v -race -tags integration -shuffle on ./...
 
 .PHONY: test-racy
 test-racy:
-	go test -v -count=1 -race -tags racy -shuffle on ./...
+	go test -v -race -tags racy -shuffle on ./...
 
 .PHONY: test-long
 test-long:
-	go test -v -count=1 -race -tags long -shuffle on ./...
+	go test -v -race -tags long -shuffle on ./...
 
 .PHONY: cover
-cover: test
+cover: test test-long test-racy
 	@go tool cover -html=cover.out -o=cover.html
 
 .PHONY: messages

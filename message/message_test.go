@@ -54,6 +54,7 @@ func messageFixture() *message.Message {
 
 func TestMessageText(t *testing.T) {
 	msg := messageFixture()
+	// We need to assert multiple outputs, as the headers are a map, so the output is unordered.
 	possibleOutput1 := `metadata: creation=1970-01-01 00:00:00.001 +0000 UTC,uuid=09AF,kind=goomerang.example.MessageV1,payloadSize=10,isSync=true headers: k1=v1,k2=v2 - payload: message:"Hi !"`
 	possibleOutput2 := `metadata: creation=1970-01-01 00:00:00.001 +0000 UTC,uuid=09AF,kind=goomerang.example.MessageV1,payloadSize=10,isSync=true headers: k2=v2,k1=v1 - payload: message:"Hi !"`
 	textMsg := msg.String()

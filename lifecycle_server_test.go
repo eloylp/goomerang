@@ -21,14 +21,14 @@ func TestShutdownProcedureServerSideInit(t *testing.T) {
 	serverArbiter := test.NewArbiter(t)
 	clientArbiter := test.NewArbiter(t)
 
-	s, run := PrepareServer(t, server.WithOnCloseHook(func() {
+	s, run := Server(t, server.WithOnCloseHook(func() {
 		serverArbiter.ItsAFactThat("SERVER_PROPERLY_CLOSED")
 	}),
 		server.WithOnStatusChangeHook(statusChangesHook(serverArbiter, "server")),
 		server.WithOnErrorHook(noErrorHook(serverArbiter)),
 	)
 	run()
-	_, connect := PrepareClient(t,
+	_, connect := Client(t,
 		client.WithServerAddr(s.Addr()),
 		client.WithOnCloseHook(func() {
 			clientArbiter.ItsAFactThat("CLIENT_PROPERLY_CLOSED")
@@ -67,10 +67,10 @@ func TestServerSendsCloseToAllClients(t *testing.T) {
 	errHook := func(err error) {
 		arbiter.ErrorHappened(err)
 	}
-	s, run := PrepareServer(t, server.WithOnErrorHook(errHook))
+	s, run := Server(t, server.WithOnErrorHook(errHook))
 	run()
 
-	_, connect1 := PrepareClient(t,
+	_, connect1 := Client(t,
 		client.WithServerAddr(s.Addr()),
 		client.WithOnErrorHook(errHook),
 		client.WithOnCloseHook(func() {
@@ -78,7 +78,7 @@ func TestServerSendsCloseToAllClients(t *testing.T) {
 		}))
 	connect1()
 
-	_, connect2 := PrepareClient(t,
+	_, connect2 := Client(t,
 		client.WithServerAddr(s.Addr()),
 		client.WithOnErrorHook(errHook),
 		client.WithOnCloseHook(func() {
@@ -96,9 +96,9 @@ func TestServerSendsCloseToAllClients(t *testing.T) {
 func TestServerCannotSendMessagesIfNotRunning(t *testing.T) {
 	t.Parallel()
 
-	s, run := PrepareServer(t)
+	s, run := Server(t)
 
-	_, err := s.Broadcast(defaultCtx, defaultMsg)
+	_, err := s.Broadcast(defaultCtx, defaultMsg())
 	assert.ErrorIs(t, err, server.ErrNotRunning, "should not broadcast messages if not connected")
 
 	run()
@@ -106,14 +106,14 @@ func TestServerCannotSendMessagesIfNotRunning(t *testing.T) {
 	err = s.Shutdown(defaultCtx)
 	require.NoError(t, err)
 
-	_, err = s.Broadcast(defaultCtx, defaultMsg)
+	_, err = s.Broadcast(defaultCtx, defaultMsg())
 	assert.ErrorIs(t, err, server.ErrNotRunning, "should not broadcast messages on closed status")
 }
 
 func TestServerCannotShutdownIfNotRunning(t *testing.T) {
 	t.Parallel()
 
-	s, _ := PrepareServer(t)
+	s, _ := Server(t)
 	err := s.Shutdown(defaultCtx)
 	assert.ErrorIs(t, err, server.ErrNotRunning, "should not shutdown if not running")
 }
@@ -121,7 +121,7 @@ func TestServerCannotShutdownIfNotRunning(t *testing.T) {
 func TestServerCannotShutdownIfClosed(t *testing.T) {
 	t.Parallel()
 
-	s, run := PrepareServer(t)
+	s, run := Server(t)
 	run()
 	err := s.Shutdown(defaultCtx)
 	require.NoError(t, err)
@@ -132,7 +132,7 @@ func TestServerCannotShutdownIfClosed(t *testing.T) {
 func TestServerCannotRunIfAlreadyRunning(t *testing.T) {
 	t.Parallel()
 
-	s, run := PrepareServer(t)
+	s, run := Server(t)
 	run()
 	defer s.Shutdown(defaultCtx)
 	err := s.Run()
@@ -142,7 +142,7 @@ func TestServerCannotRunIfAlreadyRunning(t *testing.T) {
 func TestServerCannotRunIfAlreadyClosed(t *testing.T) {
 	t.Parallel()
 
-	s, run := PrepareServer(t)
+	s, run := Server(t)
 	run()
 	require.NoError(t, s.Shutdown(defaultCtx))
 	err := s.Run()
@@ -153,8 +153,8 @@ func TestServerHandlerCannotSendIfClosed(t *testing.T) {
 	t.Parallel()
 
 	arbiter := test.NewArbiter(t)
-	s, run := PrepareServer(t)
-	s.Handle(defaultMsg.Payload, message.HandlerFunc(func(s message.Sender, msg *message.Message) {
+	s, run := Server(t)
+	s.Handle(defaultMsg().Payload, message.HandlerFunc(func(s message.Sender, msg *message.Message) {
 		// We wait for the closed state to send,
 		// as we expect an error.
 		time.Sleep(50 * time.Millisecond)
@@ -163,11 +163,11 @@ func TestServerHandlerCannotSendIfClosed(t *testing.T) {
 		}
 	}))
 	run()
-	c, connect := PrepareClient(t, client.WithServerAddr(s.Addr()))
+	c, connect := Client(t, client.WithServerAddr(s.Addr()))
 	connect()
 	defer c.Close(defaultCtx)
 	// We send the message, in order to invoke the handler.
-	_, err := c.Send(defaultMsg)
+	_, err := c.Send(defaultMsg())
 	require.NoError(t, err)
 	// While the handler is sleeping before sending,
 	// we close the server, so changin its internal

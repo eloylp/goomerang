@@ -20,13 +20,14 @@ Gopher art by <a href="https://github.com/lidiackr">@lidiackr</a>
 
 ## Status
 
-This project is still a proof of concept. It has none or very little production experience. Maintainers of the project reserve the right of
+This project is still a proof of concept. It has none or very little production experience. But that doesnt mean it wasnt made with ❤ .
+Maintainers of the project reserve the right of
 breaking the public API in new versions.
 
 ## Motivation
 
 Goomerang is an effort to provide an easy, application friendly way for communicating clients and servers. Because some of us only need to
-send some protos over a fast pipe.
+send some protos over a fast pipe. Here is a high level of the idea (bar napkin drawing):
 
 ![idea](docs/idea.drawio.svg)
 
@@ -71,6 +72,7 @@ CLOSED --> [*]
 * [Ping/pong](https://datatracker.ietf.org/doc/html/rfc6455#section-5.5.2) messages out of the box in clients and server. Keep alive
   connections.
 * Customizable TLS configuration.
+* Ability to introduce [custom HTTP routes](#custom-http-routes).
 * Custom errors are exposed, ability to build retry systems on top of the public API.
 * [Observability tools](#observability), that will help instrumenting clients and servers.
 
@@ -180,11 +182,11 @@ message types:
 * Using the [handler registration](#message-handlers) functions.
 * In clients, the convenient `client.RegisterMessage(msg)` can be used.
 
-**They are exclusive**. If a message is already registered in the moment of the handler registration, such message doesnt need to be
+**They are exclusive**. If a message is already registered in the moment of the handler registration, such message doesn't need to be
 registered
-by other methods.k
+by other methods.
 
-## A history of handlers and middlewares
+## An history of handlers and middlewares
 
 There's support for handlers and middlewares for both, client and server sides. This part of the project comes inspired by the
 Go [HTTP standard library](https://pkg.go.dev/net/http#HandlerFunc). The intention is to make this part familiar and versatile.
@@ -256,7 +258,8 @@ func (m *Handler) Handle(sender message.Sender, msg *message.Message) {
 
 Middlewares are just message handlers that always get executed no matter the kind of message, alternatively providing the ability to execute
 the next
-handler in the chain. They are executed just before the message handler, bringing the opportunity to add preprocessing or postprocessing
+handler in the chain. They are executed just before the matched message handler, bringing the opportunity to add preprocessing or
+postprocessing
 logic to the message handling operation. i.e metrics, logging or panic handlers. Let's see how to register a middleware:
 
 ```go
@@ -280,7 +283,8 @@ func main() {
 }
 ```
 
-That's sounds really familiar ! Yes, Goomerang tries to preserve same aspects of the standard library. Again, the same symmetric interface
+For many of you that sounds really familiar ! Yes, Goomerang tries to preserve same aspects of the standard library. Again, the same
+symmetric interface
 can be found in the client public API.
 
 It's important to note that **any number of middlewares can be registered**. The **order of registration will drive the order of execution**
@@ -333,8 +337,8 @@ func main() {
 }
 ```
 
-As a rule of thumb, its recommended to implement the panic middleware as first in the chain (so it protects the rest of handlers), in
-order to not crash the entire process if a panic arises at some point in the handler chain.
+As a rule of thumb, it's recommended to implement the panic middleware as first in the chain (so it protects the rest of handlers), in
+order to not crash the entire process if a panic it's raised at some point in the handler chain.
 
 ## Broadcasts
 
@@ -375,20 +379,20 @@ func main() {
 }
 ```
 
-The above call to `c.Broadcast(msg)` sends a command to the server which will send the message to all connected clients. That means
-the message being broadcasted needs to be be properly [registered](#messages-registration) in all peers.
+The above call to `c.Broadcast(msg)` sends a command to the server, which will send the message to all connected clients. That means
+the message being broadcasted needs to be properly [registered](#messages-registration) in all peers.
 
 ```mermaid
 graph LR;
-Client1-->GoomerangServer;
-GoomerangServer-->Client1;
-GoomerangServer-->Client2;
-GoomerangServer-->Client3;
+Client1-->Server;
+Server-->Client1;
+Server-->Client2;
+Server-->Client3;
 ```
 
 From the server side perspective, it's also possible to send a message to all connected clients. This can be useful for a number of cases,
 like
-push notifications. Here's and example on how to do it:
+push notifications. Here's and example on how to do it from the server side:
 
 ```go
 package main
@@ -416,13 +420,13 @@ func main() {
 }
 ```
 
-In contrast with client side broadcasts, server side broadcasts will start the broadcasting operation immediately.
+In contrast with client side broadcasts, server side invoked broadcasts will start the broadcasting operation immediately.
 
 ```mermaid
 graph LR;
-GoomerangServer-->Client1;
-GoomerangServer-->Client2;
-GoomerangServer-->Client3;
+Server-->Client1;
+Server-->Client2;
+Server-->Client3;
 ```
 
 ## Publish and subscribe
@@ -481,8 +485,8 @@ func main() {
 }
 ```
 
-We can appreciate the `Subscribe(topic string)`, `Publish(topic string, msg *message.Message)` and `Unsubscribe(topic string)` interfaces.
-This three calls will send a command to the server. After that the server will accomplish the required operation.
+We can notice the `Subscribe(topic string)`, `Publish(topic string, msg *message.Message)` and `Unsubscribe(topic string)` interfaces.
+This three calls will send a command to the server. After that, the server will accomplish the required operation.
 
 From the server side API, there's also a method `Publish(topic string, msg *message.Message)`:
 
@@ -520,10 +524,10 @@ subscribed.
 
 ```mermaid
 graph LR;
-MessageBroker-->GoomerangServer;
-GoomerangServer-->TopicA;
-GoomerangServer-->TopicB;
-GoomerangServer-->TopicC;
+MessageBroker-->Server;
+Server-->TopicA;
+Server-->TopicB;
+Server-->TopicC;
 TopicA-->Client1;
 TopicA-->Client2;
 TopicB-->Client2;
@@ -532,18 +536,18 @@ TopicC-->Client3;
 
 (Graph of Message flow)
 
-The **internal state** of the pub/sub engine its **not replicated across server replicas**. That means the server can't scale out
-horizontally yet.
+The **internal state** of the pub/sub engine its **not replicated across server replicas**. That means the server can't scale
+horizontally, yet.
 
 ## Synchronous sends
 
-The default send methods `c.Send()` `s.Broadcast()` from client and server respectively, **are completely asynchronous**. They work as a
+All the message sending interfaces from clients and servers, **are completely asynchronous**. They work as a
 "fire and forget" send system. That means the user of the library should design a way to ensure the message was received and processed by
 the server before removing it from its internal state. Unless of course, the intrinsic value of the data expires very quick and the client
 can afford its lost.
 
 In response to this issue, clients on this library have a `c.SyncSend(ctx, msg)` method implemented. This allows clients sending messages
-and wait for the server reply.
+and wait for the respective server reply.
 
 Here is an example of its use:
 
@@ -589,7 +593,8 @@ func main() {
 
 This is just a high level request/response pattern built on the top of the "fire and forget"
 previously commented send system. It probably can be useful some users, when the reply is
-crucial for completing the operation. Remember we are sharing the same pipe here, for all the messages.
+crucial for completing the operation. In this cases, is good to remember that we are sharing the same pipe here, for all the messages, so
+this channel can get contested.
 
 ### Some extra notes
 
@@ -603,6 +608,34 @@ The following command can give us minimum, default and maximum receive buffers s
 $ cat /proc/sys/net/ipv4/tcp_rmem 
 4096	131072	6291456
 ```
+
+## Custom HTTP routes
+
+Many times we want to run more HTTP handler logic in the same port of websockets.
+This library provides such ability, allowing users to register custom handlers at the
+beginning of the server setup. Here's an example of a health endpoint:
+
+```go
+package main
+
+import (
+	"net/http"
+	"go.eloylp.dev/goomerang/server"
+)
+
+func main() {
+	s, _ := server.New(server.WithListenAddr("127.0.0.1:8080"))
+	// Obtain the router + normal handler registration
+	s.Router().Handle("/health", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// Do more checks
+		_, _ = w.Write([]byte("ok"))
+	}))
+}
+```
+
+⚠ As an important note, currently the paths `/ws` and `/wss` are reserved for library use.
+
+The exposed router is the one provided by the [gorilla mux project](https://github.com/gorilla/mux).
 
 ## Hooks
 
@@ -676,7 +709,7 @@ C1->>C1: Returns to user
 The server never changes its status, as the initiator of the shutdown was only one client. So only the "connection slot" and processing for
 that client is removed from the server.
 
-Let's check now the sequence when the **server initiates** the shutdown connection:
+Let's check now the sequence when the **server initiates** the shutdown process:
 
 ```mermaid
 sequenceDiagram
@@ -709,6 +742,9 @@ S->>S: Processing shutdown
 Note left of S: Status = Closed
 S->>S: Return to user
 ```
+
+As we can see the process is similar, but in this case, the shutdown process its executed over all clients connections at the same time, in
+parallel.
 
 ## Observability
 
