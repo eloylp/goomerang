@@ -2,7 +2,7 @@ version: "3.8"
 services:
 
   server:
-    image: golang:1.8-alpine
+    image: golang:1.9-alpine
     container_name: server
     depends_on:
       - prometheus
@@ -27,7 +27,7 @@ services:
 
   proxy:
     container_name: proxy
-    image: golang:1.8-alpine
+    image: golang:1.9-alpine
     command:
       - /app/proxy
     volumes:
@@ -46,7 +46,7 @@ services:
 
   client: &client
     container_name: client
-    image: golang:1.8-alpine
+    image: golang:1.9-alpine
     command:
       - /app/client
     volumes:
