@@ -52,7 +52,7 @@ func TestNoRaces(t *testing.T) {
 	// Stress all parts of the system through the public API. All uses cases at the same time.
 	const maxConcurrent = 10
 	go exec.Parallelize(ctx, wg, maxConcurrent, func() {
-		if _, err := s.Broadcast(defaultCtx, defaultMsg()); err != nil && err != server.ErrNotRunning {
+		if _, err := s.Broadcast(ctx, defaultMsg()); err != nil && err != server.ErrNotRunning {
 			arbiter.ErrorHappened(err)
 			return
 		}
@@ -103,7 +103,7 @@ func execClientSend(ctx context.Context, wg *sync.WaitGroup, maxConcurrent int, 
 
 func execClientSendSync(ctx context.Context, wg *sync.WaitGroup, maxConcurrent int, c *client.Client, arbiter *test.Arbiter) {
 	go exec.Parallelize(ctx, wg, maxConcurrent, func() {
-		if _, _, err := c.SendSync(defaultCtx, defaultMsg()); err != nil && err != client.ErrNotRunning {
+		if _, _, err := c.SendSync(ctx, defaultMsg()); err != nil && err != client.ErrNotRunning {
 			arbiter.ErrorHappened(err)
 			return
 		}
