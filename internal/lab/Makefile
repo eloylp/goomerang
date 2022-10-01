@@ -6,7 +6,7 @@ up:
 	CGO_ENABLED=0 go build -trimpath -tags timetzdata -o ./client/client client/main.go
 	docker-compose up -d --force-recreate
 	@echo "Grafana access at: http://localhost:3000"
-	@echo "Prometheus access at: http://localhost:3000"
+	@echo "Prometheus access at: http://localhost:9090"
 	@echo "Server pprof access at: http://localhost:6060/debug/pprof"
 	@echo "Client pprof access at: http://localhost:6061/debug/pprof"
 
