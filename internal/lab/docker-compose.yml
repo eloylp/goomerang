@@ -10,7 +10,7 @@ services:
     command:
       - /app/server
     volumes:
-      - ./server/server:/app/server:z
+      - ./server/server:/app/server:Z
     environment:
       - LISTEN_ADDR=0.0.0.0:8080
       - PPROF_LISTEN_ADDR=0.0.0.0:6060
@@ -31,7 +31,7 @@ services:
     command:
       - /app/proxy
     volumes:
-      - ./proxy/proxy:/app/proxy:z
+      - ./proxy/proxy:/app/proxy:Z
     depends_on:
       - prometheus
       - grafana
@@ -50,7 +50,7 @@ services:
     command:
       - /app/client
     volumes:
-      - ./client/client:/app/client:z
+      - ./client/client:/app/client:Z
     environment:
       - TARGET_ADDR=server:8080
       - PPROF_LISTEN_ADDR=0.0.0.0:6060
