@@ -21,7 +21,7 @@ services:
       - 8080 # serving port
       - 9971 # metrics
     ports:
-      - "127.0.0.1:6060:6060" ## Go pprof
+      - "6060:6060" ## Go pprof
     networks:
       - lab
 
@@ -64,7 +64,7 @@ services:
     expose:
       - 9971 # metrics
     ports:
-      - "127.0.0.1:6061:6060" ## Go pprof
+      - "6061:6060" ## Go pprof
     networks:
       - lab
 
@@ -76,7 +76,7 @@ services:
     container_name: client2
     <<: *client
     ports:
-      - "127.0.0.1:6062:6060" ## Go pprof
+      - "6062:6060" ## Go pprof
 
   prometheus:
     image: prom/prometheus:v2.35.0
@@ -93,7 +93,7 @@ services:
       - '--web.enable-lifecycle'
     restart: unless-stopped
     ports:
-      - "127.0.0.1:9090:9090"
+      - "9090:9090"
     networks:
       - lab
 
@@ -112,7 +112,7 @@ services:
       - GF_AUTH_DISABLE_LOGIN_FORM=true
     restart: unless-stopped
     ports:
-      - "127.0.0.1:3000:3000"
+      - "3000:3000"
     networks:
       - lab
 
