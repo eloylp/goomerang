@@ -12,7 +12,7 @@ up:
 
 .PHONY: down
 down:
-	docker-compose down -v
+	docker-compose down -v -f
 
 .PHONY: logs
 logs:
