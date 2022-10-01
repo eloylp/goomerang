@@ -82,7 +82,7 @@ services:
     image: prom/prometheus:v2.35.0
     container_name: prometheus
     volumes:
-      - ./prometheus:/etc/prometheus:z
+      - ./prometheus:/etc/prometheus:Z
       - prometheus_data:/prometheus
     command:
       - '--config.file=/etc/prometheus/prometheus.yml'
@@ -103,8 +103,8 @@ services:
       - prometheus
     container_name: grafana
     volumes:
-      - grafana_data:/var/lib/grafana:z
-      - ./grafana/provisioning:/etc/grafana/provisioning:z
+      - grafana_data:/var/lib/grafana:Z
+      - ./grafana/provisioning:/etc/grafana/provisioning:Z
     environment:
       - GF_USERS_ALLOW_SIGN_UP=false
       - GF_AUTH_ANONYMOUS_ENABLED=true
