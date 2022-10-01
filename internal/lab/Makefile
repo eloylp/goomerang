@@ -20,5 +20,5 @@ logs:
 
 .PHONY: update
 update:
-	cd server && go get -u go.eloylp.dev/goomerang && cd ..
-	cd client && go get -u go.eloylp.dev/goomerang && cd ..
+	cd server && go get -u go.eloylp.dev/goomerang@develop && cd ..
+	cd client && go get -u go.eloylp.dev/goomerang@develop && cd ..
