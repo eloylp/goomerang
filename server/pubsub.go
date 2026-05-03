@@ -11,19 +11,18 @@ import (
 
 type pubSubEngine struct {
 	csMap map[string]map[*conn.Slot]message.Sender
-	L     *sync.RWMutex
+	mu    sync.RWMutex
 }
 
 func newPubSubEngine() *pubSubEngine {
 	return &pubSubEngine{
 		csMap: map[string]map[*conn.Slot]message.Sender{},
-		L:     &sync.RWMutex{},
 	}
 }
 
 func (cm *pubSubEngine) subscribe(topic string, sender message.Sender) {
-	cm.L.Lock()
-	defer cm.L.Unlock()
+	cm.mu.Lock()
+	defer cm.mu.Unlock()
 	ct, ok := cm.csMap[topic]
 	if !ok {
 		cm.csMap[topic] = map[*conn.Slot]message.Sender{
@@ -35,8 +34,8 @@ func (cm *pubSubEngine) subscribe(topic string, sender message.Sender) {
 }
 
 func (cm *pubSubEngine) publish(topic string, msg *message.Message) error {
-	cm.L.RLock()
-	defer cm.L.RUnlock()
+	cm.mu.RLock()
+	defer cm.mu.RUnlock()
 	var multiErr *multierror.Error
 	var count int
 	for _, sender := range cm.csMap[topic] {
@@ -49,14 +48,14 @@ func (cm *pubSubEngine) publish(topic string, msg *message.Message) error {
 }
 
 func (cm *pubSubEngine) unsubscribe(topic string, cs *conn.Slot) {
-	cm.L.Lock()
-	defer cm.L.Unlock()
+	cm.mu.Lock()
+	defer cm.mu.Unlock()
 	delete(cm.csMap[topic], cs)
 }
 
 func (cm *pubSubEngine) unsubscribeAll(cs *conn.Slot) {
-	cm.L.Lock()
-	defer cm.L.Unlock()
+	cm.mu.Lock()
+	defer cm.mu.Unlock()
 	for _, m := range cm.csMap {
 		delete(m, cs)
 	}
