@@ -79,6 +79,7 @@ func Server(t *testing.T, opts ...server.Option) (s *server.Server, run func()) 
 }
 
 func waitForServer(t *testing.T, is *server.Server) {
+	t.Helper()
 	ctx, cancl := context.WithTimeout(defaultCtx, time.Second)
 	defer cancl()
 	var serverAddr string
@@ -98,6 +99,7 @@ func waitForServer(t *testing.T, is *server.Server) {
 }
 
 func configureServer(t *testing.T, opts []server.Option) *server.Server {
+	t.Helper()
 	allOpts := []server.Option{server.WithListenAddr(kernelDefinedPort)}
 	allOpts = append(allOpts, opts...)
 	s, err := server.New(allOpts...)
@@ -117,6 +119,7 @@ func PrepareTLSServer(t *testing.T, opts ...server.Option) (s *server.Server, ru
 }
 
 func Client(t *testing.T, opts ...client.Option) (c *client.Client, connect func()) {
+	t.Helper()
 	c, err := client.New(opts...)
 	if err != nil {
 		t.Fatal(err)
@@ -131,6 +134,7 @@ func Client(t *testing.T, opts ...client.Option) (c *client.Client, connect func
 }
 
 func SelfSignedCert(t *testing.T) tls.Certificate {
+	t.Helper()
 	crt, err := pki.SelfSignedCert(pki.WithCertSerialNumber(1),
 		pki.WithCertCommonName("127.0.0.1"),
 		pki.WithCertOrganization([]string{"goomerang"}),
@@ -167,6 +171,7 @@ func noErrorHook(a *test.Arbiter) func(err error) {
 }
 
 func failIfErr(t *testing.T, err error) {
+	t.Helper()
 	if err != nil {
 		t.Fatal(err)
 	}

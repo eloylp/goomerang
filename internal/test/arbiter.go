@@ -54,6 +54,7 @@ func (a *Arbiter) ItsAFactThat(event string) {
 }
 
 func (a *Arbiter) RequireHappened(event string) *Arbiter {
+	a.t.Helper()
 	require.Eventuallyf(a.t, func() bool {
 		a.l.RLock()
 		defer a.l.RUnlock()
@@ -64,6 +65,7 @@ func (a *Arbiter) RequireHappened(event string) *Arbiter {
 }
 
 func (a *Arbiter) RequireNotHappened(event string) *Arbiter {
+	a.t.Helper()
 	require.Eventuallyf(a.t, func() bool {
 		a.l.RLock()
 		defer a.l.RUnlock()
@@ -74,6 +76,7 @@ func (a *Arbiter) RequireNotHappened(event string) *Arbiter {
 }
 
 func (a *Arbiter) RequireHappenedInOrder(events ...string) *Arbiter {
+	a.t.Helper()
 	passed := assert.Eventually(a.t, func() bool {
 		a.l.RLock()
 		defer a.l.RUnlock()
@@ -103,6 +106,7 @@ func (a *Arbiter) RequireHappenedInOrder(events ...string) *Arbiter {
 }
 
 func (a *Arbiter) RequireHappenedTimes(event string, expectedCount int) *Arbiter {
+	a.t.Helper()
 	var count int
 	var ok bool
 	assert.Eventuallyf(a.t, func() bool {
@@ -125,6 +129,7 @@ func (a *Arbiter) ErrorHappened(err error) {
 }
 
 func (a *Arbiter) RequireNoErrors() {
+	a.t.Helper()
 	a.l.RLock()
 	defer a.l.RUnlock()
 	var msg strings.Builder
@@ -135,6 +140,7 @@ func (a *Arbiter) RequireNoErrors() {
 }
 
 func (a *Arbiter) RequireError(errMsg string) {
+	a.t.Helper()
 	require.Eventuallyf(a.t, func() bool {
 		a.l.RLock()
 		defer a.l.RUnlock()
@@ -148,6 +154,7 @@ func (a *Arbiter) RequireError(errMsg string) {
 }
 
 func (a *Arbiter) RequireErrorIs(err error) {
+	a.t.Helper()
 	require.Eventuallyf(a.t, func() bool {
 		a.l.RLock()
 		defer a.l.RUnlock()
@@ -161,6 +168,7 @@ func (a *Arbiter) RequireErrorIs(err error) {
 }
 
 func (a *Arbiter) RequireNoEvents() {
+	a.t.Helper()
 	require.Eventuallyf(a.t, func() bool {
 		a.l.RLock()
 		defer a.l.RUnlock()
