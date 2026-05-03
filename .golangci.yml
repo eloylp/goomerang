@@ -1,5 +1,4 @@
 run:
-  go: 1.19.1
   build-tags:
     - unit
     - integration
@@ -42,17 +41,13 @@ linters-settings:
     min-complexity: 15
   goimports:
     local-prefixes: go.eloylp.dev/goomerang
-  golint:
-    min-confidence: 0
-  gomnd:
+  mnd:
     settings:
       mnd:
         # don't include the "operation" and "assign"
         checks: argument,case,condition,return
   lll:
     line-length: 140
-  maligned:
-    suggest-new: true
   misspell:
     locale: US
 linters:
@@ -61,7 +56,6 @@ linters:
   disable-all: true
   enable:
     - bodyclose
-    - deadcode
     - depguard
     - dogsled
     - errcheck
@@ -73,26 +67,21 @@ linters:
     - gocyclo
     - gofmt
     - goimports
-    - golint
     - goprintffuncname
     - gosec
     - gosimple
     - govet
     - ineffassign
-    - interfacer
     - lll
     - misspell
     - nakedret
     - rowserrcheck
-    - scopelint
     - staticcheck
-    - structcheck
     - stylecheck
     - typecheck
     - unconvert
     - unparam
     - unused
-    - varcheck
     - whitespace
     - nestif
   # don't enable:
@@ -107,18 +96,17 @@ issues:
   exclude-rules:
     - path: _test\.go
       linters:
-        - gomnd
+        - mnd
         - gochecknoinits
         - gosec
         - bodyclose
-        - scopelint
         - errcheck
         - dupl
         - forbidigo
         - lll
     - path: cmd
       linters:
-        - gomnd
+        - mnd
         - gochecknoinits
         - gosec
         - bodyclose
