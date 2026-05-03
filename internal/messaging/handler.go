@@ -12,15 +12,13 @@ type HandlerChainer struct {
 	middlewares []message.Middleware
 	handlers    map[string]message.Handler
 	chains      map[string]message.Handler
-	initiated   *int32
+	initiated   int32
 }
 
 func NewHandlerChainer() *HandlerChainer {
-	i := int32(0)
 	return &HandlerChainer{
-		handlers:  map[string]message.Handler{},
-		chains:    map[string]message.Handler{},
-		initiated: &i,
+		handlers: map[string]message.Handler{},
+		chains:   map[string]message.Handler{},
 	}
 }
 
@@ -30,7 +28,7 @@ func (hc *HandlerChainer) AppendHandler(chainName string, h message.Handler) {
 }
 
 func (hc *HandlerChainer) mustNotBeInitiated() {
-	if atomic.LoadInt32(hc.initiated) != 0 {
+	if atomic.LoadInt32(&hc.initiated) != 0 {
 		panic(errors.New("handler chainer: handlers and middlewares can only be added before starting serving"))
 	}
 }
@@ -41,7 +39,7 @@ func (hc *HandlerChainer) AppendMiddleware(m message.Middleware) {
 }
 
 func (hc *HandlerChainer) PrepareChains() {
-	atomic.StoreInt32(hc.initiated, 1)
+	atomic.StoreInt32(&hc.initiated, 1)
 	for key, h := range hc.handlers {
 		hc.chains[key] = hc.middlewareFor(h, hc.middlewares...)
 	}
