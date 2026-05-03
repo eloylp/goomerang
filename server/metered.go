@@ -120,9 +120,9 @@ func configurationMaxConcurrentMetricHook(m *metrics.ServerMetrics) func(cfg *Cf
 
 func measureBroadcastOp(m *metrics.ServerMetrics, fqdn string, brResult []BroadcastResult, duration time.Duration) {
 	m.MessageBroadcastSentTime.WithLabelValues(fqdn).Observe(duration.Seconds())
-	for i := 0; i < len(brResult); i++ {
-		m.MessageSentSize.WithLabelValues(fqdn).Observe(float64(brResult[i].Size))
-		m.MessageSentTime.WithLabelValues(fqdn).Observe(brResult[i].Duration.Seconds())
+	for _, br := range brResult {
+		m.MessageSentSize.WithLabelValues(fqdn).Observe(float64(br.Size))
+		m.MessageSentTime.WithLabelValues(fqdn).Observe(br.Duration.Seconds())
 	}
 }
 
