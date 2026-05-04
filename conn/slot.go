@@ -10,7 +10,7 @@ import (
 )
 
 type Slot struct {
-	l             *sync.Mutex
+	l             sync.Mutex
 	c             *websocket.Conn
 	receivedClose chan struct{}
 }
@@ -18,7 +18,6 @@ type Slot struct {
 func NewSlot(c *websocket.Conn) *Slot {
 	return &Slot{
 		c:             c,
-		l:             &sync.Mutex{},
 		receivedClose: make(chan struct{}, 1),
 	}
 }
