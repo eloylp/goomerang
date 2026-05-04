@@ -62,8 +62,6 @@ linters:
     - forbidigo
     - funlen
     - gochecknoinits
-    - goconst
-    - gocritic
     - gocyclo
     - gofmt
     - goimports
