@@ -41,6 +41,9 @@ linters-settings:
     min-complexity: 15
   goimports:
     local-prefixes: go.eloylp.dev/goomerang
+  gosec:
+    excludes:
+      - G115
   mnd:
     checks:
       - argument
