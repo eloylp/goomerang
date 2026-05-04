@@ -370,7 +370,7 @@ func (c *Client) close(ctx context.Context, isInitiator bool) (err error) {
 	case <-ctx.Done():
 		return ctx.Err()
 	case <-ch:
-		return
+		return err
 	}
 }
 
