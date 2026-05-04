@@ -1,6 +1,6 @@
 module go.eloylp.dev/goomerang
 
-go 1.24
+go 1.19
 
 require (
 	github.com/Shopify/toxiproxy v2.1.4+incompatible
