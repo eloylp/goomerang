@@ -195,8 +195,7 @@ func (c *Client) Send(msg *message.Message) (payloadSize int, err error) {
 	if c.status() != ws.StatusRunning {
 		return 0, ErrNotRunning
 	}
-	var data []byte
-	payloadSize, data, err = messaging.Pack(msg)
+	payloadSize, data, err := messaging.Pack(msg)
 	if err != nil {
 		return
 	}
@@ -215,8 +214,7 @@ func (c *Client) Broadcast(msg *message.Message) (payloadSize int, err error) {
 	if err != nil {
 		return 0, fmt.Errorf("broadcast: %v", err)
 	}
-	var data []byte
-	payloadSize, data, err = messaging.Pack(brMsg)
+	payloadSize, data, err := messaging.Pack(brMsg)
 	if err != nil {
 		return 0, fmt.Errorf("broadcast: %v", err)
 	}
@@ -233,8 +231,7 @@ func (c *Client) Subscribe(topic string) (err error) {
 	msg := message.New().SetPayload(&protocol.SubscribeCmd{
 		Topic: topic,
 	})
-	var data []byte
-	_, data, err = messaging.Pack(msg)
+	_, data, err := messaging.Pack(msg)
 	if err != nil {
 		return fmt.Errorf("subscribe: %v", err)
 	}
@@ -253,8 +250,7 @@ func (c *Client) Publish(topic string, msg *message.Message) (payloadSize int, e
 	if err != nil {
 		return 0, fmt.Errorf("publish: %v", err)
 	}
-	var data []byte
-	payloadSize, data, err = messaging.Pack(pubMsg)
+	payloadSize, data, err := messaging.Pack(pubMsg)
 	if err != nil {
 		return 0, fmt.Errorf("publish: %v", err)
 	}
@@ -271,8 +267,7 @@ func (c *Client) Unsubscribe(topic string) (err error) {
 	msg := message.New().SetPayload(&protocol.UnsubscribeCmd{
 		Topic: topic,
 	})
-	var data []byte
-	_, data, err = messaging.Pack(msg)
+	_, data, err := messaging.Pack(msg)
 	if err != nil {
 		return fmt.Errorf("unsubscribe: %v", err)
 	}
