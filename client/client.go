@@ -306,7 +306,6 @@ func (c *Client) SendSync(ctx context.Context, msg *message.Message) (payloadSiz
 	go func() {
 		defer close(ch)
 		UUID := uuid.New().String()
-		var data []byte
 		payloadSize, data, err := messaging.Pack(msg, messaging.FrameWithUUID(UUID), messaging.FrameIsSync())
 		if err != nil {
 			return

@@ -157,8 +157,7 @@ func (s *Server) Broadcast(ctx context.Context, msg *message.Message) (brResult 
 
 		brResult := make([]BroadcastResult, 0, len(s.connRegistry))
 
-		for c := range s.connRegistry {
-			cs := s.connRegistry[c]
+		for _, cs := range s.connRegistry {
 			start := time.Now()
 			if err := cs.Write(data); err != nil && errCount < maxErrors {
 				errs = append(errs, fmt.Errorf("broadCast: %v", err))
