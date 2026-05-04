@@ -9,6 +9,8 @@ import (
 	"go.eloylp.dev/goomerang/message"
 )
 
+const maxPubSubErrors = 100
+
 type pubSubEngine struct {
 	csMap map[string]map[*conn.Slot]message.Sender
 	L     *sync.RWMutex
@@ -40,7 +42,7 @@ func (cm *pubSubEngine) publish(topic string, msg *message.Message) error {
 	var multiErr *multierror.Error
 	var count int
 	for _, sender := range cm.csMap[topic] {
-		if _, err := sender.Send(msg); err != nil && count < 100 {
+		if _, err := sender.Send(msg); err != nil && count < maxPubSubErrors {
 			multiErr = multierror.Append(multiErr, err)
 			count++
 		}

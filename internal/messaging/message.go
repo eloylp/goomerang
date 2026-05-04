@@ -37,12 +37,12 @@ func FromFrame(frame *protocol.Frame, msgRegistry message.Registry) (*message.Me
 	}, nil
 }
 
-func Pack(msg *message.Message, opts ...FrameOption) (payloadSIze int, data []byte, err error) {
+func Pack(msg *message.Message, opts ...FrameOption) (payloadSize int, data []byte, err error) {
 	payload, err := proto.Marshal(msg.Payload)
 	if err != nil {
 		return 0, nil, err
 	}
-	payloadSize := len(payload)
+	payloadSize = len(payload)
 	frame := &protocol.Frame{
 		Kind:        FQDN(msg.Payload),
 		PayloadSize: int64(payloadSize),
