@@ -141,8 +141,6 @@ func (s *Server) Broadcast(ctx context.Context, msg *message.Message) (brResult 
 	go func() {
 		defer close(ch)
 
-		var data []byte
-		var payloadSize int
 		payloadSize, data, err := messaging.Pack(msg)
 
 		if err != nil {
